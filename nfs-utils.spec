@@ -24,6 +24,7 @@ Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
+URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
