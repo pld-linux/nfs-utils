@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# rquotad       This shell script takes care of starting and stopping
+#               the NFS quota service.
+#
+# chkconfig:	345 62 18
+# description:	NFS is a popular protocol for file sharing across \
+#		TCP/IP networks. This service provides NFS file \
+#		locking functionality.
+# probe: true
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Get service config
+[ -f /etc/sysconfig/rquotad ] && . /etc/sysconfig/rquotad
+
+# Check that networking is up.
+if [ "${NETWORKING}" = "no" ]; then
+	echo "WARNING: Networking is down. NFS rquotad and statd can't be run"
+	exit 1
+fi
+
+if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
+	[ -z "`/sbin/pidof portmap`" ] && echo "Error: portmap isn't running" && exit 0
+fi
+
+# Sanity checks
+[ -x /usr/sbin/rpc.rquotad ] || exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+	# Start daemons.
+	show "Starting NFS quotas"
+	daemon rpc.rquotad
+	touch /var/lock/subsys/rquotad
+	;;
+  stop)
+	# Stop daemons.
+	show "Shutting down NFS quotas"
+	killproc rpc.rquotad
+	rm -f /var/lock/subsys/rquotad
+	;;
+  status)
+	status rpc.rquotad
+	;;
+  restart)
+  	$0 stop
+	$0 start
+	;;
+  probe)
+	if [ ! -f /var/lock/subsys/quotad ] ; then
+	  echo start; exit 0
+	fi
+	/sbin/pidof rpc.rquotad >/dev/null 2>&1;
+	if [ $? = 1 ] ; then
+	  echo restart; exit 0
+	fi
+	;;
+  *)
+	echo "Usage: rquotad {start|stop|status|restart|probe}"
+	exit 1
+esac
+
+exit 0
