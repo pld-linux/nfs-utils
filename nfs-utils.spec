@@ -59,6 +59,10 @@ host. This package is not needed to mount NFS volumes.
 
 %description -l pl clients
 Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
+Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym 
+ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s± 
+zamountowani na tym serverze.
+Pakiet nie jest konieczny do zamountowania zasobów NFS.
 
 %package lock
 Summary:	Programs for NFS file locking
@@ -86,6 +90,7 @@ Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
+BuildRequires:	autoconf
 Prereq:		rc-scripts
 Obsoletes:	quota-rquotad
 
@@ -96,6 +101,10 @@ The results are used by quota(1) to display user quotas for remote
 file systems.
 
 %description -l pl rquotad
+rquotad jest serverem rpc(3N), który zwraca u¿ytkowanikowi lokalnego systemu 
+plików, który jest zamountowany przez zdaln± maszynê poprzez NFS.
+Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote dla zdalnego 
+systemu plików.
 Zdalny serwer quota.
 
 %prep
@@ -106,6 +115,7 @@ Zdalny serwer quota.
 %patch3
 
 %build
+autoconf
 %configure \
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
