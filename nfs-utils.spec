@@ -26,8 +26,8 @@ Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
-Requires:	setup >= 2.4.6-7
 PreReq:		rc-scripts
+PreReq:		setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
 Requires(post):	sed
