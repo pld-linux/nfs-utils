@@ -1,8 +1,8 @@
 Summary:	Kernel NFS server
-Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
+Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
-Version:	0.1.7
-Release:	4
+Version:	0.1.8
+Release:	1
 Copyright:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
@@ -21,7 +21,6 @@ Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
 Requires:	rc-scripts
-#Requires:	/dev/nfsd_netlink
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
 
@@ -35,14 +34,14 @@ z nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ
 ni¿ tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 
 %package clients
-Obsoletes:	nfs-server-clients
-Provides:	nfs-server-clients
-Summary:	Clients for connecting to a remote NFS server.
-Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS.
+Summary:	Clients for connecting to a remote NFS server
+Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 Group(pl):	Sieciowe
 Obsoletes:	nfsclient nfs-server-clients knfsd-clients
 Provides:	nfsclient
+Provides:	nfs-server-clients
+Obsoletes:	nfs-server-clients
 
 %description clients
 The nfs-server-clients package contains the showmount program.
@@ -56,9 +55,10 @@ Pakiet zawiera program showmount s³u¿±cy do odpytywania
 serwera NFS.
 
 %package lock
-Summary:	Programs for NFS file locking.
-Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock).
+Summary:	Programs for NFS file locking
+Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 #Requires:	kernel >= 2.2.5
+Requires:	rc-scripts
 Requires:	portmap >= 4.0
 Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
@@ -74,10 +74,11 @@ Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie
 blokowania plików (file locking) poprzez NFS.
 
 %package rquotad
-Summary:	Remote quota server.
-Summary(pl):	Zdalny serwer quota.
+Summary:	Remote quota server
+Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
+Requires:	rc-scripts
 
 %description rquotad
 rquotad is an rpc(3N) server which returns quotas for a user of a local file system which
@@ -92,6 +93,7 @@ Zdalny serwer quota.
 %patch0 -p1
 
 %build
+LDFLAGS="-s"; export LDFLAGS
 %configure \
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
@@ -125,8 +127,6 @@ echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
-strip --strip-unneeded $RPM_BUILD_ROOT{/sbin/*,%{_sbindir}/*} || :
-
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 gzip -9nf ChangeLog README nfs/*.ps \
@@ -150,8 +150,10 @@ mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 
 %preun
 if [ "$1" = "0" ]; then
+	if [ -r /var/lock/subsys/nfs ]; then
+		/etc/rc.d/init.d/nfs stop >&2
+	fi
 	/sbin/chkconfig --del nfs
-	/etc/rc.d/init.d/nfs stop >&2
 fi
 
 %post clients
@@ -173,8 +175,10 @@ fi
 
 %preun lock
 if [ "$1" = "0" ]; then
+	if [ -r /var/lock/subsys/nfslock ]; then
+		/etc/rc.d/init.d/nfslock stop >&2
+	fi
 	/sbin/chkconfig --del nfslock
-	/etc/rc.d/init.d/nfslock stop >&2
 fi
 
 %post rquotad
@@ -187,8 +191,10 @@ fi
 
 %preun rquotad
 if [ "$1" = "0" ]; then
+	f [ -r /var/lock/subsys/rquotad ]; then
+		/etc/rc.d/init.d/rquotad stop >&2
+	fi
 	/sbin/chkconfig --del rquotad
-	/etc/rc.d/init.d/rquotad stop >&2
 fi
 
 %files
