@@ -27,7 +27,7 @@ Patch4:		%{name}-nolibs.patch
 Patch5:		%{name}-usn36.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
-PreReq:		rc-scripts
+PreReq:		rc-scripts >= 0.4.0
 PreReq:		setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
