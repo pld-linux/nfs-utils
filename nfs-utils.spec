@@ -1,8 +1,8 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
-Version:	0.1.9.1
-Release:	2
+Version:	0.2
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
@@ -15,7 +15,7 @@ Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
-Patch0:		nfs-utils-paths.patch
+Patch0:		%{name}-paths.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
@@ -122,7 +122,7 @@ touch $RPM_BUILD_ROOT/%{_var}/lib/nfs/rmtab
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
