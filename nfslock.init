@@ -29,29 +29,23 @@ if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
 fi
 
 # Sanity checks
-[ -x /usr/sbin/rpc.lockd ] || exit 0
 [ -x /usr/sbin/rpc.statd ] || exit 0
 
 # See how we were called.
 case "$1" in
   start)
 	# Start daemons.
-	msg_starting "NFS lockd"
-	daemon rpc.lockd
 	msg_starting "NFS statd"
 	daemon rpc.statd
 	touch /var/lock/subsys/nfslock
 	;;
   stop)
 	# Stop daemons.
-	msg_stopping "NFS lockd"
-	killproc lockd
 	msg_stopping "NFS statd"
 	killproc rpc.statd
 	rm -f /var/lock/subsys/nfslock
 	;;
   status)
-	status lockd
 	status rpc.statd
 	;;
   restart)
@@ -63,8 +57,7 @@ case "$1" in
 	  echo start; exit 0
 	fi
 	/sbin/pidof rpc.statd >/dev/null 2>&1; STATD="$?"
-	/sbin/pidof lockd >/dev/null 2>&1; LOCKD="$?"
-	if [ $STATD = 1 -o $LOCKD = 1 ] ; then
+	if [ $STATD = 1 ] ; then
 	  echo restart; exit 0
 	fi
 	;;
