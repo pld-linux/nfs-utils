@@ -176,6 +176,8 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
+ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
+
 mv -f nfs/*.ps ./
 mv -f nfs html
 
@@ -253,6 +255,7 @@ fi
 %defattr(644,root,root,755)
 %doc ChangeLog README *.ps html
 %attr(755,root,root) /sbin/rpcdebug
+%attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
