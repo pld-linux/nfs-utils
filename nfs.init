@@ -22,7 +22,7 @@
 [ -f /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
-# Source networking configuration
+# Get sysconfig
 if [ -f /etc/sysconfig/nfs ]; then
     . /etc/sysconfig/nfs
 fi    
