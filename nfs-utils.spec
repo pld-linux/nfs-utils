@@ -105,8 +105,8 @@ LDFLAGS="-s"; export LDFLAGS
 %install
 rm -rf $RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}}
-install -d $RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
+install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
+	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
 %{__make} install install_prefix="$RPM_BUILD_ROOT"
 
@@ -160,11 +160,18 @@ fi
 
 %post clients
 /sbin/chkconfig --add nfsfs
+if [ -r /var/lock/subsys/nfsfs ]; then
+	/etc/rc.d/init.d/nfs restart >&2
+else
+	echo "Run \"/etc/rc.d/init.d/nfs start\" to mount all NFS volumens."
+fi
 
 %preun clients
 if [ "$1" = "0" ]; then
+	if [ -r /var/lock/subsys/nfsfs ]; then
+		/etc/rc.d/init.d/nfsfs stop >&2
+	fi
 	/sbin/chkconfig --del nfsfs
-	/etc/rc.d/init.d/nfsfs stop >&2
 fi
 
 %post lock
@@ -188,12 +195,12 @@ fi
 if [ -r /var/lock/subsys/rquotad ]; then
 	/etc/rc.d/init.d/rquotad restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start quota daemon."
+	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start NFS quota daemon."
 fi
 
 %preun rquotad
 if [ "$1" = "0" ]; then
-	f [ -r /var/lock/subsys/rquotad ]; then
+	if [ -r /var/lock/subsys/rquotad ]; then
 		/etc/rc.d/init.d/rquotad stop >&2
 	fi
 	/sbin/chkconfig --del rquotad
