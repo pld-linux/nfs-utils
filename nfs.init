@@ -36,38 +36,49 @@ fi
 # See how we were called.
 case "$1" in
   start)
-	# Start daemons.
-  	if [ "$NFSDTYPE" = "U" ] ; then
-		msg_starting "NFS mountd"
-		daemon rpc.mountd
-		msg_starting "NFS daemon"
-		daemon rpc.nfsd
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/nfs ]; then
+		# Start daemons.
+	  	if [ "$NFSDTYPE" = "U" ] ; then
+			msg_starting "NFS mountd"
+			daemon rpc.mountd
+			msg_starting "NFS daemon"
+			daemon rpc.nfsd
+		else
+			msg_starting "NFS"
+			daemon /usr/sbin/exportfs -r
+			msg_starting "NFS mountd"
+			daemon rpc.mountd $RPCMOUNTDOPTS
+			msg_starting "NFS daemon"
+			daemon rpc.nfsd $RPCNFSDCOUNT
+		fi
+		touch /var/lock/subsys/nfs
 	else
-		msg_starting "NFS"
-		daemon /usr/sbin/exportfs -r
-		msg_starting "NFS mountd"
-		daemon rpc.mountd $RPCMOUNTDOPTS
-		msg_starting "NFS daemon"
-		daemon rpc.nfsd $RPCNFSDCOUNT
+		msg_Already_Running "NFS"
+		exit 1
 	fi
-	touch /var/lock/subsys/nfs
 	;;
   stop)
-	# Stop daemons.
-  	if [ "$NFSDTYPE" = "U" ] ; then
-		msg_stopping "NFS mountd"
-		killproc rpc.mountd
-		msg_stopping "NFS daemon"
-		killproc rpc.nfsd
+	if [ -f /var/lock/subsys/nfs ]; then
+		# Stop daemons.
+	  	if [ "$NFSDTYPE" = "U" ] ; then
+			msg_stopping "NFS mountd"
+			killproc rpc.mountd
+			msg_stopping "NFS daemon"
+			killproc rpc.nfsd
+		else
+			msg_stopping "NFS mountd"
+			killproc rpc.mountd
+			msg_stopping "NFS daemon"
+			killproc nfsd -QUIT
+			msg_stopping "NFS"
+			daemon /usr/sbin/exportfs -au
+		fi
+		rm -f /var/lock/subsys/nfs
 	else
-		msg_stopping "NFS mountd"
-		killproc rpc.mountd
-		msg_stopping "NFS daemon"
-		killproc nfsd -QUIT
-		msg_stopping "NFS"
-		daemon /usr/sbin/exportfs -au
+		msg_Not_Running "NFS"
+		exit 1
 	fi
-	rm -f /var/lock/subsys/nfs
 	;;
   status)
 	status rpc.mountd

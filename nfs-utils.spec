@@ -44,7 +44,9 @@ Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 Group(de):	Netzwerkwesen
+Group(es):	Red
 Group(pl):	Sieciowe
+Group(pt_BR):	Rede
 Requires:	psmisc
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
@@ -63,17 +65,19 @@ host. This package is not needed to mount NFS volumes.
 
 %description -l pl clients
 Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
-Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym 
-ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s± 
-zamountowani na tym serverze.
-Pakiet nie jest konieczny do zamountowania zasobów NFS.
+Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym
+ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s±
+zamountowani na tym serverze. Ten pakiet nie jest konieczny do
+zamountowania zasobów NFS.
 
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 Group:		Networking
 Group(de):	Netzwerkwesen
+Group(es):	Red
 Group(pl):	Sieciowe
+Group(pt_BR):	Rede
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Prereq:		rc-scripts
@@ -106,11 +110,10 @@ The results are used by quota(1) to display user quotas for remote
 file systems.
 
 %description -l pl rquotad
-rquotad jest serverem rpc(3N), który zwraca u¿ytkowanikowi lokalnego systemu 
-plików, który jest zamountowany przez zdaln± maszynê poprzez NFS.
-Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote dla zdalnego 
-systemu plików.
-Zdalny serwer quota.
+rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
+lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
+poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote
+dla zdalnego systemu plików.
 
 %prep
 %setup  -q -a1
@@ -141,7 +144,7 @@ install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-touch $RPM_BUILD_ROOT/%{_var}/lib/nfs/rmtab
+touch $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
