@@ -161,7 +161,7 @@ fi
 %post clients
 /sbin/chkconfig --add nfsfs
 if [ -r /var/lock/subsys/nfsfs ]; then
-	/etc/rc.d/init.d/nfs restart >&2
+	/etc/rc.d/init.d/nfsfs restart >&2
 else
 	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumens."
 fi
