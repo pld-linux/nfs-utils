@@ -121,7 +121,7 @@ case "$1" in
 	fi
 	;;
   *)
-	msg_Usage "$0 {start|stop|status|restart|reload|probe}"
+	msg_usage "$0 {start|stop|status|restart|reload|probe}"
 	exit 1
 esac
 
