@@ -3,37 +3,41 @@
 # nfs           This shell script takes care of starting and stopping
 #               the NFS services. Later we might add NIS too.
 #
-# chkconfig: 345 60 20
-# description: NFS is a popular protocol for file sharing across TCP/IP \
-#              networks. This service provides NFS server functionality, \
-#              which is configured via the /etc/exports file.
-# probe: true
+# chkconfig:	345 60 20
+# description:	NFS is a popular protocol for file sharing across TCP/IP \
+#		networks. This service provides NFS server functionality, \
+#		which is configured via the /etc/exports file.
+# probe:	true
 
-# Source function library.
+
+# Source function library
 . /etc/rc.d/init.d/functions
 
-# Source networking configuration.
+# Get network config
 . /etc/sysconfig/network
 
-# Check that networking is up.
-[ "${NETWORKING}" = "no" ] && exit 0
+# Get service config
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
 
-[ -f /usr/sbin/rpc.nfsd ] || exit 0
-[ -f /usr/sbin/rpc.mountd ] || exit 0
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && echo "Error: Networking is down"; exit 0
+
+# Sanity check
 [ -f /etc/exports ] || exit 0
 
-# Get sysconfig
-if [ -f /etc/sysconfig/nfs ]; then
-    . /etc/sysconfig/nfs
-fi    
+
 # See how we were called.
 case "$1" in
   start)
-	# Start daemons.
-	show Starting rpc.mountd
-	daemon rpc.mountd
-	show Starting rpc.nfsd
-	daemon rpc.nfsd
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/nfs ]; then
+		show Starting rpc.mountd
+		daemon rpc.mountd
+		show Starting rpc.nfsd
+		daemon rpc.nfsd
+	else
+		echo "nfs already is running"
+	fi
 	touch /var/lock/subsys/nfs
 	;;
   stop)
