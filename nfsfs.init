@@ -37,13 +37,6 @@ fi
 # See how we were called.
 case "$1" in
   start)
-	modprobe -s nfsd > /dev/null 2>&1
-	
-	if [ "$(kernelverser)" -ge "002006" ] && \
-	    	grep -q nfsd /proc/filesystems && \
-		! grep -q nfsd /proc/mounts; then
-	    		run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
-	fi
 	run_cmd "Mounting NFS filesystems" mount -a -t nfs
 	touch /var/lock/subsys/nfsfs
 	;;

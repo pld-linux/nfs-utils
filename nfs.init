@@ -50,6 +50,12 @@ case "$1" in
 			msg_starting "NFS daemon"
 			daemon rpc.nfsd
 		else
+			modprobe -s nfsd > /dev/null 2>&1
+			if [ "$(kernelverser)" -ge "002006" ] && \
+			    grep -q nfsd /proc/filesystems && \
+			    ! grep -q nfsd /proc/mounts; then
+			    	run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
+			fi
 			msg_starting "NFS"
 			daemon /usr/sbin/exportfs -r
 			msg_starting "NFS mountd"
