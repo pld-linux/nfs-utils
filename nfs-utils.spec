@@ -159,70 +159,30 @@ mv -f nfs html
 rm -rf $RPM_BUILD_ROOT
 
 %post
-/sbin/chkconfig --add nfs
-if [ -r /var/lock/subsys/nfs ]; then
-	/etc/rc.d/init.d/nfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to start nfs daemon."
-fi
+NAME=nfs; DESC="nfs daemon"; %chkconfig_add
 sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
 mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 
 %preun
-if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfs ]; then
-		/etc/rc.d/init.d/nfs stop >&2
-	fi
-	/sbin/chkconfig --del nfs
-fi
+NAME=nfs; %chkconfig_del
 
 %post clients
-/sbin/chkconfig --add nfsfs
-if [ -r /var/lock/subsys/nfsfs ]; then
-	/etc/rc.d/init.d/nfsfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumens."
-fi
+NAME=nfsfs; DESC="mounting all NFS volumes"; %chkconfig_add
 
 %preun clients
-if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfsfs ]; then
-		/etc/rc.d/init.d/nfsfs stop >&2
-	fi
-	/sbin/chkconfig --del nfsfs
-fi
+NAME=nfsfs; %chkconfig_del
 
 %post lock
-/sbin/chkconfig --add nfslock
-if [ -r /var/lock/subsys/nfslock ]; then
-	/etc/rc.d/init.d/nfslock restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfslock start\" to start nfslock daemon."
-fi
+NAME=nfslock; DESC="nfslock daemon"; %chkconfig_add
 
 %preun lock
-if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfslock ]; then
-		/etc/rc.d/init.d/nfslock stop >&2
-	fi
-	/sbin/chkconfig --del nfslock
-fi
+NAME=nfslock; %chkconfig_del
 
 %post rquotad
-/sbin/chkconfig --add rquotad
-if [ -r /var/lock/subsys/rquotad ]; then
-	/etc/rc.d/init.d/rquotad restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start NFS quota daemon."
-fi
+NAME=rquotad; DESC="NFS quota daemon"; %chkconfig_add
 
 %preun rquotad
-if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/rquotad ]; then
-		/etc/rc.d/init.d/rquotad stop >&2
-	fi
-	/sbin/chkconfig --del rquotad
-fi
+NAME=rquotad; %chkconfig_del
 
 %files
 %defattr(644,root,root,755)
