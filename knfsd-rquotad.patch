@@ -1,0 +1,89 @@
+diff -ur knfsd-1.5.2.orig/utils/rquotad/hasquota.c knfsd-1.5.2/utils/rquotad/hasquota.c
+--- knfsd-1.5.2.orig/utils/rquotad/hasquota.c	Sat Sep 25 02:49:36 1999
++++ knfsd-1.5.2/utils/rquotad/hasquota.c	Sun Nov 21 00:09:06 1999
+@@ -51,7 +51,7 @@
+    if (((type == USRQUOTA) && (option = hasmntopt(mnt, MNTOPT_USRQUOTA)) != (char *)0) ||
+        ((type == GRPQUOTA) && (option = hasmntopt(mnt, MNTOPT_GRPQUOTA)) != (char *)0)) {
+       if ((pathname = strchr(option, '=')) == (char *)0) {
+-	  *qfnamep=xmalloc(strlen(mnt->mnt_dir)+strlen(qfname)+strlen(qfextension[type])+2);
++	  *qfnamep=xmalloc(strlen(mnt->mnt_dir)+strlen(qfname)+strlen(qfextension[type])+3);
+ 	  (void) sprintf(*qfnamep, "%s%s%s.%s", mnt->mnt_dir,
+ 			(mnt->mnt_dir[strlen(mnt->mnt_dir) - 1] == '/') ? "" : "/",
+ 			qfname, qfextension[type]);
+diff -ur knfsd-1.5.2.orig/utils/rquotad/rquota_server.c knfsd-1.5.2/utils/rquotad/rquota_server.c
+--- knfsd-1.5.2.orig/utils/rquotad/rquota_server.c	Sat Sep 25 02:49:38 1999
++++ knfsd-1.5.2/utils/rquotad/rquota_server.c	Sat Nov 20 19:40:15 1999
+@@ -50,10 +50,10 @@
+ 
+ char *nfsmount_to_devname(char *pathname, int *blksize)
+ {
+-   DIR *dp;
++   FILE *fp;
+    dev_t device;
+    struct stat st;
+-   struct dirent *de;
++   struct mntent *mnt;
+    static char *devicename = NULL;
+    static int devicelen = 0;
+ 
+@@ -63,42 +63,29 @@
+    device = st.st_dev;
+    *blksize = st.st_blksize;
+ 
+-   /*
+-    * search for devicename in _PATH_DEV_DSK dir.
+-    */
+-   if ((dp = opendir(_PATH_DEV_DSK)) == (DIR *)0)
+-      return (char *)0;
+-
+-   while ((de = readdir(dp)) != (struct dirent *)0) {
+-      if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
+-         continue;
+-
+-      if (devicelen == 0) {
+-	 devicelen = sizeof (_PATH_DEV_DSK) + strlen (de->d_name) + 1;
+-	 devicename = (char *) xmalloc (devicelen);
+-      }
+-      else {
+-	  int newlen = sizeof (_PATH_DEV_DSK) + strlen (de->d_name) + 1;
+-	  if (newlen > devicelen) {
+-	      devicelen = newlen;
+-	      devicename = (char *) xrealloc (devicename, devicelen);
+-	  }
+-      }
+-
+-      strcpy(devicename, _PATH_DEV_DSK);
+-      strcat(devicename, de->d_name);
+-      if (stat(devicename, &st) == -1)
++   fp = setmntent(MNTTAB, "r");
++   while ((mnt = getmntent(fp)) != (struct mntent *)0) {
++      if (stat(mnt->mnt_fsname, &st) == -1)
+          continue;
+ 
+-      if (!S_ISBLK(st.st_mode))
+-         continue;
+-
+-      if ((device == st.st_rdev) && S_ISBLK(st.st_mode))
++      if ((device == st.st_rdev) && S_ISBLK(st.st_mode)) {
++	 if (devicelen == 0) {
++	    devicelen = strlen (mnt->mnt_fsname) + 1;
++	    devicename = (char *) xmalloc (devicelen);
++	 } else {
++	    int newlen = strlen (mnt->mnt_fsname) + 1;
++	    if (newlen > devicelen) {
++	       devicelen = newlen;
++	       devicename = (char *) xrealloc (devicename, devicelen);
++	    }
++	 }
++	 strcpy(devicename, mnt->mnt_fsname);
+          break;
++      }
+    }
+-   closedir(dp);
++   endmntent(fp);
+ 
+-   if (de != (struct dirent *)0) {
++   if (mnt != (struct mntent *)0) {
+       return devicename;
+    } else
+       return (char *)0;
