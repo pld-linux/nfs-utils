@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# rquotad       This shell script takes care of starting and stopping
-#               the NFS quota service.
+# rquotad	This shell script takes care of starting and stopping
+#		the NFS quota service.
 #
 # chkconfig:	345 62 18
 # description:	NFS is a popular protocol for file sharing across \
@@ -19,9 +19,13 @@
 [ -f /etc/sysconfig/rquotad ] && . /etc/sysconfig/rquotad
 
 # Check that networking is up.
-if is_no "${NETWORKING}"; then
-	msg_network_down "NFS rquotad"
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		msg_network_down "NFS rquotad"
+		exit 1
+	fi
+else
+	exit 0
 fi
 
 if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
@@ -30,6 +34,7 @@ fi
 
 # Sanity checks
 [ -x /usr/sbin/rpc.rquotad ] || exit 0
+
 
 # See how we were called.
 case "$1" in
@@ -46,7 +51,7 @@ case "$1" in
 	fi
 	;;
   stop)
-  	if [ -f /var/lock/subsys/rquotad ]; then
+	if [ -f /var/lock/subsys/rquotad ]; then
 		# Stop daemons.
 		msg_stopping "NFS quotas"
 		killproc rpc.rquotad
@@ -59,21 +64,21 @@ case "$1" in
   status)
 	status rpc.rquotad
 	;;
-  restart)
-  	$0 stop
+  restart|reload)
+	$0 stop
 	$0 start
 	;;
   probe)
 	if [ ! -f /var/lock/subsys/quotad ] ; then
-	  echo start; exit 0
+		echo start; exit 0
 	fi
 	/sbin/pidof rpc.rquotad >/dev/null 2>&1;
 	if [ $? = 1 ] ; then
-	  echo restart; exit 0
+		echo restart; exit 0
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|status|restart|probe}"
+	msg_usage "$0 {start|stop|restart|reload|probe|status}"
 	exit 1
 esac
 
