@@ -1,13 +1,13 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
-Version:	0.2.1
-Release:	2.1
+Version:	0.3.1
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
-Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
+Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
 Source3:	nfslock.init
@@ -109,7 +109,6 @@ Zdalny serwer quota.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
