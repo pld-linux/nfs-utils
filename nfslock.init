@@ -19,8 +19,8 @@
 [ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 
 # Check that networking is up.
-if [ "${NETWORKING}" = "no" ]; then
-	echo "WARNING: Networking is down. NFS lockd and statd can't be run"
+if is_no "${NETWORKING}"; then
+	msg_Network_Down "NFS lockd"
 	exit 1
 fi
 
@@ -36,17 +36,17 @@ fi
 case "$1" in
   start)
 	# Start daemons.
-	show "Starting NFS lockd"
+	msg_starting "NFS lockd"
 	daemon rpc.lockd
-	show "Starting NFS statd"
+	msg_starting "NFS statd"
 	daemon rpc.statd
 	touch /var/lock/subsys/nfslock
 	;;
   stop)
 	# Stop daemons.
-	show "Shutting down NFS lockd"
+	msg_stopping "NFS lockd"
 	killproc lockd
-	show "Shutting down NFS statd"
+	msg_stopping "NFS statd"
 	killproc rpc.statd
 	rm -f /var/lock/subsys/nfslock
 	;;
@@ -69,7 +69,7 @@ case "$1" in
 	fi
 	;;
   *)
-	echo "Usage: nfslock {start|stop|status|restart}"
+	msg_Usage "$0 {start|stop|status|restart}"
 	exit 1
 esac
 

@@ -19,8 +19,8 @@
 [ -f /etc/sysconfig/rquotad ] && . /etc/sysconfig/rquotad
 
 # Check that networking is up.
-if [ "${NETWORKING}" = "no" ]; then
-	echo "WARNING: Networking is down. NFS rquotad and statd can't be run"
+if is_no "${NETWORKING}"; then
+	msg_Network_Down "NFS rquotad"
 	exit 1
 fi
 
@@ -35,13 +35,13 @@ fi
 case "$1" in
   start)
 	# Start daemons.
-	show "Starting NFS quotas"
+	msg_starting "NFS quotas"
 	daemon rpc.rquotad
 	touch /var/lock/subsys/rquotad
 	;;
   stop)
 	# Stop daemons.
-	show "Shutting down NFS quotas"
+	msg_stopping "NFS quotas"
 	killproc rpc.rquotad
 	rm -f /var/lock/subsys/rquotad
 	;;
@@ -62,7 +62,7 @@ case "$1" in
 	fi
 	;;
   *)
-	echo "Usage: rquotad {start|stop|status|restart|probe}"
+	msg_Usage "$0 {start|stop|status|restart|probe}"
 	exit 1
 esac
 

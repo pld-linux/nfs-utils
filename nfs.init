@@ -19,8 +19,8 @@
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
 
 # Check that networking is up.
-if [ "${NETWORKING}" = "no" ]; then
-	echo "WARNING: Networking is down. Knfsd can't be run"
+if is_no "${NETWORKING}"; then
+	msg_Network_Down NFSD
 	exit 1
 fi
 
@@ -38,16 +38,16 @@ case "$1" in
   start)
 	# Start daemons.
   	if [ "$NFSDTYPE" = "U" ] ; then
-		show "Starting NFS mountd"
+		msg_starting "NFS mountd"
 		daemon rpc.mountd
-		show "Starting NFS daemon"
+		msg_starting "NFS daemon"
 		daemon rpc.nfsd
 	else
-		show "Starting NFS services"
+		msg_starting "NFS"
 		daemon /usr/sbin/exportfs -r
-		show "Starting NFS mountd"
+		msg_starting "NFS mountd"
 		daemon rpc.mountd $RPCMOUNTDOPTS
-		show "Starting NFS daemon"
+		msg_starting "NFS daemon"
 		daemon rpc.nfsd $RPCNFSDCOUNT
 	fi
 	touch /var/lock/subsys/nfs
@@ -55,16 +55,16 @@ case "$1" in
   stop)
 	# Stop daemons.
   	if [ "$NFSDTYPE" = "U" ] ; then
-		show "Shutting down NFS mountd"
+		msg_stopping "NFS mountd"
 		killproc rpc.mountd
-		show "Shutting down NFS daemon"
+		msg_stopping "NFS daemon"
 		killproc rpc.nfsd
 	else
-		show "Shutting down NFS mountd"
+		msg_stopping "NFS mountd"
 		killproc rpc.mountd
-		show "Shutting down NFS daemon"
+		msg_stopping "NFS daemon"
 		killproc nfsd -QUIT
-		show "Shutting down NFS services"
+		msg_stopping "NFS"
 		daemon /usr/sbin/exportfs -au
 	fi
 	rm -f /var/lock/subsys/nfs
@@ -110,7 +110,7 @@ case "$1" in
 	fi
 	;;
   *)
-	echo "Usage: nfs {start|stop|status|restart|reload|probe}"
+	msg_Usage "$0 {start|stop|status|restart|reload|probe}"
 	exit 1
 esac
 
