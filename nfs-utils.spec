@@ -4,12 +4,12 @@ Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
 Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.3
-Release:	2
+Version:	1.0.4
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	3252bef5471705dfa26a13d46b3847dc
+# Source0-md5:	5b9166b909e8d9585296166af8cb63f7
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
