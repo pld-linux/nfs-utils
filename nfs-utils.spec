@@ -1,8 +1,8 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
-Version:	0.3.1
-Release:	11
+Version:	0.3.3
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -19,7 +19,6 @@ Source8:	nfsfs.init
 Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
-Patch3:		%{name}-cwd.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
@@ -118,7 +117,6 @@ Zdalny serwer quota.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3
 
 %build
 autoconf
