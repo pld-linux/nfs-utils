@@ -2,7 +2,7 @@ Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
 Version:	0.3.1
-Release:	10
+Release:	11
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -46,6 +46,7 @@ Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(pl):	Sieciowe
+Requires:	psmisc
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
 Provides:	nfsclient
