@@ -53,8 +53,7 @@ case "$1" in
 	show "Unmounting NFS filesystems"
 	busy
 	remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
-	while [ -n "$remaining" -a 3 -gt 0 ]
-	do
+	while [ -n "$remaining" -a 3 -gt 0 ]; do
 		fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
 		sleep 2
 		fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
@@ -80,12 +79,12 @@ case "$1" in
 	$0 stop
 	$0 start
 	;;
-  reload)
+  reload|force-reload)
 	mount -a -t nfs
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|reload|status}"
-	exit 1
+	msg_usage "$0 {start|stop|restart|reload|force-reload|status}"
+	exit 3
 esac
 
 exit 0

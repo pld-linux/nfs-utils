@@ -37,7 +37,6 @@ fi
 [ -x /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
-
 RETVAL=0
 # See how we were called.
 case "$1" in
@@ -61,7 +60,6 @@ case "$1" in
 		touch /var/lock/subsys/nfs
 	else
 		msg_already_running "NFS"
-		exit 1
 	fi
 	;;
   stop)
@@ -83,20 +81,31 @@ case "$1" in
 		rm -f /var/lock/subsys/nfs
 	else
 		msg_not_running "NFS"
-		exit 1
 	fi
 	;;
   status)
 	status rpc.mountd
+	RETVAL=$?
 	if [ "$NFSDTYPE" = "U" ] ; then
 		status rpc.nfsd
 	else
 		status nfsd
 	fi
+	RET=$?
+	[ $RETVAL -eq 0 ] && RETVAL=$RET
 	;;
   restart)
 	$0 stop
 	$0 start
+	exit $?
+	;;
+  force-reload)
+	if [ "$NFSDTYPE" = "U" ]; then
+		$0 restart
+	else
+		$0 reload
+	fi
+	exit $?
 	;;
   reload)
 	[ "$NFSDTYPE" = "U" ] && exit 0
@@ -104,11 +113,11 @@ case "$1" in
 		msg_reloading "NFS"
 		busy
 		/usr/sbin/exportfs
-		RETVAL=$?
+		[ $? -ne 0 ] && RETVAL=7
 		[ $RETVAL -eq 0 ] && ok || died	
 	else
-		msg_not_running "NFS"
-		exit 1
+		msg_not_running "NFS" >&2
+		exit 7
 	fi
 	;;
   probe)
@@ -129,8 +138,8 @@ case "$1" in
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|reload|probe|status}"
-	exit 1
+	msg_usage "$0 {start|stop|restart|reload|force-reload|probe|status}"
+	exit 3
 esac
 
 exit $RETVAL
