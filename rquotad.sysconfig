@@ -1,3 +1,0 @@
-# Define nice level for rpc.rquotad daemon
-SERVICE_RUN_NICE_LEVEL="+0"
-
