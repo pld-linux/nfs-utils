@@ -4,7 +4,7 @@ Release:	1
 Summary:	Kernel NFS server.
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
-Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tdar.gz
+Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
 Source3:	nfslock.init
 Source4:	nfs.sysconfig
