@@ -1,14 +1,16 @@
 Name:		nfs-utils
 Version:	0.1.3
-Release:	1
+Release:	2
 Summary:	Kernel NFS server.
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
 Source3:	nfslock.init
-Source4:	nfs.sysconfig
-Source5:	nfslock.sysconfig
+Source4:	rquotad.init
+Source5:	nfs.sysconfig
+Source6:	nfslock.sysconfig
+Source7:	rquotad.sysconfig
 Patch0:		nfs-utils-paths.patch
 Patch1:		nfs-utils-rquotad.patch
 #Requires:	kernel >= 2.2.5
@@ -72,6 +74,20 @@ Install nfs-lock if you want to use file lock over NFS.
 Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie
 blokowania plików (file locking) poprzez NFS.
 
+%package rquotad
+Summary:	Remote quota server.
+Summary(pl):	Zdalny serwer quota.
+Group:		Networking/Daemons
+Group(pl):	Sieciowe/Serwery
+
+%description rquotad
+rquotad is an rpc(3N) server which returns quotas for a user of a local file system which
+is mounted by a remote machine over the NFS. The results are used by quota(1) to display
+user quotas for remote file systems. 
+
+%description -l pl rquotad
+Zdalny serwer quota.
+
 %prep
 %setup  -q -a1
 %patch0 -p1
@@ -95,8 +111,10 @@ make install install_prefix="$RPM_BUILD_ROOT"
 install	-s tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
-install %{SOURCE4} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
-install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
+install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
+install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
+install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
+install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
 touch $RPM_BUILD_ROOT/%{_var}/state/nfs/rmtab
 
 touch $RPM_BUILD_ROOT/etc/exports
@@ -176,7 +194,6 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
-%{_mandir}/man8/rpc.rquotad.8*
 %{_mandir}/man5/exports.5*
 
 %files lock
@@ -193,3 +210,10 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
+
+%files rquotad
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_sbindir}/rpc.rquotad
+%{_mandir}/man8/rpc.rquotad.8*
+%attr(754,root,root) /etc/rc.d/init.d/rquotad
+%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
