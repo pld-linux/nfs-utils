@@ -1,14 +1,19 @@
---- nfs-utils-1.0.5/configure.in.orig	2003-07-18 01:34:05.000000000 +0200
-+++ nfs-utils-1.0.5/configure.in	2003-08-11 20:23:42.584171056 +0200
-@@ -84,11 +84,11 @@
+--- nfs-utils-1.0.7/configure.in.orig	2004-12-17 05:09:09.000000000 +0100
++++ nfs-utils-1.0.7/configure.in	2004-12-22 13:28:06.000000000 +0100
+@@ -113,8 +113,8 @@
  dnl *************************************************************
  dnl * Check for required librarues
  dnl *************************************************************
 -AC_CHECK_LIB(socket, main, [LIBSOCKET="-lnsl"])
 -AC_CHECK_LIB(nsl, main,	[LIBNSL="-lnsl"])
-+AC_CHECK_FUNC(socket, [LIBSOCKET=""], [AC_CHECK_LIB(socket, main, [LIBSOCKET="-lnsl"])])
++AC_CHECK_FUNC(socket, [LIBSOCKET=""], [AC_CHECK_LIB(socket, main, [LIBSOCKET="-lsocket"])])
 +AC_CHECK_FUNC(gethostbyname, [LIBNSL=""], [AC_CHECK_LIB(nsl, main, [LIBNSL="-lnsl"])])
  AC_CHECK_LIB(crypt, crypt, [LIBCRYPT="-lcrypt"])
+ if test "$enable_nfsv4" = yes; then
+     AC_CHECK_LIB(event, event_dispatch, , [AC_MSG_ERROR(libevent needed for nfsv4 support)])
+@@ -123,7 +123,7 @@
+     AC_CHECK_HEADERS(nfsidmap.h, ,[AC_MSG_ERROR(libnfsidmap needed for nfsv4 support)])
+ fi
  if test "$knfsd_cv_glibc2" = no; then
 -    AC_CHECK_LIB(bsd, daemon, [LIBBSD="-lbsd"])
 +    AC_CHECK_FUNC(daemon, , [AC_CHECK_LIB(bsd, daemon, [LIBBSD="-lbsd"])])
