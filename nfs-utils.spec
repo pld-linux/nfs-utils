@@ -5,7 +5,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.6
-Release:	6
+Release:	7
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -26,6 +26,7 @@ Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
+Requires:	setup >= 2.4.6-7
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
@@ -269,7 +270,7 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
-%config(noreplace) %verify(not size mtime md5) %attr(664,root,samba)  %{_sysconfdir}/exports
+%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
