@@ -1,8 +1,8 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Name:		nfs-utils
-Version:	0.1.6
-Release:	2
+Version:	0.1.7
+Release:	3
 Copyright:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
