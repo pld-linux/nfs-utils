@@ -24,28 +24,19 @@ fi
 
 # Check that networking is up.
 if is_no "${NETWORKING}"; then
-	msg_Network_Down nfsfs
+	msg_network_down nfsfs
 	exit 1
 fi
-
-CONFIGUREDNFSMOUNTPOINTS="`grep -v '^#' /etc/fstab | \
-    awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'`"
-ACTIVENFSMOUNTPOINTS="`grep -v '^#' /proc/mounts | \
-    awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'`"
 
 # See how we were called.
 case "$1" in
   start)
-	if [ -z "$CONFIGUREDNFSMOUNTPOINTS" ] ; then
-		echo "There are no configured NFS mountpoints!"
-	else
 	show "Mounting NFS filesystems"
 	busy
 	mount -a -t nfs
 	deltext
 	ok
 	touch /var/lock/subsys/nfsfs
-	fi
 	;;
   stop)
 	if [ -f /proc/mounts ] ; then
@@ -53,12 +44,6 @@ case "$1" in
 	else
 		fsfile="/etc/mtab"
 	fi
-			
-	if [ -z "$CONFIGUREDNFSMOUNTPOINTS" ] ; then
-		echo "There are no configured NFS mountpoints!"
-	elif [ -z "$ACTIVENFSMOUNTPOINTS" ] ; then
-		echo "There are no active NFS mountpoints!"
-	else
 
 	show "Unmounting NFS filesystems"
 	busy
@@ -69,14 +54,15 @@ case "$1" in
 	deltext
 	ok
 	rm -f /var/lock/subsys/nfsfs
-	fi
 	;;
   status)
 	if [ -f /proc/mounts ] ; then
 		echo "Configured NFS mountpoints:"
-		echo "$CONFIGUREDNFSMOUNTPOINTS"
+		grep -v '^#' /etc/fstab | \
+		  awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'
 		echo "Active NFS mountpoints:"
-		echo "$ACTIVENFSMOUNTPOINTS"
+		grep -v '^#' /proc/mounts | \
+		  awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'
 	else
 		echo "/proc filesystem unavailable"
 	fi
@@ -89,7 +75,7 @@ case "$1" in
 	mount -a -t nfs
 	;;
   *)
-	msg_Usage "$0 {start|stop|restart|reload|status}"
+	msg_usage "$0 {start|stop|restart|reload|status}"
 	exit 1
 esac
 

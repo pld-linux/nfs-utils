@@ -20,7 +20,7 @@
 
 # Check that networking is up.
 if is_no "${NETWORKING}"; then
-	msg_Network_Down "NFS rquotad"
+	msg_network_down "NFS rquotad"
 	exit 1
 fi
 
@@ -41,7 +41,7 @@ case "$1" in
 		daemon rpc.rquotad
 		touch /var/lock/subsys/rquotad
 	else
-		msg_Already_Running "NFS quota daemon"
+		msg_already_running "NFS quota daemon"
 		exit 1
 	fi
 	;;
@@ -52,7 +52,7 @@ case "$1" in
 		killproc rpc.rquotad
 		rm -f /var/lock/subsys/rquotad
 	else
-		msg_Not_Running "NFS quota daemon"
+		msg_not_running "NFS quota daemon"
 		exit 1
 	fi
 	;;
@@ -73,7 +73,7 @@ case "$1" in
 	fi
 	;;
   *)
-	msg_Usage "$0 {start|stop|status|restart|probe}"
+	msg_usage "$0 {start|stop|status|restart|probe}"
 	exit 1
 esac
 
