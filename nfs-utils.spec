@@ -99,7 +99,7 @@ LDFLAGS="-s"; export LDFLAGS
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
 	--enable-secure-statd
-make all
+%{__make} all
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -107,7 +107,7 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}}
 install -d $RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
-make install install_prefix="$RPM_BUILD_ROOT"
+%{__make} install install_prefix="$RPM_BUILD_ROOT"
 
 install	-s tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
