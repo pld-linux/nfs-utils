@@ -60,12 +60,12 @@ case "$1" in
 		show "Shutting down NFS daemon"
 		killproc rpc.nfsd
 	else
-		show "Shutting down NFS services"
-		daemon /usr/sbin/exportfs -au
 		show "Shutting down NFS mountd"
 		killproc rpc.mountd
 		show "Shutting down NFS daemon"
 		killproc nfsd -QUIT
+		show "Shutting down NFS services"
+		daemon /usr/sbin/exportfs -au
 	fi
 	rm -f /var/lock/subsys/nfs
 	;;
