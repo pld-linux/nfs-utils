@@ -46,9 +46,9 @@ case "$1" in
 		# Start daemons.
 		if [ "$NFSDTYPE" = "U" ]; then
 			msg_starting "NFS mountd"
-			daemon rpc.mountd
+			daemon rpc.mountd $RPCMOUNTOPTIONS
 			msg_starting "NFS daemon"
-			daemon rpc.nfsd
+			daemon rpc.nfsd $RPCNFSDCOUNT
 		else
 			modprobe -s nfsd > /dev/null 2>&1
 			if [ "$(kernelverser)" -ge "002006" ] && \
