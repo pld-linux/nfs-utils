@@ -2,7 +2,7 @@ Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
 Version:	0.3.1
-Release:	9
+Release:	10
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -25,6 +25,8 @@ Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
 Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
+BuildRequires:	autoconf
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
 
@@ -44,11 +46,13 @@ Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(pl):	Sieciowe
-Obsoletes:	nfsclient nfs-server-clients knfsd-clients
+Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
 Provides:	nfsclient
 Provides:	nfs-server-clients
-Prereq:		rc-scripts
+Obsoletes:	nfsclient
 Obsoletes:	nfs-server-clients
+Obsoletes:	knfsd-clients
 
 %description clients
 The nfs-server-clients package contains the showmount program.
@@ -73,6 +77,7 @@ Group(pl):	Sieciowe
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
 Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
 
@@ -90,8 +95,8 @@ Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
-BuildRequires:	autoconf
 Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
 Obsoletes:	quota-rquotad
 
 %description rquotad
