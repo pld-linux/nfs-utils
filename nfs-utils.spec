@@ -159,13 +159,27 @@ fi
 if [ -r /var/lock/subsys/nfslock ]; then
 	/etc/rc.d/init.d/nfslock restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to start nfslock daemon."
+	echo "Run \"/etc/rc.d/init.d/nfslock start\" to start nfslock daemon."
 fi
 
 %preun lock
 if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del nfslock
 	/etc/rc.d/init.d/nfslock stop >&2
+fi
+
+%post rquotad
+/sbin/chkconfig --add rquotad
+if [ -r /var/lock/subsys/rquotad ]; then
+	/etc/rc.d/init.d/rquotad restart >&2
+else
+	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start quota daemon."
+fi
+
+%preun rquotad
+if [ "$1" = "0" ]; then
+	/sbin/chkconfig --del rquotad
+	/etc/rc.d/init.d/rquotad stop >&2
 fi
 
 %files
