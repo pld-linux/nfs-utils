@@ -2,7 +2,7 @@ Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
 Version:	0.3.1
-Release:	8
+Release:	9
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -47,6 +47,7 @@ Group(pl):	Sieciowe
 Obsoletes:	nfsclient nfs-server-clients knfsd-clients
 Provides:	nfsclient
 Provides:	nfs-server-clients
+Prereq:		rc-scripts
 Obsoletes:	nfs-server-clients
 
 %description clients
@@ -62,14 +63,14 @@ Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
-#Requires:	kernel >= 2.2.5
-Requires:	rc-scripts
-Requires:	portmap >= 4.0
-Obsoletes:	nfslockd knfsd-lock
-Provides:	nfslockd
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(pl):	Sieciowe
+#Requires:	kernel >= 2.2.5
+Requires:	portmap >= 4.0
+Prereq:		rc-scripts
+Obsoletes:	nfslockd knfsd-lock
+Provides:	nfslockd
 
 %description lock
 The nfs-lock pacage contains programs which support the NFS file lock.
@@ -85,7 +86,7 @@ Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
-Requires:	rc-scripts
+Prereq:		rc-scripts
 Obsoletes:	quota-rquotad
 
 %description rquotad
