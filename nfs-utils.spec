@@ -2,7 +2,7 @@ Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Name:		nfs-utils
 Version:	0.1.7
-Release:	3
+Release:	4
 Copyright:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
@@ -93,7 +93,7 @@ Zdalny serwer quota.
 
 %build
 %configure \
-	--with-statedir=/var/state/nfs \
+	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
 	--enable-secure-statd
 make all
@@ -102,7 +102,7 @@ make all
 rm -rf $RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}}
-install -d $RPM_BUILD_ROOT{/etc/{rc.d/init.d,sysconfig},%{_var}/state/nfs}
+install -d $RPM_BUILD_ROOT{/etc/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
 make install install_prefix="$RPM_BUILD_ROOT"
 
@@ -114,7 +114,7 @@ install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-touch $RPM_BUILD_ROOT/%{_var}/state/nfs/rmtab
+touch $RPM_BUILD_ROOT/%{_var}/lib/nfs/rmtab
 
 touch $RPM_BUILD_ROOT/etc/exports
 
@@ -127,7 +127,7 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
 strip --strip-unneeded $RPM_BUILD_ROOT{/sbin/*,%{_sbindir}/*} || :
 
-touch $RPM_BUILD_ROOT/var/state/nfs/xtab
+touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 gzip -9nf ChangeLog README nfs/*.ps \
 	$RPM_BUILD_ROOT%{_mandir}/man*/*
@@ -203,13 +203,13 @@ fi
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
-%attr(755,root,root) %dir %{_var}/state/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs
 
 %config(noreplace) %verify(not size mtime md5) /etc/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
-%config(noreplace) %verify(not size mtime md5) %{_var}/state/nfs/xtab
-%config(noreplace) %verify(not size mtime md5) %{_var}/state/nfs/etab
-%config(noreplace) %verify(not size mtime md5) %{_var}/state/nfs/rmtab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
 
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
@@ -225,7 +225,7 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
-%attr(755,root,root) %dir %{_var}/state/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
