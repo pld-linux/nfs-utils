@@ -1,9 +1,11 @@
 Summary:	Kernel NFS server
 Summary(pl):	DziaЁaj╠cy na poziomie j╠dra serwer NFS
 Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
+Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
+Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	0.3.3
-Release:	5
+Release:	9
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -41,6 +43,17 @@ tradycyjny, dziaЁaj╠cy na poziomie uzytkownika serwer NFS.
 %description -l pt_BR
 O pacote nfs-utils provЙ os utilitАrios para o cliente e servidor NFS
 do Linux.
+
+%description -l ru
+Пакет nfs-utils предоставляет демона для NFS-сервера, включенного в
+ядро, и сопутствующие утилиты, которые обеспечивают намного большую
+производительность, чем традиционные Linux NFS-сервера, используемые
+большинством пользователей.
+
+%description -l uk
+Пакет nfs-utils нада╓ демона для NFS-сервера, вбудованого в ядро, та
+супутн╕ утил╕ти, як╕ забезпечують набагато б╕льшу продуктивн╕сть, н╕ж
+традиц╕йн╕ Linux NFS-сервери, як╕ використову╓ б╕льш╕сть користувач╕в.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
@@ -115,7 +128,7 @@ dla zdalnego systemu plikСw.
 %patch2 -p1
 
 %build
-autoconf
+%{__autoconf}
 %configure \
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
@@ -150,9 +163,7 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
-gzip -9nf ChangeLog README nfs/*.ps
-
-mv -f nfs/*.ps.gz ./
+mv -f nfs/*.ps ./
 mv -f nfs html
 
 %clean
@@ -226,7 +237,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc {ChangeLog,README,*.ps}.gz html
+%doc ChangeLog README *.ps html
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
@@ -258,7 +269,6 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
-%attr(755,root,root) %dir %{_var}/lib/nfs
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
@@ -270,9 +280,9 @@ fi
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
-%files rquotad
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_sbindir}/rpc.rquotad
-%attr(754,root,root) /etc/rc.d/init.d/rquotad
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
-%{_mandir}/man8/rpc.rquotad.8*
+#%files rquotad
+#%defattr(644,root,root,755)
+#%attr(755,root,root) %{_sbindir}/rpc.rquotad
+#%attr(754,root,root) /etc/rc.d/init.d/rquotad
+#%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
+#%{_mandir}/man8/rpc.rquotad.8*
