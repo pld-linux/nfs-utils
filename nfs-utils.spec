@@ -18,6 +18,7 @@ Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
 Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
+Patch2:		%{name}-eepro-support.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
@@ -99,6 +100,7 @@ Zdalny serwer quota.
 %setup  -q -a1
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 %configure \
