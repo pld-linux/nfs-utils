@@ -89,17 +89,8 @@ case "$1" in
 	fi
 	;;
   restart)
-  	if [ "$NFSDTYPE" = "U" ] ; then
-		$0 stop
-		$0 start
-	else
-		show "Restarting NFS services (killing)"
-		killproc rpc.mountd
-		show "Restarting NFS services (starting)"
-		daemon rpc.mountd $RPCMOUNTDOPTS
-		/usr/sbin/exportfs -r
-		touch /var/lock/subsys/nfs
-	fi
+	$0 stop
+	$0 start
 	;;
   reload)
 	[ "$NFSDTYPE" = "U" ] && exit 0
