@@ -47,10 +47,14 @@ case "$1" in
 
 	show "Unmounting NFS filesystems"
 	busy
-	fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
-	sleep 2
-	fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
-	umount -a -t nfs
+	remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
+	while [ -n "$remaining" -a 3 -gt 0 ]
+	do
+		fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
+		sleep 2
+		fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
+		umount -a -t nfs
+	done
 	deltext
 	ok
 	rm -f /var/lock/subsys/nfsfs
