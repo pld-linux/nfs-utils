@@ -21,7 +21,7 @@ Patch0:		%{name}-paths.patch
 Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
-Requires:	rc-scripts
+Prereq:		rc-scripts
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
 
