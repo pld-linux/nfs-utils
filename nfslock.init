@@ -43,7 +43,7 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/nfslock ]; then
 		# Start daemons.
 		msg_starting "NFS statd"
-		daemon rpc.statd
+		daemon rpc.statd $STATDOPTS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
 	else
