@@ -70,12 +70,12 @@ case "$1" in
 	exit $?
 	;;
   probe)
-	if [ ! -f /var/lock/subsys/nfslock ] ; then
+	if [ ! -f /var/lock/subsys/nfslock ]; then
 		echo start
 		exit 0
 	fi
 	/sbin/pidof rpc.statd >/dev/null 2>&1; STATD="$?"
-	if [ $STATD = 1 ] ; then
+	if [ $STATD = 1 ]; then
 		echo restart
 		exit 0
 	fi

@@ -44,7 +44,7 @@ case "$1" in
 	touch /var/lock/subsys/nfsfs
 	;;
   stop)
-	if [ -f /proc/mounts ] ; then
+	if [ -f /proc/mounts ]; then
 		fsfile="/proc/mounts"
 	else
 		fsfile="/etc/mtab"
@@ -64,7 +64,7 @@ case "$1" in
 	rm -f /var/lock/subsys/nfsfs
 	;;
   status)
-	if [ -f /proc/mounts ] ; then
+	if [ -f /proc/mounts ]; then
 		echo "Configured NFS mountpoints:"
 		grep -v '^#' /etc/fstab | \
 		  awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'

@@ -44,7 +44,7 @@ case "$1" in
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
 		# Start daemons.
-		if [ "$NFSDTYPE" = "U" ] ; then
+		if [ "$NFSDTYPE" = "U" ]; then
 			msg_starting "NFS mountd"
 			daemon rpc.mountd
 			msg_starting "NFS daemon"
@@ -65,7 +65,7 @@ case "$1" in
   stop)
 	if [ -f /var/lock/subsys/nfs ]; then
 		# Stop daemons.
-		if [ "$NFSDTYPE" = "U" ] ; then
+		if [ "$NFSDTYPE" = "U" ]; then
 			msg_stopping "NFS mountd"
 			killproc rpc.mountd
 			msg_stopping "NFS daemon"
@@ -86,7 +86,7 @@ case "$1" in
   status)
 	status rpc.mountd
 	RETVAL=$?
-	if [ "$NFSDTYPE" = "U" ] ; then
+	if [ "$NFSDTYPE" = "U" ]; then
 		status rpc.nfsd
 	else
 		status nfsd
@@ -122,17 +122,17 @@ case "$1" in
 	;;
   probe)
 	[ "$NFSDTYPE" = "U" ] && exit 0
-	if [ ! -f /var/lock/subsys/nfs ] ; then
+	if [ ! -f /var/lock/subsys/nfs ]; then
 		echo start
 		exit 0
 	fi
 	/sbin/pidof rpc.mountd >/dev/null 2>&1; MOUNTD="$?"
 	/sbin/pidof nfsd >/dev/null 2>&1; NFSD="$?"
-	if [ $MOUNTD = 1 -o $NFSD = 1 ] ; then
+	if [ $MOUNTD = 1 -o $NFSD = 1 ]; then
 		echo restart
 		exit 0
 	fi
-	if [ /etc/exports -nt /var/lock/subsys/nfs ] ; then
+	if [ /etc/exports -nt /var/lock/subsys/nfs ]; then
 		echo reload
 		exit 0
 	fi
