@@ -3,11 +3,15 @@ Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Name:		nfs-utils
 Version:	0.3.3
-Release:	4
+Release:	5
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
+Group(es):	Red/Servidores
+Group(fr):	Réseau/Serveurs
 Group(pl):	Sieciowe/Serwery
+Group(pt):	Rede/Server
+Group(ru):	óÅÔÅ×ÙÅ/äÅÍÏÎÙ
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
@@ -41,8 +45,8 @@ nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
 tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 
 %description -l pt_BR
-O pacote nfs-utils provê os utilitários para o cliente e servidor
-NFS do Linux.
+O pacote nfs-utils provê os utilitários para o cliente e servidor NFS
+do Linux.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
@@ -50,8 +54,11 @@ Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(es):	Red
+Group(fr):	Réseau
 Group(pl):	Sieciowe
 Group(pt_BR):	Rede
+Group(pt):	Rede
+Group(ru):	óÅÔÅ×ÙÅ
 Requires:	psmisc
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
@@ -78,12 +85,15 @@ zamountowania zasobów NFS.
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
+#Requires:	kernel >= 2.2.5
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(es):	Red
+Group(fr):	Réseau
 Group(pl):	Sieciowe
 Group(pt_BR):	Rede
-#Requires:	kernel >= 2.2.5
+Group(pt):	Rede
+Group(ru):	óÅÔÅ×ÙÅ
 Requires:	portmap >= 4.0
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
@@ -103,7 +113,11 @@ Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
+Group(es):	Red/Servidores
+Group(fr):	Réseau/Serveurs
 Group(pl):	Sieciowe/Serwery
+Group(pt):	Rede/Server
+Group(ru):	óÅÔÅ×ÙÅ/äÅÍÏÎÙ
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
 Obsoletes:	quota-rquotad
