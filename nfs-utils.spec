@@ -128,7 +128,7 @@ dla zdalnego systemu plików.
 %patch2 -p1
 
 %build
-autoconf
+%{__autoconf}
 %configure \
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
