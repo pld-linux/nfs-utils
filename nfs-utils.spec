@@ -269,7 +269,7 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
-%config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
+%config(noreplace) %verify(not size mtime md5) %attr(664,root,samba)  %{_sysconfdir}/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
