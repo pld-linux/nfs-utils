@@ -5,7 +5,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.5
-Release:	2
+Release:	2.1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -271,7 +271,6 @@ fi
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
@@ -296,6 +295,7 @@ fi
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
 %files clients
 %defattr(644,root,root,755)
