@@ -1,32 +1,38 @@
 #!/bin/sh
 #
-# nfsfs         Mount NFS filesystems.
+# nfsfs		Mount NFS filesystems.
 #
-# Version:      @(#) /etc/init.d/skeleton 1.01 26-Oct-1993
+# Version:	@(#) /etc/init.d/skeleton 1.01 26-Oct-1993
 #
-# Author:       Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
+# Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
 #
-# chkconfig: 345 15 88
-# description: Mounts and unmounts all Network File System (NFS) \
-#              mount points.
+# chkconfig:	345 15 88
+# description:	Mounts and unmounts all Network File System (NFS) \
+#		mount points.
 #
 # $Id$
 
 # Source networking configuration.
 if [ ! -f /etc/sysconfig/network ]; then
-    exit 0
+	exit 0
 fi
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
+# Get network config
 . /etc/sysconfig/network
 
 # Check that networking is up.
-if is_no "${NETWORKING}"; then
-	msg_network_down nfsfs
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		msg_network_down nfsfs
+		exit 1
+	fi
+else
+	exit 0
 fi
+
 
 # See how we were called.
 case "$1" in
@@ -34,7 +40,6 @@ case "$1" in
 	show "Mounting NFS filesystems"
 	busy
 	mount -a -t nfs
-	deltext
 	ok
 	touch /var/lock/subsys/nfsfs
 	;;
@@ -56,7 +61,6 @@ case "$1" in
 		umount -a -f -t nfs
 		remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
 	done
-	deltext
 	ok
 	rm -f /var/lock/subsys/nfsfs
 	;;
@@ -85,4 +89,3 @@ case "$1" in
 esac
 
 exit 0
-

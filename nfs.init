@@ -19,13 +19,17 @@
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
 
 # Check that networking is up.
-if is_no "${NETWORKING}"; then
-	msg_Network_Down NFSD
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		msg_network_down NFSD
+		exit 1
+	fi
+else
+	exit 0
 fi
 
 if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
-	[ -z "`/sbin/pidof portmap`" ] && echo "Error: portmap isn't running" && exit 0
+	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
 fi
 
 # Sanity checks
@@ -39,7 +43,7 @@ case "$1" in
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
 		# Start daemons.
-	  	if [ "$NFSDTYPE" = "U" ] ; then
+		if [ "$NFSDTYPE" = "U" ] ; then
 			msg_starting "NFS mountd"
 			daemon rpc.mountd
 			msg_starting "NFS daemon"
@@ -54,14 +58,14 @@ case "$1" in
 		fi
 		touch /var/lock/subsys/nfs
 	else
-		msg_Already_Running "NFS"
+		msg_already_running "NFS"
 		exit 1
 	fi
 	;;
   stop)
 	if [ -f /var/lock/subsys/nfs ]; then
 		# Stop daemons.
-	  	if [ "$NFSDTYPE" = "U" ] ; then
+		if [ "$NFSDTYPE" = "U" ] ; then
 			msg_stopping "NFS mountd"
 			killproc rpc.mountd
 			msg_stopping "NFS daemon"
@@ -76,13 +80,13 @@ case "$1" in
 		fi
 		rm -f /var/lock/subsys/nfs
 	else
-		msg_Not_Running "NFS"
+		msg_not_running "NFS"
 		exit 1
 	fi
 	;;
   status)
 	status rpc.mountd
-  	if [ "$NFSDTYPE" = "U" ] ; then
+	if [ "$NFSDTYPE" = "U" ] ; then
 		status rpc.nfsd
 	else
 		status nfsd
@@ -100,15 +104,18 @@ case "$1" in
   probe)
 	[ "$NFSDTYPE" = "U" ] && exit 0
 	if [ ! -f /var/lock/subsys/nfs ] ; then
-	  echo start; exit 0
+		echo start
+		exit 0
 	fi
 	/sbin/pidof rpc.mountd >/dev/null 2>&1; MOUNTD="$?"
 	/sbin/pidof nfsd >/dev/null 2>&1; NFSD="$?"
 	if [ $MOUNTD = 1 -o $NFSD = 1 ] ; then
-	  echo restart; exit 0
+		echo restart
+		exit 0
 	fi
 	if [ /etc/exports -nt /var/lock/subsys/nfs ] ; then
-	  echo reload; exit 0
+		echo reload
+		exit 0
 	fi
 	;;
   *)

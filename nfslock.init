@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# nfslock       This shell script takes care of starting and stopping
-#               the NFS file locking service.
+# nfslock	This shell script takes care of starting and stopping
+#		the NFS file locking service.
 #
 # chkconfig:	345 61 19
 # description:	NFS is a popular protocol for file sharing across \
@@ -19,9 +19,13 @@
 [ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 
 # Check that networking is up.
-if is_no "${NETWORKING}"; then
-	msg_Network_Down "NFS lockd"
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		msg_network_down "NFS lockd"
+		exit 1
+	fi
+else
+	exit 0
 fi
 
 if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
@@ -41,18 +45,18 @@ case "$1" in
 		daemon rpc.statd
 		touch /var/lock/subsys/nfslock
 	else
-		msg_Already_Running "NFS statd"
+		msg_already_running "NFS statd"
 		exit 1
 	fi
 	;;
   stop)
-  	if [ -f /var/lock/subsys/nfslock ]; then
+	if [ -f /var/lock/subsys/nfslock ]; then
 		# Stop daemons.
 		msg_stopping "NFS statd"
 		killproc rpc.statd
 		rm -f /var/lock/subsys/nfslock
 	else
-		msg_Not_Running "NFS statd"
+		msg_not_running "NFS statd"
 		exit 1
 	fi
 	;;
@@ -60,20 +64,22 @@ case "$1" in
 	status rpc.statd
 	;;
   restart)
-  	$0 stop
+	$0 stop
 	$0 start
 	;;
   probe)
 	if [ ! -f /var/lock/subsys/nfslock ] ; then
-	  echo start; exit 0
+		echo start
+		exit 0
 	fi
 	/sbin/pidof rpc.statd >/dev/null 2>&1; STATD="$?"
 	if [ $STATD = 1 ] ; then
-	  echo restart; exit 0
+		echo restart
+		exit 0
 	fi
 	;;
   *)
-	msg_Usage "$0 {start|stop|status|restart}"
+	msg_usage "$0 {start|stop|restart|probe|status}"
 	exit 1
 esac
 
