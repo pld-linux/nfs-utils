@@ -1,4 +1,3 @@
-B# $Revision: 1.86 $, $Date: 2004-12-22 13:59:10 $
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
