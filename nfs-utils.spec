@@ -215,6 +215,7 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
+%attr(755,root,root) %dir %{_var}/state/nfs
 
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
