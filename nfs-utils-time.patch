@@ -1,0 +1,11 @@
+diff -urN nfs-utils-0.2.1.org/support/nfs/rpcmisc.c nfs-utils-0.2.1/support/nfs/rpcmisc.c
+--- nfs-utils-0.2.1.org/support/nfs/rpcmisc.c	Sat Mar 10 21:29:27 2001
++++ nfs-utils-0.2.1/support/nfs/rpcmisc.c	Sat Mar 10 21:30:26 2001
+@@ -27,6 +27,7 @@
+ #include <signal.h>
+ #include <fcntl.h>
+ #include <memory.h>
++#include <time.h>
+ #include <errno.h>
+ #include <unistd.h>
+ #include "nfslib.h"
