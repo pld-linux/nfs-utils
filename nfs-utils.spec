@@ -1,3 +1,4 @@
+B# $Revision: 1.86 $, $Date: 2004-12-22 13:59:10 $
 Summary:	Kernel NFS server
 Summary(pl):	DziaЁaj╠cy na poziomie j╠dra serwer NFS
 Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
@@ -5,7 +6,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.7
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
