@@ -1,8 +1,11 @@
-Name:		nfs-utils
-Version:	0.1.3
-Release:	4
-Summary:	Kernel NFS server.
+Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
+Name:		nfs-utils
+Version:	0.1.6
+Release:	1
+Copyright:	GPL
+Group:		Networking/Daemons
+Group(pl):	Sieciowe/Serwery
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
@@ -12,15 +15,11 @@ Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Patch0:		nfs-utils-paths.patch
-Patch1:		nfs-utils-rquotad.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
-Group:		Networking/Daemons
-Group(pl):	Sieciowe/Serwery
 Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
 Requires:	rc-scripts
-Copyright:	GPL
 #Requires:	/dev/nfsd_netlink
 BuildRoot:	/tmp/%{name}-%{version}-root
 ExcludeArch:	armv4l
@@ -90,7 +89,6 @@ Zdalny serwer quota.
 %prep
 %setup  -q -a1
 %patch0 -p1
-%patch1 -p1
 
 %build
 %configure \
