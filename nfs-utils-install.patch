@@ -1,0 +1,8 @@
+--- nfs-utils-1.0.4/Makefile~	Fri Jul  4 06:22:01 2003
++++ nfs-utils-1.0.4/Makefile	Mon Jul 14 19:30:51 2003
+@@ -22,5 +22,3 @@
+ 	touch $(STATEDIR)/rmtab; chmod 644 $(STATEDIR)/rmtab
+ 	mkdir -p $(STATEDIR)/sm $(STATEDIR)/sm.bak
+ 	touch $(STATEDIR)/state
+-	chmod go-rwx $(STATEDIR)/sm $(STATEDIR)/sm.bak $(STATEDIR)/state
+-	chown $(STATDUSER) $(STATEDIR)/sm $(STATEDIR)/sm.bak $(STATEDIR)/state
