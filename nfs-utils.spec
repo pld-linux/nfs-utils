@@ -1,9 +1,11 @@
 Summary:	Kernel NFS server
 Summary(pl):	DziaЁaj╠cy na poziomie j╠dra serwer NFS
 Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
+Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
+Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	0.3.3
-Release:	5
+Release:	6
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -41,6 +43,17 @@ tradycyjny, dziaЁaj╠cy na poziomie uzytkownika serwer NFS.
 %description -l pt_BR
 O pacote nfs-utils provЙ os utilitАrios para o cliente e servidor NFS
 do Linux.
+
+%description -l ru
+Пакет nfs-utils предоставляет демона для NFS-сервера, включенного в
+ядро, и сопутствующие утилиты, которые обеспечивают намного большую
+производительность, чем традиционные Linux NFS-сервера, используемые
+большинством пользователей.
+
+%description -l uk
+Пакет nfs-utils нада╓ демона для NFS-сервера, вбудованого в ядро, та
+супутн╕ утил╕ти, як╕ забезпечують набагато б╕льшу продуктивн╕сть, н╕ж
+традиц╕йн╕ Linux NFS-сервери, як╕ використову╓ б╕льш╕сть користувач╕в.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
