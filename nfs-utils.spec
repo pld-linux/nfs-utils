@@ -4,12 +4,12 @@ Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
 Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.4
-Release:	2
+Version:	1.0.5
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	5b9166b909e8d9585296166af8cb63f7
+# Source0-md5:	ce48f1e17f1c49ca14dbd2b0e033d1b9
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -23,7 +23,6 @@ Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
-Patch4:		%{name}-use-after-free.patch
 BuildRequires:	autoconf
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
@@ -136,7 +135,6 @@ dla zdalnego systemu plikСw.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
 
 %build
 %{__autoconf}
@@ -255,6 +253,9 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/nfsstat
+%attr(755,root,root) %{_sbindir}/nhfsgraph
+%attr(755,root,root) %{_sbindir}/nhfsnums
+%attr(755,root,root) %{_sbindir}/nhfsrun
 %attr(755,root,root) %{_sbindir}/nhfsstone
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
@@ -266,15 +267,20 @@ fi
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
+%{_mandir}/man5/exports.5*
+%{_mandir}/man7/nfsd.7*
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
+%{_mandir}/man8/nhfsgraph.8*
+%{_mandir}/man8/nhfsnums.8*
+%{_mandir}/man8/nhfsrun.8*
 %{_mandir}/man8/nhfsstone.8*
 %{_mandir}/man8/nfsd.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
-%{_mandir}/man5/exports.5*
 
 %files lock
 %defattr(644,root,root,755)
