@@ -163,7 +163,7 @@ fi
 if [ -r /var/lock/subsys/nfsfs ]; then
 	/etc/rc.d/init.d/nfs restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to mount all NFS volumens."
+	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumens."
 fi
 
 %preun clients
