@@ -53,7 +53,7 @@ case "$1" in
 		fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
 		sleep 2
 		fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
-		umount -a -t nfs
+		umount -a -f -t nfs
 		remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
 	done
 	deltext
