@@ -113,7 +113,7 @@ install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 
 %{__make} install install_prefix="$RPM_BUILD_ROOT"
 
-install	-s tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
+install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
