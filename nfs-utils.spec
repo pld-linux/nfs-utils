@@ -3,7 +3,7 @@ Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
 Version:	0.1.8
 Release:	1
-Copyright:	GPL
+License:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
@@ -25,13 +25,14 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
 
 %description
-This is the *new* kernel NFS server and related tools.  It provides a much
-higher level of performance than the traditional Linux user-land NFS server.
+This is the *new* kernel NFS server and related tools. It provides a
+much higher level of performance than the traditional Linux user-land
+NFS server.
 
 %description -l pl
-To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane
-z nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ
-ni¿ tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
+To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane z
+nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
+tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
@@ -46,13 +47,12 @@ Obsoletes:	nfs-server-clients
 %description clients
 The nfs-server-clients package contains the showmount program.
 Showmount queries the mount daemon on a remote host for information
-about the NFS (Network File System) server on the remote host.  For
+about the NFS (Network File System) server on the remote host. For
 example, showmount can display the clients which are mounted on that
-host.  This package is not needed to mount NFS volumes.
+host. This package is not needed to mount NFS volumes.
 
 %description -l pl clients
-Pakiet zawiera program showmount s³u¿±cy do odpytywania
-serwera NFS.
+Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
 
 %package lock
 Summary:	Programs for NFS file locking
@@ -62,16 +62,16 @@ Requires:	rc-scripts
 Requires:	portmap >= 4.0
 Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
-Group:          Networking
-Group(pl):      Sieciowe
+Group:		Networking
+Group(pl):	Sieciowe
 
 %description lock
 The nfs-lock pacage contains programs which support the NFS file lock.
 Install nfs-lock if you want to use file lock over NFS.
 
 %description -l pl lock
-Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie
-blokowania plików (file locking) poprzez NFS.
+Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie blokowania
+plików (file locking) poprzez NFS.
 
 %package rquotad
 Summary:	Remote quota server
@@ -81,9 +81,10 @@ Group(pl):	Sieciowe/Serwery
 Requires:	rc-scripts
 
 %description rquotad
-rquotad is an rpc(3N) server which returns quotas for a user of a local file system which
-is mounted by a remote machine over the NFS. The results are used by quota(1) to display
-user quotas for remote file systems. 
+rquotad is an rpc(3N) server which returns quotas for a user of a
+local file system which is mounted by a remote machine over the NFS.
+The results are used by quota(1) to display user quotas for remote
+file systems.
 
 %description -l pl rquotad
 Zdalny serwer quota.
@@ -104,7 +105,7 @@ make all
 rm -rf $RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}}
-install -d $RPM_BUILD_ROOT{/etc/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
+install -d $RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
 make install install_prefix="$RPM_BUILD_ROOT"
 
@@ -118,7 +119,7 @@ install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
 touch $RPM_BUILD_ROOT/%{_var}/lib/nfs/rmtab
 
-touch $RPM_BUILD_ROOT/etc/exports
+touch $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
 rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
@@ -211,7 +212,7 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
-%config(noreplace) %verify(not size mtime md5) /etc/exports
+%config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
