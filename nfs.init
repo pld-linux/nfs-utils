@@ -59,7 +59,7 @@ case "$1" in
 			msg_starting "NFS"
 			daemon /usr/sbin/exportfs -r
 			msg_starting "NFS mountd"
-			daemon rpc.mountd $RPCMOUNTDOPTS
+			daemon rpc.mountd $RPCMOUNTOPTIONS
 			msg_starting "NFS daemon"
 			daemon rpc.nfsd $RPCNFSDCOUNT
 		fi
