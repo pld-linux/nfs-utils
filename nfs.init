@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# nfs           This shell script takes care of starting and stopping
+#               the NFS services. Later we might add NIS too.
+#
+# chkconfig: 345 60 20
+# description: NFS is a popular protocol for file sharing across TCP/IP \
+#              networks. This service provides NFS server functionality, \
+#              which is configured via the /etc/exports file.
+# probe: true
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+# Try to define nicelevel ...
+NICE="nice -n 5"
+
+[ -f /usr/sbin/rpc.nfsd ] || exit 0
+[ -f /usr/sbin/rpc.mountd ] || exit 0
+[ -f /etc/exports ] || exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+	# Start daemons.
+	echo -n "Starting NFS services: "
+	$NICE rpc.mountd
+	$NICE rpc.nfsd
+	echo done
+	touch /var/lock/subsys/nfs
+	;;
+  stop)
+	# Stop daemons.
+	echo -n "Shutting down NFS services: "
+	killall -TERM rpc.mountd
+	killall -TERM rpc.nfsd
+	echo done
+	rm -f /var/lock/subsys/nfs
+	;;
+  status)
+	status rpc.mountd
+	status rpc.nfsd
+	;;
+  restart)
+	$0 stop
+	$0 start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|status|restart}"
+	exit 1
+esac
+
+exit 0
+
