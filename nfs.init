@@ -37,7 +37,7 @@ fi
 case "$1" in
   start)
 	# Start daemons.
-  	if [ NFSDTYPE = "U" ] ; then
+  	if [ "$NFSDTYPE" = "U" ] ; then
 		show "Starting NFS mountd"
 		daemon rpc.mountd
 		show "Starting NFS daemon"
@@ -54,7 +54,7 @@ case "$1" in
 	;;
   stop)
 	# Stop daemons.
-  	if [ NFSDTYPE = "U" ] ; then
+  	if [ "$NFSDTYPE" = "U" ] ; then
 		show "Shutting down NFS mountd"
 		killproc rpc.mountd
 		show "Shutting down NFS daemon"
@@ -71,14 +71,14 @@ case "$1" in
 	;;
   status)
 	status rpc.mountd
-  	if [ NFSDTYPE = "U" ] ; then
+  	if [ "$NFSDTYPE" = "U" ] ; then
 		status rpc.nfsd
 	else
 		status nfsd
 	fi
 	;;
   restart)
-  	if [ NFSDTYPE = "U" ] ; then
+  	if [ "$NFSDTYPE" = "U" ] ; then
 		$0 stop
 		$0 start
 	else
@@ -91,12 +91,12 @@ case "$1" in
 	fi
 	;;
   reload)
-	[ NFSDTYPE = "U" ] && exit 0
+	[ "$NFSDTYPE" = "U" ] && exit 0
 	/usr/sbin/exportfs
 	touch /var/lock/subsys/nfs
 	;;
   probe)
-	[ NFSDTYPE = "U" ] && exit 0
+	[ "$NFSDTYPE" = "U" ] && exit 0
 	if [ ! -f /var/lock/subsys/nfs ] ; then
 	  echo start; exit 0
 	fi
@@ -110,7 +110,7 @@ case "$1" in
 	fi
 	;;
   *)
-	echo "Usage: nfs {start|stop|status|restart|reload}"
+	echo "Usage: nfs {start|stop|status|restart|reload|probe}"
 	exit 1
 esac
 
