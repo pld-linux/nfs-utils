@@ -2,7 +2,7 @@ Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Name:		nfs-utils
 Version:	0.1.6
-Release:	1
+Release:	2
 Copyright:	GPL
 Group:		Networking/Daemons
 Group(pl):	Sieciowe/Serwery
@@ -14,6 +14,7 @@ Source4:	rquotad.init
 Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
+Source8:	nfsfs.init
 Patch0:		nfs-utils-paths.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
@@ -109,6 +110,7 @@ install	-s tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
+install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
@@ -149,6 +151,15 @@ mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del nfs
 	/etc/rc.d/init.d/nfs stop >&2
+fi
+
+%post clients
+/sbin/chkconfig --add nfsfs
+
+%preun clients
+if [ "$1" = "0" ]; then
+	/sbin/chkconfig --del nfsfs
+	/etc/rc.d/init.d/nfsfs stop >&2
 fi
 
 %post lock
@@ -220,6 +231,7 @@ fi
 
 %files clients
 %defattr(644,root,root,755)
+%attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
