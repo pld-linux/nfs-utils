@@ -1,6 +1,6 @@
 Name:		nfs-utils
 Version:	0.1.3
-Release:	2
+Release:	3
 Summary:	Kernel NFS server.
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
@@ -60,7 +60,6 @@ Summary:	Programs for NFS file locking.
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock).
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
-Requires:	%{name} = %{version}
 Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
 Group:          Networking
