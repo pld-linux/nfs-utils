@@ -22,7 +22,7 @@ Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
 Requires:	rc-scripts
 #Requires:	/dev/nfsd_netlink
-BuildRoot:	/tmp/%{name}-%{version}-root
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
 
 %description
