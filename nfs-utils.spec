@@ -5,7 +5,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	0.3.3
-Release:	6
+Release:	7
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -283,9 +283,9 @@ fi
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
-%files rquotad
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_sbindir}/rpc.rquotad
-%attr(754,root,root) /etc/rc.d/init.d/rquotad
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
-%{_mandir}/man8/rpc.rquotad.8*
+#%files rquotad
+#%defattr(644,root,root,755)
+#%attr(755,root,root) %{_sbindir}/rpc.rquotad
+#%attr(754,root,root) /etc/rc.d/init.d/rquotad
+#%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
+#%{_mandir}/man8/rpc.rquotad.8*
