@@ -35,7 +35,7 @@ fi
 # Sanity checks
 [ -x /usr/sbin/rpc.rquotad ] || exit 0
 
-
+RETVAL=0
 # See how we were called.
 case "$1" in
   start)
@@ -44,10 +44,10 @@ case "$1" in
 		# Start daemons.
 		msg_starting "NFS quotas"
 		daemon rpc.rquotad
-		touch /var/lock/subsys/rquotad
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rquotad
 	else
 		msg_already_running "NFS quota daemon"
-		exit 1
 	fi
 	;;
   stop)
@@ -58,15 +58,16 @@ case "$1" in
 		rm -f /var/lock/subsys/rquotad
 	else
 		msg_not_running "NFS quota daemon"
-		exit 1
 	fi
 	;;
   status)
 	status rpc.rquotad
+	exit $?
 	;;
-  restart|reload)
+  restart|force-reload)
 	$0 stop
 	$0 start
+	exit $?
 	;;
   probe)
 	if [ ! -f /var/lock/subsys/quotad ] ; then
@@ -78,8 +79,8 @@ case "$1" in
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|reload|probe|status}"
-	exit 1
+	msg_usage "$0 {start|stop|restart|force-reload|probe|status}"
+	exit 3
 esac
 
-exit 0
+exit $RETVAL
