@@ -4,8 +4,8 @@ Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
-Version:	0.3.3
-Release:	9
+Version:	1.0.1
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -20,15 +20,19 @@ Source8:	nfsfs.init
 Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
-Requires:	portmap >= 4.0
-Obsoletes:	nfsdaemon nfs-server knfsd
-Provides:	nfsdaemon
-Prereq:		rc-scripts
-Prereq:		/sbin/chkconfig
 BuildRequires:	autoconf
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
+Requires(post):	fileutils
+Requires(post):	sed
+Requires:	portmap >= 4.0
+Provides:	nfsdaemon
+Obsoletes:	nfsdaemon
+Obsoletes:	knfsd
+Obsoletes:	nfs-server
+Conflicts:	kernel < 2.2.5
 ExcludeArch:	armv4l
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Conflicts:	kernel < 2.2.5
 
 %description
 This is the *new* kernel NFS server and related tools. It provides a
@@ -59,9 +63,9 @@ do Linux.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
 Requires:	psmisc
-Prereq:		rc-scripts
-Prereq:		/sbin/chkconfig
 Provides:	nfsclient
 Provides:	nfs-server-clients
 Obsoletes:	nfsclient
@@ -85,13 +89,14 @@ zamountowania zasobów NFS.
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
-#Requires:	kernel >= 2.2.5
 Group:		Networking
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
+#Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
-Prereq:		rc-scripts
-Prereq:		/sbin/chkconfig
-Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
+Obsoletes:	nfslockd
+Obsoletes:	knfsd-lock
 
 %description lock
 The nfs-lock pacage contains programs which support the NFS file lock.
@@ -105,8 +110,8 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
-Prereq:		rc-scripts
-Prereq:		/sbin/chkconfig
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
 Obsoletes:	quota-rquotad
 
 %description rquotad
@@ -176,6 +181,7 @@ if [ -r /var/lock/subsys/nfs ]; then
 else
 	echo "Run \"/etc/rc.d/init.d/nfs start\" to start nfs daemon."
 fi
+umask 022
 sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
 mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 
@@ -257,6 +263,7 @@ fi
 
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
+%{_mandir}/man8/nhfsstone.8*
 %{_mandir}/man8/nfsd.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
