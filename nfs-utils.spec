@@ -8,7 +8,7 @@ Version:	1.0.3
 Release:	1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
+Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
 # Source0-md5:	3252bef5471705dfa26a13d46b3847dc
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
