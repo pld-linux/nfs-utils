@@ -5,7 +5,7 @@ Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
 Version:	1.0.5
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -23,6 +23,7 @@ Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
+Patch4:		%{name}-nolibs.patch
 BuildRequires:	autoconf
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
@@ -45,7 +46,7 @@ NFS server.
 %description -l pl
 To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane z
 nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
-tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
+tradycyjny, dzia³aj±cy na poziomie u¿ytkownika serwer NFS.
 
 %description -l pt_BR
 O pacote nfs-utils provê os utilitários para o cliente e servidor NFS
@@ -86,7 +87,7 @@ host. This package is not needed to mount NFS volumes.
 Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
 Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym
 ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s±
-zamountowani na tym serverze. Ten pakiet nie jest konieczny do
+zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
 zamountowania zasobów NFS.
 
 %package lock
@@ -126,15 +127,16 @@ file systems.
 %description rquotad -l pl
 rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
 lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
-poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote
+poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
 
 %prep
-%setup  -q -a1
+%setup -q -a1
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 %{__autoconf}
@@ -203,7 +205,7 @@ fi
 if [ -r /var/lock/subsys/nfsfs ]; then
 	/etc/rc.d/init.d/nfsfs restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumens."
+	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumes."
 fi
 
 %preun clients
