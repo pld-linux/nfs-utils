@@ -1,6 +1,6 @@
 Name:		nfs-utils
 Version:	0.1.3
-Release:	3
+Release:	4
 Summary:	Kernel NFS server.
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS.
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
