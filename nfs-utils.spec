@@ -1,3 +1,7 @@
+# TODO:
+#	- where to put idmapd binaries (server/client/both)?
+#	- gss daemons, main or separate package?
+
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
@@ -5,7 +9,7 @@ Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
 Version:	1.0.7
-Release:	2
+Release:	2.1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -25,8 +29,13 @@ Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
 Patch5:		%{name}-usn36.patch
+Patch6:		%{name}-gss.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
+BuildRequires:	libevent-devel
+BuildRequires:	nfsidmap-devel
+BuildRequires:	heimdal-devel
+BuildRequires:	libwrap-devel
 PreReq:		rc-scripts >= 0.4.0
 PreReq:		setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
@@ -141,16 +150,18 @@ dla zdalnego systemu plików.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 chmod u+w configure
 
 %build
+rm -rf support/gssapi/*
+echo -ne "all:\ndep:\ninstall:\ninstallman:\n" > support/gssapi/Makefile
+ln -sf %{_includedir}/gssapi.h support/include/gssapi/gssapi.h
 %{__autoconf}
-# nfsv4 needs libevent and libnfsidmap
-# gss needs nfsidmap.h
 %configure \
-	--disable-gss \
-	--disable-nfsv4 \
+	--enable-gss \
+	--enable-nfsv4 \
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs
@@ -164,6 +175,7 @@ install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 %{__make} install \
 	install_prefix=$RPM_BUILD_ROOT
 
+install utils/idmapd/idmapd.conf	$RPM_BUILD_ROOT/etc
 install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
@@ -176,19 +188,25 @@ install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,gssd,idmapd,svcgssd}.8
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
+echo ".so gssd.8"    >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
+echo ".so idmapd.8"  >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
+echo ".so svcgssd.8" >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
+echo ".so idmapd.conf.5" > $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-mv -f nfs/*.ps ./
-mv -f nfs html
+cp -a nfs nfs-copy
+mv -f nfs-copy/*.ps ./
+mv -f nfs-copy html
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -268,6 +286,7 @@ fi
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(755,root,root) %{_sbindir}/nfsstat
 %attr(755,root,root) %{_sbindir}/nhfsgraph
 %attr(755,root,root) %{_sbindir}/nhfsnums
@@ -278,12 +297,14 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
+%attr(660,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/idmapd.conf
 %attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
 
+%{_mandir}/man[58]/*idmap*
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man8/exportfs.8*
