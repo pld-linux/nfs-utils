@@ -34,16 +34,27 @@ fi
 # See how we were called.
 case "$1" in
   start)
-	# Start daemons.
-	msg_starting "NFS quotas"
-	daemon rpc.rquotad
-	touch /var/lock/subsys/rquotad
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/rquotad ]; then
+		# Start daemons.
+		msg_starting "NFS quotas"
+		daemon rpc.rquotad
+		touch /var/lock/subsys/rquotad
+	else
+		msg_Already_Running "NFS quota daemon"
+		exit 1
+	fi
 	;;
   stop)
-	# Stop daemons.
-	msg_stopping "NFS quotas"
-	killproc rpc.rquotad
-	rm -f /var/lock/subsys/rquotad
+  	if [ -f /var/lock/subsys/rquotad ]; then
+		# Stop daemons.
+		msg_stopping "NFS quotas"
+		killproc rpc.rquotad
+		rm -f /var/lock/subsys/rquotad
+	else
+		msg_Not_Running "NFS quota daemon"
+		exit 1
+	fi
 	;;
   status)
 	status rpc.rquotad

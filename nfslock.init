@@ -34,16 +34,27 @@ fi
 # See how we were called.
 case "$1" in
   start)
-	# Start daemons.
-	msg_starting "NFS statd"
-	daemon rpc.statd
-	touch /var/lock/subsys/nfslock
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/nfslock ]; then
+		# Start daemons.
+		msg_starting "NFS statd"
+		daemon rpc.statd
+		touch /var/lock/subsys/nfslock
+	else
+		msg_Already_Running "NFS statd"
+		exit 1
+	fi
 	;;
   stop)
-	# Stop daemons.
-	msg_stopping "NFS statd"
-	killproc rpc.statd
-	rm -f /var/lock/subsys/nfslock
+  	if [ -f /var/lock/subsys/nfslock ]; then
+		# Stop daemons.
+		msg_stopping "NFS statd"
+		killproc rpc.statd
+		rm -f /var/lock/subsys/nfslock
+	else
+		msg_Not_Running "NFS statd"
+		exit 1
+	fi
 	;;
   status)
 	status rpc.statd

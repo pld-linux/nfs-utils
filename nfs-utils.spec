@@ -3,7 +3,7 @@ Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Name:		nfs-utils
 Version:	0.3.3
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -68,7 +68,7 @@ about the NFS (Network File System) server on the remote host. For
 example, showmount can display the clients which are mounted on that
 host. This package is not needed to mount NFS volumes.
 
-%description -l pl clients
+%description clients -l pl
 Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
 Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym
 ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s±
@@ -78,12 +78,12 @@ zamountowania zasobów NFS.
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
-#Requires:	kernel >= 2.2.5
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(es):	Red
 Group(pl):	Sieciowe
 Group(pt_BR):	Rede
+#Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
@@ -94,7 +94,7 @@ Provides:	nfslockd
 The nfs-lock pacage contains programs which support the NFS file lock.
 Install nfs-lock if you want to use file lock over NFS.
 
-%description -l pl lock
+%description lock -l pl
 Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie blokowania
 plików (file locking) poprzez NFS.
 
@@ -114,7 +114,7 @@ local file system which is mounted by a remote machine over the NFS.
 The results are used by quota(1) to display user quotas for remote
 file systems.
 
-%description -l pl rquotad
+%description rquotad -l pl
 rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
 lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote
