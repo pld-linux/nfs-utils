@@ -1,10 +1,11 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Name:		nfs-utils
-Version:	0.2
+Version:	0.2.1
 Release:	1
 License:	GPL
 Group:		Networking/Daemons
+Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
 Source0:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/%{name}-%{version}.tar.gz
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
@@ -38,6 +39,7 @@ tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
+Group(de):	Netzwerkwesen
 Group(pl):	Sieciowe
 Obsoletes:	nfsclient nfs-server-clients knfsd-clients
 Provides:	nfsclient
@@ -63,6 +65,7 @@ Requires:	portmap >= 4.0
 Obsoletes:	nfslockd knfsd-lock
 Provides:	nfslockd
 Group:		Networking
+Group(de):	Netzwerkwesen
 Group(pl):	Sieciowe
 
 %description lock
@@ -77,6 +80,7 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
+Group(de):	Netzwerkwesen/Server
 Group(pl):	Sieciowe/Serwery
 Requires:	rc-scripts
 Obsoletes:	quota-rquotad
@@ -95,7 +99,6 @@ Zdalny serwer quota.
 %patch0 -p1
 
 %build
-LDFLAGS="-s"; export LDFLAGS
 %configure \
 	--with-statedir=/var/lib/nfs \
 	--enable-nfsv3 \
@@ -131,8 +134,7 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
-gzip -9nf ChangeLog README nfs/*.ps \
-	$RPM_BUILD_ROOT%{_mandir}/man*/*
+gzip -9nf ChangeLog README nfs/*.ps
 
 mv -f nfs/*.ps.gz ./
 mv -f nfs html
