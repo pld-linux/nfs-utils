@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # nfs           This shell script takes care of starting and stopping
 #               the NFS services. Later we might add NIS too.
@@ -9,8 +9,6 @@
 #              which is configured via the /etc/exports file.
 # probe: true
 
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-
 # Source function library.
 . /etc/rc.d/init.d/functions
 
@@ -18,31 +16,32 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 . /etc/sysconfig/network
 
 # Check that networking is up.
-[ ${NETWORKING} = "no" ] && exit 0
-
-# Try to define nicelevel ...
-NICE="nice -n 5"
+[ "${NETWORKING}" = "no" ] && exit 0
 
 [ -f /usr/sbin/rpc.nfsd ] || exit 0
 [ -f /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
+# Source networking configuration
+if [ -f /etc/sysconfig/nfs ]; then
+    . /etc/sysconfig/nfs
+fi    
 # See how we were called.
 case "$1" in
   start)
 	# Start daemons.
-	echo -n "Starting NFS services: "
-	$NICE rpc.mountd
-	$NICE rpc.nfsd
-	echo done
+	show Starting rpc.mountd
+	daemon rpc.mountd
+	show Starting rpc.nfsd
+	daemon rpc.nfsd
 	touch /var/lock/subsys/nfs
 	;;
   stop)
 	# Stop daemons.
-	echo -n "Shutting down NFS services: "
-	killall -TERM rpc.mountd
-	killall -TERM rpc.nfsd
-	echo done
+	show Shutting down rpc.mountd
+	killproc rpc.mountd
+	show Shutting down rpc.nfsd
+	killproc rpc.nfsd
 	rm -f /var/lock/subsys/nfs
 	;;
   status)
