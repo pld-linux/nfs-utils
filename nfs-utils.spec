@@ -5,7 +5,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	0.3.3
-Release:	7
+Release:	8
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://download.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -163,9 +163,7 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
-gzip -9nf ChangeLog README nfs/*.ps
-
-mv -f nfs/*.ps.gz ./
+mv -f nfs/*.ps ./
 mv -f nfs html
 
 %clean
@@ -239,7 +237,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc {ChangeLog,README,*.ps}.gz html
+%doc ChangeLog README *.ps html
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
@@ -271,7 +269,6 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
-%attr(755,root,root) %dir %{_var}/lib/nfs
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
