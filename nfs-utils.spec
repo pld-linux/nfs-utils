@@ -32,7 +32,7 @@ higher level of performance than the traditional Linux user-land NFS server.
 %description -l pl
 To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane
 z nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ
-ni¿ tradycyjny, dzia³aj±cy na poziomie urzytkownika serwer NFS.
+ni¿ tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 
 %package clients
 Obsoletes:	nfs-server-clients
@@ -118,7 +118,8 @@ touch $RPM_BUILD_ROOT/%{_var}/state/nfs/rmtab
 
 touch $RPM_BUILD_ROOT/etc/exports
 
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd}.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
+echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
@@ -225,7 +226,8 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
 %attr(755,root,root) %dir %{_var}/state/nfs
-
+%{_mandir}/man8/rpc.lockd.8*
+%{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
 
@@ -238,6 +240,6 @@ fi
 %files rquotad
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_sbindir}/rpc.rquotad
-%{_mandir}/man8/rpc.rquotad.8*
 %attr(754,root,root) /etc/rc.d/init.d/rquotad
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
+%{_mandir}/man8/rpc.rquotad.8*
