@@ -39,8 +39,16 @@ case "$1" in
 	touch /var/lock/subsys/nfsfs
 	;;
   stop)
+	if [ -f /proc/mounts ] ; then
+		fsfile="/proc/mounts"
+	else
+		fsfile="/etc/mtab"
+	fi
+
 	show "Unmounting NFS filesystems"
 	busy
+	fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
+	fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
 	umount -a -t nfs
 	deltext
 	ok
