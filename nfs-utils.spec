@@ -149,7 +149,8 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
 
-%{__make} install install_prefix="$RPM_BUILD_ROOT"
+%{__make} install \
+	install_prefix=$RPM_BUILD_ROOT
 
 install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
@@ -183,7 +184,7 @@ rm -rf $RPM_BUILD_ROOT
 if [ -r /var/lock/subsys/nfs ]; then
 	/etc/rc.d/init.d/nfs restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to start nfs daemon."
+	echo "Run \"/etc/rc.d/init.d/nfs start\" to start NFS daemon."
 fi
 umask 022
 sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
