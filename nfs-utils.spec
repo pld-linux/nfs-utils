@@ -5,7 +5,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.4
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -23,6 +23,7 @@ Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
+Patch4:		%{name}-use-after-free.patch
 BuildRequires:	autoconf
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
@@ -135,6 +136,7 @@ dla zdalnego systemu plikСw.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 %{__autoconf}
