@@ -292,4 +292,4 @@ fi
 #%attr(755,root,root) %{_sbindir}/rpc.rquotad
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
 #%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
-#%{_mandir}/man8/rpc.rquotad.8*
+#%%{_mandir}/man8/rpc.rquotad.8*
