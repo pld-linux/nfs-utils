@@ -4,12 +4,12 @@ Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
 Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.6
-Release:	10
+Version:	1.0.7
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	f17e9983457e1cf61c37f0be4493fce6
+# Source0-md5:	8f863120261cd572ad320a9152581e11
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -142,12 +142,18 @@ dla zdalnego systemu plikСw.
 %patch4 -p1
 %patch5 -p1
 
+chmod u+w configure
+
 %build
 %{__autoconf}
+# nfsv4 needs libevent and libnfsidmap
+# gss needs nfsidmap.h
 %configure \
-	--with-statedir=/var/lib/nfs \
+	--disable-gss \
+	--disable-nfsv4 \
 	--enable-nfsv3 \
-	--enable-secure-statd
+	--enable-secure-statd \
+	--with-statedir=/var/lib/nfs
 %{__make} all
 
 %install
