@@ -4,12 +4,12 @@ Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
-Version:	1.0.6
-Release:	1
+Version:	1.0.5
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	f17e9983457e1cf61c37f0be4493fce6
+# Source0-md5:	ce48f1e17f1c49ca14dbd2b0e033d1b9
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -23,8 +23,6 @@ Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
-Patch4:		%{name}-nolibs.patch
-URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
@@ -47,7 +45,7 @@ NFS server.
 %description -l pl
 To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane z
 nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
-tradycyjny, dzia³aj±cy na poziomie u¿ytkownika serwer NFS.
+tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
 
 %description -l pt_BR
 O pacote nfs-utils provê os utilitários para o cliente e servidor NFS
@@ -88,7 +86,7 @@ host. This package is not needed to mount NFS volumes.
 Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
 Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym
 ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s±
-zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
+zamountowani na tym serverze. Ten pakiet nie jest konieczny do
 zamountowania zasobów NFS.
 
 %package lock
@@ -128,16 +126,15 @@ file systems.
 %description rquotad -l pl
 rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
 lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
-poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
+poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quote
 dla zdalnego systemu plików.
 
 %prep
-%setup -q -a1
+%setup  -q -a1
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
 
 %build
 %{__autoconf}
@@ -206,7 +203,7 @@ fi
 if [ -r /var/lock/subsys/nfsfs ]; then
 	/etc/rc.d/init.d/nfsfs restart >&2
 else
-	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumes."
+	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumens."
 fi
 
 %preun clients
@@ -271,6 +268,7 @@ fi
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
@@ -295,7 +293,6 @@ fi
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
 %files clients
 %defattr(644,root,root,755)
