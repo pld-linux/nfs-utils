@@ -3,7 +3,7 @@ Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Name:		nfs-utils
 Version:	0.3.3
-Release:	3
+Release:	4
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
