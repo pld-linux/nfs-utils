@@ -9,9 +9,8 @@ Source2:	nfs.init
 Source3:	nfslock.init
 Source4:	nfs.sysconfig
 Source5:	nfslock.sysconfig
-Patch0:		knfsd-paths.patch
-Patch1:		knfsd-non_root_build.patch
-Patch2:		knfsd-rquotad.patch
+Patch0:		nfs-utils-paths.patch
+Patch1:		nfs-utils-rquotad.patch
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Group:		Networking/Daemons
@@ -76,8 +75,7 @@ blokowania plików (file locking) poprzez NFS.
 %prep
 %setup  -q -a1
 %patch0 -p1
-#%patch1 -p1
-%patch2 -p1
+%patch1 -p1
 
 %build
 %configure \
