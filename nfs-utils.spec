@@ -1,8 +1,9 @@
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
+Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Name:		nfs-utils
 Version:	0.3.3
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -19,15 +20,15 @@ Source8:	nfsfs.init
 Patch0:		%{name}-paths.patch
 Patch1:		%{name}-time.patch
 Patch2:		%{name}-eepro-support.patch
-#Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Obsoletes:	nfsdaemon nfs-server knfsd
 Provides:	nfsdaemon
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
 BuildRequires:	autoconf
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 ExcludeArch:	armv4l
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+Conflicts:	kernel < 2.2.5
 
 %description
 This is the *new* kernel NFS server and related tools. It provides a
@@ -38,6 +39,10 @@ NFS server.
 To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane z
 nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
 tradycyjny, dzia³aj±cy na poziomie uzytkownika serwer NFS.
+
+%description -l pt_BR
+O pacote nfs-utils provê os utilitários para o cliente e servidor
+NFS do Linux.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
@@ -73,12 +78,12 @@ zamountowania zasobów NFS.
 %package lock
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
+#Requires:	kernel >= 2.2.5
 Group:		Networking
 Group(de):	Netzwerkwesen
 Group(es):	Red
 Group(pl):	Sieciowe
 Group(pt_BR):	Rede
-#Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Prereq:		rc-scripts
 Prereq:		/sbin/chkconfig
@@ -144,9 +149,9 @@ install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-touch $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 
-touch $RPM_BUILD_ROOT%{_sysconfdir}/exports
+> $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
+> $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
