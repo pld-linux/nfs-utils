@@ -194,16 +194,18 @@ install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,gssd,idmapd,svcgssd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
+%if %{with nfs4}
 echo ".so gssd.8"    >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
 echo ".so svcgssd.8" >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
-rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 echo ".so idmapd.conf.5" > $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
+%endif
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
@@ -302,14 +304,14 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
-%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%{?with_nfs4:%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf}
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
 
-%{_mandir}/man[58]/*idmap*
+%{?with_nfs4:%{_mandir}/man[58]/*idmap*}
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man8/exportfs.8*
