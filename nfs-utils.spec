@@ -1,7 +1,10 @@
 # TODO:
 #	- where to put idmapd binaries (server/client/both)?
 #	- gss daemons, main or separate package?
-
+#
+# Conditional build:
+%bcond_without	nfs4		# without NFSv4 support
+#
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
@@ -32,10 +35,10 @@ Patch5:		%{name}-usn36.patch
 Patch6:		%{name}-gss.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
-BuildRequires:	libevent-devel
-BuildRequires:	nfsidmap-devel
-BuildRequires:	heimdal-devel
+%{?with_nfs4:BuildRequires:	heimdal-devel}
+%{?with_nfs4:BuildRequires:	libevent-devel}
 BuildRequires:	libwrap-devel
+%{?with_nfs4:BuildRequires:	nfsidmap-devel}
 PreReq:		rc-scripts >= 0.4.0
 PreReq:		setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
@@ -160,8 +163,10 @@ echo -ne "all:\ndep:\ninstall:\ninstallman:\n" > support/gssapi/Makefile
 ln -sf %{_includedir}/gssapi.h support/include/gssapi/gssapi.h
 %{__autoconf}
 %configure \
-	--enable-gss \
-	--enable-nfsv4 \
+%if %{without nfs4}
+	--disable-gss \
+	--disable-nfsv4 \
+%endif
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs
@@ -286,7 +291,7 @@ fi
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
-%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%{?with_nfs4:%attr(755,root,root) %{_sbindir}/rpc.idmapd}
 %attr(755,root,root) %{_sbindir}/nfsstat
 %attr(755,root,root) %{_sbindir}/nhfsgraph
 %attr(755,root,root) %{_sbindir}/nhfsnums
@@ -297,12 +302,12 @@ fi
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
 
-%attr(660,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/idmapd.conf
-%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
+%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
 
 %{_mandir}/man[58]/*idmap*
 %{_mandir}/man5/exports.5*
@@ -323,12 +328,12 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.lockd
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/state
 
 %files clients
 %defattr(644,root,root,755)
@@ -340,5 +345,5 @@ fi
 #%defattr(644,root,root,755)
 #%attr(755,root,root) %{_sbindir}/rpc.rquotad
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
-#%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
+#%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
