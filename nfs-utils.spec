@@ -1,5 +1,5 @@
 # TODO:
-#	- where to put idmapd binaries (server/client/both)?
+#	- idmapd problematic (needed in both, server and client)
 #	- gss daemons, main or separate package?
 #
 # Conditional build:
@@ -32,13 +32,16 @@ Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
 Patch5:		%{name}-usn36.patch
-Patch6:		%{name}-gss.patch
+Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-2/nfs-utils-1.0.7-CITI_NFS4_ALL-2.dif
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
-%{?with_nfs4:BuildRequires:	heimdal-devel}
-%{?with_nfs4:BuildRequires:	libevent-devel}
+%if %{with nfs4}
+BuildRequires:	heimdal-devel
+BuildRequires:	libevent-devel
+BuildRequires:	librpcsecgss-devel
+BuildRequires:	nfsidmap-devel
+%endif
 BuildRequires:	libwrap-devel
-%{?with_nfs4:BuildRequires:	nfsidmap-devel}
 PreReq:		rc-scripts >= 0.4.0
 PreReq:		setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
@@ -158,12 +161,17 @@ dla zdalnego systemu plików.
 chmod u+w configure
 
 %build
-rm -rf support/gssapi/*
-echo -ne "all:\ndep:\ninstall:\ninstallman:\n" > support/gssapi/Makefile
-ln -sf %{_includedir}/gssapi.h support/include/gssapi/gssapi.h
+%if "%{_lib}" == "lib64"
+sed -i -e 's#/lib/#/%{_lib}/#g' configure.in
+%endif
+sed -i -e 's#libroken.a#libroken.so#g' configure.in
 %{__autoconf}
 %configure \
-%if %{without nfs4}
+%if %{with nfs4}
+	--enable-nfsv4 \
+	--enable-gss \
+	--with-krb5=%{_prefix} \
+%else
 	--disable-gss \
 	--disable-nfsv4 \
 %endif
@@ -175,7 +183,7 @@ ln -sf %{_includedir}/gssapi.h support/include/gssapi/gssapi.h
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
+	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs/rpc_pipefs}
 
 %{__make} install \
 	install_prefix=$RPM_BUILD_ROOT
@@ -293,7 +301,6 @@ fi
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
-%{?with_nfs4:%attr(755,root,root) %{_sbindir}/rpc.idmapd}
 %attr(755,root,root) %{_sbindir}/nfsstat
 %attr(755,root,root) %{_sbindir}/nhfsgraph
 %attr(755,root,root) %{_sbindir}/nhfsnums
@@ -303,15 +310,14 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
 
-%{?with_nfs4:%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf}
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
 
-%{?with_nfs4:%{_mandir}/man[58]/*idmap*}
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man8/exportfs.8*
@@ -324,6 +330,11 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
+
+%if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/rpc.svcgssd
+%{_mandir}/man8/*svcgss*
+%endif
 
 %files lock
 %defattr(644,root,root,755)
@@ -342,6 +353,16 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
+
+%if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%attr(755,root,root) %{_sbindir}/rpc.gssd
+%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%{_mandir}/man[58]/*idmap*
+%{_mandir}/man8/rpc.gssd*
+%{_mandir}/man8/gssd*
+%endif
+
 
 #%files rquotad
 #%defattr(644,root,root,755)
