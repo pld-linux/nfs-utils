@@ -39,6 +39,7 @@ case "$1" in
   start)
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
 	    if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
+		modprobe -s nfs > /dev/null 2>&1
 		if [ "$(kernelverser)" -ge "002006" ]; then
 		    grep -q rpc_pipefs /proc/filesystems && \
 		    ! grep -q rpc_pipefs /proc/mounts && \
