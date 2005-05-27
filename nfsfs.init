@@ -78,6 +78,7 @@ case "$1" in
 	    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
 		msg_stopping "NFS idmapd"
 		killproc rpc.cidmapd
+		rm -f /var/lock/subsys/idmapd
 	    fi
 	fi
 	rm -f /var/lock/subsys/nfsfs
