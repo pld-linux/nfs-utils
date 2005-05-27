@@ -1,6 +1,3 @@
-# TODO:
-#	- idmapd problematic (needed in both, server and client)
-#	- gss daemons, main or separate package?
 #
 # Conditional build:
 %bcond_without	nfs4		# without NFSv4 support
@@ -12,7 +9,7 @@ Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
 Version:	1.0.7
-Release:	2.1
+Release:	2.2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -40,6 +37,7 @@ BuildRequires:	heimdal-devel
 BuildRequires:	libevent-devel
 BuildRequires:	librpcsecgss-devel
 BuildRequires:	nfsidmap-devel
+Requires:	%{name}-common = %{version}-%{release}
 %endif
 BuildRequires:	libwrap-devel
 PreReq:		rc-scripts >= 0.4.0
@@ -88,6 +86,9 @@ Group:		Networking
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	psmisc
+%if %{with nfs4}
+Requires:	%{name}-common = %{version}-%{release}
+%endif
 Provides:	nfsclient
 Provides:	nfs-server-clients
 Obsoletes:	nfsclient
@@ -147,6 +148,17 @@ rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
 lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
+
+%package common
+Summary:	Common programs for NFS
+Summary(pl):	Wspólne programy do obs³ugi NFS
+Group:		Networking
+
+%description common
+Common programs for NFS.
+
+%description common -l pl
+Wspólne programy do obs³ugi NFS.
 
 %prep
 %setup -q -a1
@@ -355,10 +367,7 @@ fi
 %{_mandir}/man8/showmount.8*
 
 %if %{with nfs4}
-%attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(755,root,root) %{_sbindir}/rpc.gssd
-%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
-%{_mandir}/man[58]/*idmap*
 %{_mandir}/man8/rpc.gssd*
 %{_mandir}/man8/gssd*
 %endif
@@ -370,3 +379,11 @@ fi
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
 #%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
+
+%if %{with nfs4}
+%files common
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%{_mandir}/man[58]/*idmap*
+%endif
