@@ -64,8 +64,11 @@ case "$1" in
 			msg_starting "NFS mountd"
 			daemon rpc.mountd $RPCMOUNTOPTIONS
 			if (grep -q nfs4 /proc/filesystems); then
-			    msg_starting "NFS idmapd"
-			    daemon rpc.idmapd $RPCIDMAPOPTIONS
+			    if [ ! -f /var/lock/subsys/idmapd ]; then
+				msg_starting "NFS idmapd"
+				daemon rpc.idmapd $RPCIDMAPOPTIONS
+				[ $? = 0 ] && touch /var/lock/subsys/idmapd
+			    fi
 			    msg_starting "NFS svcgssd"
 			    daemon rpc.svcgssd $RPCSVCGSSOPTIONS
 			fi
@@ -93,8 +96,10 @@ case "$1" in
 			if (grep -q nfs4 /proc/filesystems); then
 			    msg_stopping "NFS svcgssd"
 			    killproc rpc.svcgssd
-			    msg_stopping "NFS idmapd"
-			    killproc rpc.idmapd
+			    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfsfs ]; then
+				msg_stopping "NFS idmapd"
+				killproc rpc.idmapd
+			    fi
 			fi
 			msg_stopping "NFS"
 			daemon /usr/sbin/exportfs -au

@@ -39,8 +39,10 @@ case "$1" in
   start)
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
 	    if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
-		msg_starting "NFS idmapd"
-		daemon rpc.cidmapd $RPCIDMAPOPTIONS
+		if [ ! -f /var/lock/subsys/idmapd ]; then
+		    msg_starting "NFS idmapd"
+		    daemon rpc.cidmapd $RPCIDMAPOPTIONS
+		fi
 		msg_starting "NFS gssd"
 		daemon rpc.gssd $RPCGSSOPTIONS
 	    fi
@@ -73,8 +75,10 @@ case "$1" in
 	if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
 	    msg_stopping "NFS gssd"
 	    killproc rpc.gssd
-	    msg_stopping "NFS idmapd"
-	    killproc rpc.cidmapd
+	    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
+		msg_stopping "NFS idmapd"
+		killproc rpc.cidmapd
+	    fi
 	fi
 	rm -f /var/lock/subsys/nfsfs
 	;;
