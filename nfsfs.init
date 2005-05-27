@@ -39,6 +39,11 @@ case "$1" in
   start)
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
 	    if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
+		if [ "$(kernelverser)" -ge "002006" ]; then
+		    grep -q rpc_pipefs /proc/filesystems && \
+		    ! grep -q rpc_pipefs /proc/mounts && \
+		    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+		fi
 		if [ ! -f /var/lock/subsys/idmapd ]; then
 		    msg_starting "NFS idmapd"
 		    daemon rpc.idmapd $RPCIDMAPOPTIONS
