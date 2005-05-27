@@ -56,7 +56,7 @@ case "$1" in
 			    ! grep -q nfsd /proc/mounts; then
 			    	run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 			    grep -q rpc_pipefs /proc/filesystems && \
-			    ! grep -q rpc_pipefs /proc/mounts; then
+			    ! grep -q rpc_pipefs /proc/mounts && \
 			    	run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 			fi
 			msg_starting "NFS"
