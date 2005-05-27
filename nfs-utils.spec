@@ -37,11 +37,11 @@ BuildRequires:	heimdal-devel
 BuildRequires:	libevent-devel
 BuildRequires:	librpcsecgss-devel
 BuildRequires:	nfsidmap-devel
-Requires:	%{name}-common = %{version}-%{release}
 %endif
 BuildRequires:	libwrap-devel
 PreReq:		rc-scripts >= 0.4.0
 PreReq:		setup >= 2.4.6-7
+Requires:       %{name}-common = %{version}-%{release}
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
 Requires(post):	sed
@@ -86,9 +86,7 @@ Group:		Networking
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	psmisc
-%if %{with nfs4}
 Requires:	%{name}-common = %{version}-%{release}
-%endif
 Provides:	nfsclient
 Provides:	nfs-server-clients
 Obsoletes:	nfsclient
@@ -321,9 +319,6 @@ fi
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
-%attr(755,root,root) %dir %{_var}/lib/nfs
-%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
-
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
@@ -380,9 +375,11 @@ fi
 #%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
 
-%if %{with nfs4}
 %files common
 %defattr(644,root,root,755)
+%attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%if %{with nfs4}
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %{_mandir}/man[58]/*idmap*
