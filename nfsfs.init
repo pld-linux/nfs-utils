@@ -49,7 +49,7 @@ case "$1" in
 		    daemon rpc.idmapd $RPCIDMAPOPTIONS
 		fi
 		msg_starting "NFS gssd"
-		daemon rpc.gssd $RPCGSSOPTIONS
+		daemon rpc.gssd -m $RPCGSSOPTIONS
 	    fi
 	    run_cmd "Mounting NFS filesystems" mount -a -t nfs
 	    touch /var/lock/subsys/nfsfs
