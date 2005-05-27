@@ -51,15 +51,15 @@ case "$1" in
 			daemon rpc.nfsd $RPCNFSDCOUNT
 		else
 			modprobe -s nfsd > /dev/null 2>&1
-			if [ "$(kernelverser)" -ge "002006" ] && \
+			if [ "$(kernelverser)" -ge "002006" ]; then
 			    grep -q nfsd /proc/filesystems && \
-			    ! grep -q nfsd /proc/mounts; then
+			    ! grep -q nfsd /proc/mounts && \
 			    	run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 			    grep -q rpc_pipefs /proc/filesystems && \
 			    ! grep -q rpc_pipefs /proc/mounts && \
 			    	run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 			fi
-			msg_starting "NFS"
+			msg_starting "NFS exportfs"
 			daemon /usr/sbin/exportfs -r
 			msg_starting "NFS mountd"
 			daemon rpc.mountd $RPCMOUNTOPTIONS
