@@ -9,7 +9,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.7
-Release:	2.2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -33,7 +33,7 @@ Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 %if %{with nfs4}
-BuildRequires:	heimdal-devel
+BuildRequires:	heimdal-devel >= 0.7
 BuildRequires:	libevent-devel
 BuildRequires:	librpcsecgss-devel
 BuildRequires:	nfsidmap-devel
