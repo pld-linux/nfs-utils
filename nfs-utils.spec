@@ -31,6 +31,7 @@ Patch4:		%{name}-nolibs.patch
 Patch5:		%{name}-usn36.patch
 Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-2/nfs-utils-1.0.7-CITI_NFS4_ALL-2.dif
 Patch7:		%{name}-heimdal-internals.patch
+Patch8:		%{name}-rquotad-curblocks.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 %if %{with nfs4}
@@ -169,6 +170,7 @@ Wspólne programy do obs³ugi NFS.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 chmod u+w configure
 
