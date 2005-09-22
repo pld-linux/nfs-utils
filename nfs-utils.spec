@@ -197,7 +197,7 @@ sed -i -e 's#libroken.a#libroken.so#g' configure.in
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs/rpc_pipefs}
+	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs/{rpc_pipefs,v4recovery}}
 
 %{__make} install \
 	install_prefix=$RPM_BUILD_ROOT
@@ -383,6 +383,7 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %dir %{_var}/lib/nfs
 %attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
 %if %{with nfs4}
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
