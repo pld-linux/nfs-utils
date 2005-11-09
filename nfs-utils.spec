@@ -1,3 +1,5 @@
+# TODO
+# - should unmount /proc/fs/nfsd at package uninstall (or in service nfs stop)
 #
 # Conditional build:
 %bcond_without	nfs4		# without NFSv4 support
