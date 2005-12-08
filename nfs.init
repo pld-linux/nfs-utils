@@ -141,7 +141,7 @@ case "$1" in
 		busy
 		/usr/sbin/exportfs
 		[ $? -ne 0 ] && RETVAL=7
-		[ $RETVAL -eq 0 ] && ok || died	
+		[ $RETVAL -eq 0 ] && ok || died
 	else
 		msg_not_running "NFS" >&2
 		exit 7
