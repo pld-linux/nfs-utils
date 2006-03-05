@@ -31,7 +31,7 @@ Patch2:		%{name}-eepro-support.patch
 Patch3:		%{name}-install.patch
 Patch4:		%{name}-nolibs.patch
 Patch5:		%{name}-usn36.patch
-Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-2/nfs-utils-1.0.7-CITI_NFS4_ALL-2.dif
+Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-2/%{name}-1.0.7-CITI_NFS4_ALL-2.dif
 Patch7:		%{name}-heimdal-internals.patch
 Patch8:		%{name}-rquotad-curblocks.patch
 URL:		http://nfs.sourceforge.net/
@@ -43,17 +43,17 @@ BuildRequires:	librpcsecgss-devel
 BuildRequires:	nfsidmap-devel
 %endif
 BuildRequires:	libwrap-devel
-PreReq:		rc-scripts >= 0.4.0
-PreReq:		setup >= 2.4.6-7
-Requires:       %{name}-common = %{version}-%{release}
-Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
-Requires(post):	sed
+Requires(post):	sed >= 4.0
+Requires(post,preun):	/sbin/chkconfig
+Requires:	%{name}-common = %{version}-%{release}
 Requires:	portmap >= 4.0
+Requires:	rc-scripts >= 0.4.0
+Requires:	setup >= 2.4.6-7
 Provides:	nfsdaemon
-Obsoletes:	nfsdaemon
 Obsoletes:	knfsd
 Obsoletes:	nfs-server
+Obsoletes:	nfsdaemon
 Conflicts:	kernel < 2.2.5
 ExcludeArch:	armv4l
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -87,15 +87,15 @@ do Linux.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
-PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
-Requires:	psmisc
 Requires:	%{name}-common = %{version}-%{release}
-Provides:	nfsclient
+Requires:	psmisc
+Requires:	rc-scripts
 Provides:	nfs-server-clients
-Obsoletes:	nfsclient
-Obsoletes:	nfs-server-clients
+Provides:	nfsclient
 Obsoletes:	knfsd-clients
+Obsoletes:	nfs-server-clients
+Obsoletes:	nfsclient
 
 %description clients
 The nfs-server-clients package contains the showmount program.
@@ -115,13 +115,13 @@ zamountowania zasobów NFS.
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 Group:		Networking
-PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
+Requires:	rc-scripts
 Provides:	nfslockd
-Obsoletes:	nfslockd
 Obsoletes:	knfsd-lock
+Obsoletes:	nfslockd
 
 %description lock
 The nfs-lock pacage contains programs which support the NFS file lock.
@@ -135,8 +135,8 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
-PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
+Requires:	rc-scripts
 Obsoletes:	quota-rquotad
 
 %description rquotad
@@ -204,7 +204,7 @@ install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 %{__make} install \
 	install_prefix=$RPM_BUILD_ROOT
 
-install utils/idmapd/idmapd.conf	$RPM_BUILD_ROOT/etc
+install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}
 install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
@@ -243,69 +243,43 @@ mv -f nfs-copy html
 rm -rf $RPM_BUILD_ROOT
 
 %post
+sed -i -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd
 /sbin/chkconfig --add nfs
-if [ -r /var/lock/subsys/nfs ]; then
-	/etc/rc.d/init.d/nfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to start NFS daemon."
-fi
-umask 022
-sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
-mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
+%service nfs restart "NFS daemon"
 
 %preun
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfs ]; then
-		/etc/rc.d/init.d/nfs stop >&2
-	fi
+	%service nfs stop
 	/sbin/chkconfig --del nfs
 fi
 
 %post clients
 /sbin/chkconfig --add nfsfs
-if [ -r /var/lock/subsys/nfsfs ]; then
-	/etc/rc.d/init.d/nfsfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumes."
-fi
+%service nfsfs restart
 
 %preun clients
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfsfs ]; then
-		/etc/rc.d/init.d/nfsfs stop >&2
-	fi
+	%service nfsfs stop
 	/sbin/chkconfig --del nfsfs
 fi
 
 %post lock
 /sbin/chkconfig --add nfslock
-if [ -r /var/lock/subsys/nfslock ]; then
-	/etc/rc.d/init.d/nfslock restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfslock start\" to start nfslock daemon."
-fi
+%service nfslock restart "nfslock daemon"
 
 %preun lock
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfslock ]; then
-		/etc/rc.d/init.d/nfslock stop >&2
-	fi
+	%service nfslock stop
 	/sbin/chkconfig --del nfslock
 fi
 
 %post rquotad
 /sbin/chkconfig --add rquotad
-if [ -r /var/lock/subsys/rquotad ]; then
-	/etc/rc.d/init.d/rquotad restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start NFS quota daemon."
-fi
+%service rquotad restart "NFS quota daemon"
 
 %preun rquotad
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/rquotad ]; then
-		/etc/rc.d/init.d/rquotad stop >&2
-	fi
+	%service rquotad stop
 	/sbin/chkconfig --del rquotad
 fi
 
@@ -372,7 +346,6 @@ fi
 %{_mandir}/man8/rpc.gssd*
 %{_mandir}/man8/gssd*
 %endif
-
 
 #%files rquotad
 #%defattr(644,root,root,755)
