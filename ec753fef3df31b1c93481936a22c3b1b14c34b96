@@ -1,0 +1,7 @@
+- rel 2
+- added security patch
+  BUG(redhat RHSA-2003:206-01):
+    buffer overflow bug in nfs-utils version 1.0.3
+    and earlier.  This bug could be exploited by an attacker,
+    causing a remote Denial of Service (crash).
+    It is not believed that this bug could lead to remote arbitrary code execution.
