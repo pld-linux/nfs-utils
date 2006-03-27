@@ -39,8 +39,8 @@ BuildRequires:	autoconf
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
 BuildRequires:	libevent-devel
-BuildRequires:	librpcsecgss-devel
 BuildRequires:	libnfsidmap-devel
+BuildRequires:	librpcsecgss-devel
 %endif
 BuildRequires:	libwrap-devel
 Requires(post):	fileutils
