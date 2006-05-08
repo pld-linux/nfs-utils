@@ -1,6 +1,0 @@
-# Define nice level for idmapd daemon
-SERVICE_RUN_NICE_LEVEL="+0"
-
-# Options for rpc.idmapd
-# See rpc.statd(8) for valid options.
-IDMAPDOPTS=
