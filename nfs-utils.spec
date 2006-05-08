@@ -30,6 +30,12 @@ Patch2:		%{name}-install.patch
 Patch3:		%{name}-nolibs.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-heimdal-internals.patch
+# Bugfixes (no EXPERIMENTAL features) from
+# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.8-1/
+Patch6:		%{name}-1.0.8-001-gssd_check_gssapi_early.dif
+Patch7:		%{name}-1.0.8-002-gssd_acquire_cred_desired_mechs.dif
+Patch8:		%{name}-1.0.8-003-gssd_use_kernel_supported_enctypes.dif
+Patch9:		%{name}-1.0.8-005-svcgssd_nobody_name_mapping.dif
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -167,6 +173,10 @@ Wspólne programy do obs³ugi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
 
 %build
 %if "%{_lib}" == "lib64"
