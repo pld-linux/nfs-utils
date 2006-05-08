@@ -1,3 +1,7 @@
+#
+# Conditional build:
+%bcond_without	nfs4		# without NFSv4 support
+#
 Summary:	Kernel NFS server
 Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
 Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
@@ -5,7 +9,7 @@ Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
 Version:	1.0.8
-Release:	0.1
+Release:	0.4
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -19,21 +23,22 @@ Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
-Source9:	idmapd.sysconfig
-Source10:	idmapd.init
 Patch0:		%{name}-time.patch
 Patch1:		%{name}-eepro-support.patch
 Patch2:		%{name}-install.patch
 Patch3:		%{name}-nolibs.patch
 Patch4:		%{name}-heimdal.patch
+Patch5:		%{name}-heimdal-internals.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
-# GSS requires devel snap
-#BuildRequires:	heimdal-static
+%if %{with nfs4}
+BuildRequires:	heimdal-static
 BuildRequires:	libevent-devel
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.10
+%endif
+Requires:	%{name}-common = %{version}-%{release}
 Requires:	rc-scripts >= 0.4.0
 Requires:	setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
@@ -79,6 +84,7 @@ Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
+Requires:	%{name}-common = %{version}-%{release}
 Requires:	psmisc
 Provides:	nfsclient
 Provides:	nfs-server-clients
@@ -140,24 +146,16 @@ lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
 
-%package idmapd
-Summary:	NFSv4 ID <-> Name Mapper
-Summary(pl):	Demon mapuj±cy NFSv4 ID na nazwy
-Group:		Networking/Daemons
-PreReq:		rc-scripts
-Requires(post,preun):	/sbin/chkconfig
+%package common                                                                       
+Summary:	Common programs for NFS
+Summary(pl):	Wspólne programy do obs³ugi NFS
+Group:		Networking
 
-%description idmapd
-idmapd is the NFSv4 ID <-> name mapping daemon.  It provides
-functionality to the NFSv4 kernel client and server, to which
-it communicates via upcalls, by translating user and group IDs
-to names, and vice versa.         
+%description common
+Common programs for NFS.
 
-%description idmapd -l pl
-idmapd jest serwerem rpc mapuj±cym NFSv4 ID na nazwy.
-Dostarcza kernelowemu klientowi i serwerowi NFSv4 funkcjonalno¶æ
-pozwalaj±c± na komunikacjê z kernelem t³umacz±c numery u¿ytkowników
-i grup na nazwy, i vice versa.
+%description common -l pl
+Wspólne programy do obs³ugi NFS.
 
 %prep
 %setup -q -a1
@@ -166,19 +164,25 @@ i grup na nazwy, i vice versa.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 %{__aclocal} -I aclocal
 %{__autoconf}
 %{__automake}
-# GSS requires devel heimdal snap
 %configure \
-	--disable-gss \
-	--with-krb5=/usr \
+%if %{with nfs4}
+	--enable-gss \
+	--with-krb5=%{_prefix} \
 	--enable-nfsv4 \
+%else
+	--disable-gss \
+	--disable-nfsv4 \
+%endif
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs
+
 %{__make} all
 
 %install
@@ -197,22 +201,26 @@ install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
-install %{SOURCE10} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/idmapd
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,idmapd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,svcgssd,gssd,idmapd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
-echo ".so idmapd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
+%if %{with nfs4}
+echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
+echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
+echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
+echo ".so idmapd.conf.5" > $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
+%endif
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
@@ -328,6 +336,10 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
+%if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/rpc.svcgssd
+%{_mandir}/man8/*svcgss*
+%endif
 
 %files lock
 %defattr(644,root,root,755)
@@ -347,6 +359,12 @@ fi
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
+%if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/rpc.gssd
+%{_mandir}/man8/rpc.gssd*
+%{_mandir}/man8/gssd*
+%endif
+
 #%files rquotad
 #%defattr(644,root,root,755)
 #%attr(755,root,root) %{_sbindir}/rpc.rquotad
@@ -354,12 +372,14 @@ fi
 #%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
 
-%files idmapd
+%files common
 %defattr(644,root,root,755)
-%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/idmapd.conf
+%attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
+%if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/gss_*
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
-%attr(754,root,root) /etc/rc.d/init.d/idmapd
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/idmapd
-%{_mandir}/man5/idmapd.conf.5*
-%{_mandir}/man8/idmapd.8*
-%{_mandir}/man8/rpc.idmapd.8*
+%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%{_mandir}/man[58]/*idmap*
+%endif
