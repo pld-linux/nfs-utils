@@ -82,7 +82,7 @@ do Linux.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	psmisc
@@ -110,7 +110,7 @@ zamountowania zasobów NFS.
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 Group:		Networking
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
@@ -130,7 +130,7 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Obsoletes:	quota-rquotad
 
