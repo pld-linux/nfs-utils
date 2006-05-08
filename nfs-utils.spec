@@ -39,17 +39,18 @@ BuildRequires:	libevent-devel
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.10
 %endif
+BuildRequires:	libwrap-devel
+BuildRequires:	sed >= 4.0
+Requires(post):	fileutils
+Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
+Requires:	portmap >= 4.0
 Requires:	rc-scripts >= 0.4.0
 Requires:	setup >= 2.4.6-7
-Requires(post,preun):	/sbin/chkconfig
-Requires(post):	fileutils
-Requires(post):	sed
-Requires:	portmap >= 4.0
 Provides:	nfsdaemon
-Obsoletes:	nfsdaemon
 Obsoletes:	knfsd
 Obsoletes:	nfs-server
+Obsoletes:	nfsdaemon
 Conflicts:	kernel < 2.2.5
 ExcludeArch:	armv4l
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -83,15 +84,15 @@ do Linux.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
-Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	psmisc
-Provides:	nfsclient
+Requires:	rc-scripts
 Provides:	nfs-server-clients
-Obsoletes:	nfsclient
-Obsoletes:	nfs-server-clients
+Provides:	nfsclient
 Obsoletes:	knfsd-clients
+Obsoletes:	nfs-server-clients
+Obsoletes:	nfsclient
 
 %description clients
 The nfs-server-clients package contains the showmount program.
@@ -111,13 +112,13 @@ zamountowania zasobów NFS.
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 Group:		Networking
-Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
+Requires:	rc-scripts
 Provides:	nfslockd
-Obsoletes:	nfslockd
 Obsoletes:	knfsd-lock
+Obsoletes:	nfslockd
 
 %description lock
 The nfs-lock pacage contains programs which support the NFS file lock.
@@ -131,8 +132,8 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
-Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
+Requires:	rc-scripts
 Obsoletes:	quota-rquotad
 
 %description rquotad
@@ -147,7 +148,7 @@ lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
 
-%package common                                                                       
+%package common
 Summary:	Common programs for NFS
 Summary(pl):	Wspólne programy do obs³ugi NFS
 Group:		Networking
@@ -239,66 +240,41 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 /sbin/chkconfig --add nfs
-if [ -r /var/lock/subsys/nfs ]; then
-	/etc/rc.d/init.d/nfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfs start\" to start NFS daemon."
-fi
-umask 022
+%service nfs restart "NFS daemon"
 
 %preun
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfs ]; then
-		/etc/rc.d/init.d/nfs stop >&2
-	fi
+	%service nfs stop
 	/sbin/chkconfig --del nfs
 fi
 
 %post clients
 /sbin/chkconfig --add nfsfs
-if [ -r /var/lock/subsys/nfsfs ]; then
-	/etc/rc.d/init.d/nfsfs restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfsfs start\" to mount all NFS volumes."
-fi
+%service nfsfs restart
 
 %preun clients
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfsfs ]; then
-		/etc/rc.d/init.d/nfsfs stop >&2
-	fi
+	%service nfsfs stop
 	/sbin/chkconfig --del nfsfs
 fi
 
 %post lock
 /sbin/chkconfig --add nfslock
-if [ -r /var/lock/subsys/nfslock ]; then
-	/etc/rc.d/init.d/nfslock restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/nfslock start\" to start nfslock daemon."
-fi
+%service nfslock restart "nfslock daemon"
 
 %preun lock
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/nfslock ]; then
-		/etc/rc.d/init.d/nfslock stop >&2
-	fi
+	%service nfslock stop
 	/sbin/chkconfig --del nfslock
 fi
 
 %post rquotad
 /sbin/chkconfig --add rquotad
-if [ -r /var/lock/subsys/rquotad ]; then
-	/etc/rc.d/init.d/rquotad restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/rquotad start\" to start NFS quota daemon."
-fi
+%service rquotad restart "NFS quota daemon"
 
 %preun rquotad
 if [ "$1" = "0" ]; then
-	if [ -r /var/lock/subsys/rquotad ]; then
-		/etc/rc.d/init.d/rquotad stop >&2
-	fi
+	%service rquotad stop
 	/sbin/chkconfig --del rquotad
 fi
 
@@ -318,15 +294,11 @@ fi
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
-%attr(755,root,root) %dir %{_var}/lib/nfs
-%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
-%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
-
-%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
+%attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
 
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
@@ -350,17 +322,17 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.lockd
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
-%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
+%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/state
 
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
-%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsclient
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsclient
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
@@ -374,7 +346,7 @@ fi
 #%defattr(644,root,root,755)
 #%attr(755,root,root) %{_sbindir}/rpc.rquotad
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
-#%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
+#%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
 
 %files common
