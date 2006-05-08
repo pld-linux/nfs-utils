@@ -4,12 +4,12 @@ Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
-Version:	1.0.7
-Release:	2
+Version:	1.0.8
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	8f863120261cd572ad320a9152581e11
+# Source0-md5:	74fc2dd04b40c9d619ca41d3787ef8db
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -19,16 +19,23 @@ Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
-Patch0:		%{name}-paths.patch
-Patch1:		%{name}-time.patch
-Patch2:		%{name}-eepro-support.patch
-Patch3:		%{name}-install.patch
-Patch4:		%{name}-nolibs.patch
-Patch5:		%{name}-usn36.patch
+Source9:	idmapd.sysconfig
+Source10:	idmapd.init
+Patch0:		%{name}-time.patch
+Patch1:		%{name}-eepro-support.patch
+Patch2:		%{name}-install.patch
+Patch3:		%{name}-nolibs.patch
+Patch4:		%{name}-heimdal.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
-PreReq:		rc-scripts >= 0.4.0
-PreReq:		setup >= 2.4.6-7
+BuildRequires:	automake
+# GSS requires devel snap
+#BuildRequires:	heimdal-static
+BuildRequires:	libevent-devel
+BuildRequires:	libnfsidmap-devel
+BuildRequires:	librpcsecgss-devel >= 0.10
+Requires:	rc-scripts >= 0.4.0
+Requires:	setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
 Requires(post):	sed
@@ -133,6 +140,25 @@ lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
 
+%package idmapd
+Summary:	NFSv4 ID <-> Name Mapper
+Summary(pl):	Demon mapuj±cy NFSv4 ID na nazwy
+Group:		Networking/Daemons
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
+
+%description idmapd
+idmapd is the NFSv4 ID <-> name mapping daemon.  It provides
+functionality to the NFSv4 kernel client and server, to which
+it communicates via upcalls, by translating user and group IDs
+to names, and vice versa.         
+
+%description idmapd -l pl
+idmapd jest serwerem rpc mapuj±cym NFSv4 ID na nazwy.
+Dostarcza kernelowemu klientowi i serwerowi NFSv4 funkcjonalno¶æ
+pozwalaj±c± na komunikacjê z kernelem t³umacz±c numery u¿ytkowników
+i grup na nazwy, i vice versa.
+
 %prep
 %setup -q -a1
 %patch0 -p1
@@ -140,17 +166,16 @@ dla zdalnego systemu plików.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
-
-chmod u+w configure
 
 %build
+%{__aclocal} -I aclocal
 %{__autoconf}
-# nfsv4 needs libevent and libnfsidmap
-# gss needs nfsidmap.h
+%{__automake}
+# GSS requires devel heimdal snap
 %configure \
 	--disable-gss \
-	--disable-nfsv4 \
+	--with-krb5=/usr \
+	--enable-nfsv4 \
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs
@@ -159,35 +184,40 @@ chmod u+w configure
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs}
+	$RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig} \
+	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery}
 
 %{__make} install \
-	install_prefix=$RPM_BUILD_ROOT
+	DESTDIR=$RPM_BUILD_ROOT
 
 install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
+install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
+
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
+install %{SOURCE10} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
+install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/idmapd
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,idmapd}.8
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
+echo ".so idmapd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-mv -f nfs/*.ps ./
 mv -f nfs html
 
 %clean
@@ -262,7 +292,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc ChangeLog README *.ps html
+%doc ChangeLog README html
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
@@ -277,6 +307,8 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
 %attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
 
 %attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
 %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
@@ -321,3 +353,13 @@ fi
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
 #%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
+
+%files idmapd
+%defattr(644,root,root,755)
+%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/idmapd.conf
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%attr(754,root,root) /etc/rc.d/init.d/idmapd
+%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/idmapd
+%{_mandir}/man5/idmapd.conf.5*
+%{_mandir}/man8/idmapd.8*
+%{_mandir}/man8/rpc.idmapd.8*
