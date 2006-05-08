@@ -9,7 +9,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.8
-Release:	0.7
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -245,8 +245,6 @@ else
 	echo "Run \"/etc/rc.d/init.d/nfs start\" to start NFS daemon."
 fi
 umask 022
-sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
-mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 
 %preun
 if [ "$1" = "0" ]; then
