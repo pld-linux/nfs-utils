@@ -1,0 +1,8 @@
+# Set it to "yes" if you plan to mount NFSv4 shares
+NFSV4="no"
+
+# Options for NFSv4 ID <-> Name Mapper (idmapd)
+#RPCIDMAPOPTIONS=
+
+# Options for NFSv4 rpcsec_gss daemon
+#RPCGSSOPTIONS=
