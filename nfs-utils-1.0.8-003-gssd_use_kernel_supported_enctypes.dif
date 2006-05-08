@@ -1,0 +1,309 @@
+
+
+This patch replaces a hard-coded list with a function to obtain
+the Kerberos encryption types that the kernel's rpcsec_gss code
+can support.  Defaults to old behavior if kernel does not supply
+information.
+
+
+---
+
+ nfs-utils-1.0.8-kwc/utils/gssd/gssd.c      |    2 
+ nfs-utils-1.0.8-kwc/utils/gssd/krb5_util.c |  226 ++++++++++++++++++++++-------
+ nfs-utils-1.0.8-kwc/utils/gssd/krb5_util.h |    2 
+ 3 files changed, 180 insertions(+), 50 deletions(-)
+
+diff -puN utils/gssd/gssd.c~gssd_use_kernel_supported_enctypes utils/gssd/gssd.c
+--- nfs-utils-1.0.8/utils/gssd/gssd.c~gssd_use_kernel_supported_enctypes	2006-04-20 12:29:03.828097000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/gssd.c	2006-04-20 12:29:03.869097000 -0400
+@@ -157,6 +157,8 @@ main(int argc, char *argv[])
+ 
+ 	/* Process keytab file and get machine credentials */
+ 	gssd_refresh_krb5_machine_creds();
++	/* Determine Kerberos information from the kernel */
++	gssd_obtain_kernel_krb5_info();
+ 
+ 	gssd_run();
+ 	printerr(0, "gssd_run returned!\n");
+diff -puN utils/gssd/krb5_util.c~gssd_use_kernel_supported_enctypes utils/gssd/krb5_util.c
+--- nfs-utils-1.0.8/utils/gssd/krb5_util.c~gssd_use_kernel_supported_enctypes	2006-04-20 12:29:03.841097000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/krb5_util.c	2006-04-20 12:29:03.885097000 -0400
+@@ -97,6 +97,7 @@
+ #include "config.h"
+ #include <sys/param.h>
+ #include <rpc/rpc.h>
++#include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/socket.h>
+ #include <arpa/inet.h>
+@@ -105,6 +106,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <dirent.h>
++#include <fcntl.h>
+ #include <errno.h>
+ #include <time.h>
+ #include <gssapi/gssapi.h>
+@@ -123,6 +125,10 @@
+ /* Global list of principals/cache file names for machine credentials */
+ struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
+ 
++/* Encryption types supported by the kernel rpcsec_gss code */
++int num_krb5_enctypes = 0;
++krb5_enctype *krb5_enctypes = NULL;
++
+ /*==========================*/
+ /*===  Internal routines ===*/
+ /*==========================*/
+@@ -261,56 +267,6 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ }
+ 
+ 
+-#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+-/*
+- * this routine obtains a credentials handle via gss_acquire_cred()
+- * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
+- * types negotiated.
+- *
+- * XXX Should call some function to determine the enctypes supported
+- * by the kernel. (Only need to do that once!)
+- *
+- * Returns:
+- *	0 => all went well
+- *     -1 => there was an error
+- */
+-
+-int
+-limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
+-{
+-	u_int maj_stat, min_stat;
+-	gss_cred_id_t credh;
+-	gss_OID_set_desc  desired_mechs;
+-	krb5_enctype enctypes[] = { ENCTYPE_DES_CBC_CRC };
+-	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
+-
+-	/* We only care about getting a krb5 cred */
+-	desired_mechs.count = 1;
+-	desired_mechs.elements = &krb5oid;
+-
+-	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
+-				    &desired_mechs, GSS_C_INITIATE,
+-				    &credh, NULL, NULL);
+-
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_acquire_cred",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-
+-	maj_stat = gss_set_allowable_enctypes(&min_stat, credh, &krb5oid,
+-					     num_enctypes, &enctypes);
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_set_allowable_enctypes",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-	sec->cred = credh;
+-
+-	return 0;
+-}
+-#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
+-
+ /*
+  * Obtain credentials via a key in the keytab given
+  * a keytab handle and a gssd_k5_kt_princ structure.
+@@ -608,6 +564,56 @@ gssd_set_krb5_ccache_name(char *ccname)
+ #endif
+ }
+ 
++/*
++ * Parse the supported encryption type information
++ */
++static int
++parse_enctypes(char *enctypes)
++{
++	int n = 0;
++	char *curr, *comma;
++	int i;
++
++	/* Just in case this ever gets called more than once */
++	if (krb5_enctypes != NULL) {
++		free(krb5_enctypes);
++		krb5_enctypes = NULL;
++		num_krb5_enctypes = 0;
++	}
++
++	/* count the number of commas */
++	for (curr = enctypes; curr && *curr != '\0'; curr = ++comma) {
++		comma = strchr(curr, ',');
++		if (comma != NULL)
++			n++;
++		else
++			break;
++	}
++	/* If no more commas and we're not at the end, there's one more value */
++	if (*curr != '\0')
++		n++;
++
++	/* Empty string, return an error */
++	if (n == 0)
++		return ENOENT;
++
++	/* Allocate space for enctypes array */
++	if ((krb5_enctypes = (int *) calloc(n, sizeof(int))) == NULL) {
++		return ENOMEM;
++	}
++
++	/* Now parse each value into the array */
++	for (curr = enctypes, i = 0; curr && *curr != '\0'; curr = ++comma) {
++		krb5_enctypes[i++] = atoi(curr);
++		comma = strchr(curr, ',');
++		if (comma == NULL)
++			break;
++	}
++
++	num_krb5_enctypes = n;
++	return 0;
++}
++
+ /*==========================*/
+ /*===  External routines ===*/
+ /*==========================*/
+@@ -859,3 +865,123 @@ gssd_destroy_krb5_machine_creds(void)
+ 	krb5_free_context(context);
+ }
+ 
++#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
++/*
++ * this routine obtains a credentials handle via gss_acquire_cred()
++ * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
++ * types negotiated.
++ *
++ * Returns:
++ *	0 => all went well
++ *     -1 => there was an error
++ */
++
++int
++limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
++{
++	u_int maj_stat, min_stat;
++	gss_cred_id_t credh;
++	gss_OID_set_desc  desired_mechs;
++	krb5_enctype enctypes[] = {ENCTYPE_DES_CBC_CRC};
++	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
++
++	/* We only care about getting a krb5 cred */
++	desired_mechs.count = 1;
++	desired_mechs.elements = &krb5oid;
++
++	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
++				    &desired_mechs, GSS_C_INITIATE,
++				    &credh, NULL, NULL);
++
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_acquire_cred",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++
++	/*
++	 * If we failed for any reason to produce global
++	 * list of supported enctypes, use local default here.
++	 */
++	if (krb5_enctypes == NULL)
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_enctypes, &enctypes);
++	else
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_krb5_enctypes,
++					krb5_enctypes);
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_set_allowable_enctypes",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++	sec->cred = credh;
++
++	return 0;
++}
++#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
++
++/*
++ * Obtain supported enctypes from kernel.
++ * Set defaults if info is not available.
++ */
++void
++gssd_obtain_kernel_krb5_info(void)
++{
++	char enctype_file_name[128];
++	char buf[1024];
++	char enctypes[128];
++	char extrainfo[1024];
++	int fd;
++	int use_default_enctypes = 0;
++	int nbytes, numfields;
++	char default_enctypes[] = "1,3,2";
++	int code;
++
++	snprintf(enctype_file_name, sizeof(enctype_file_name),
++		 "%s/%s", pipefsdir, "krb5_info");
++
++	if ((fd = open(enctype_file_name, O_RDONLY)) == -1) {
++		printerr(1, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Unable to open '%s'. Unable to determine "
++			 "Kerberos encryption types supported by the "
++			 "kernel; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	if ((nbytes = read(fd, buf, sizeof(buf))) == -1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Error reading Kerberos encryption type "
++			 "information file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	numfields = sscanf(buf, "enctypes: %s\n%s", enctypes, extrainfo);
++	if (numfields < 1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "error parsing Kerberos encryption type "
++			 "information from file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	if (numfields > 1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Extra information, '%s', from '%s' is ignored\n",
++			 enctype_file_name, extrainfo);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++  do_the_parse:
++  	if (use_default_enctypes)
++		strcpy(enctypes, default_enctypes);
++
++	if ((code = parse_enctypes(enctypes)) != 0) {
++		printerr(0, "ERROR: gssd_obtain_kernel_krb5_info: "
++			 "parse_enctypes%s failed with code %d\n",
++			 use_default_enctypes ? " (with default enctypes)" : "",
++			 code);
++	}
++}
+diff -puN utils/gssd/krb5_util.h~gssd_use_kernel_supported_enctypes utils/gssd/krb5_util.h
+--- nfs-utils-1.0.8/utils/gssd/krb5_util.h~gssd_use_kernel_supported_enctypes	2006-04-20 12:29:03.852097000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/krb5_util.h	2006-04-20 12:29:03.895099000 -0400
+@@ -22,6 +22,8 @@ int  gssd_refresh_krb5_machine_creds(voi
+ void gssd_free_krb5_machine_cred_list(char **list);
+ void gssd_setup_krb5_machine_gss_ccache(char *servername);
+ void gssd_destroy_krb5_machine_creds(void);
++void gssd_obtain_kernel_krb5_info(void);
++
+ 
+ #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+ int limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid);
+
+_

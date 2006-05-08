@@ -1,0 +1,42 @@
+
+
+Temporary patch to do default mapping if we get an error while trying to
+map a gss principal to the appropriate uid/gid.  This currently returns
+hardcoded values.  This may be correct, or we may need to try and figure
+out the correct values to match the anonuid/anongid for the export.
+
+
+---
+
+ nfs-utils-1.0.8-kwc/utils/gssd/svcgssd_proc.c |   17 +++++++++++++++--
+ 1 files changed, 15 insertions(+), 2 deletions(-)
+
+diff -puN utils/gssd/svcgssd_proc.c~svcgssd_nobody_name_mapping utils/gssd/svcgssd_proc.c
+--- nfs-utils-1.0.8/utils/gssd/svcgssd_proc.c~svcgssd_nobody_name_mapping	2006-04-20 12:29:28.104273000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/svcgssd_proc.c	2006-04-20 12:29:28.119273000 -0400
+@@ -220,8 +220,21 @@ get_ids(gss_name_t client_name, gss_OID 
+ 	nfs4_init_name_mapping(NULL); /* XXX: should only do this once */
+ 	res = nfs4_gss_princ_to_ids(secname, sname, &uid, &gid);
+ 	if (res < 0) {
+-		printerr(0, "WARNING: get_ids: unable to map "
+-			"name '%s' to a uid\n", sname);
++		/*
++		 * -ENOENT means there was no mapping, any other error
++		 * value means there was an error trying to do the
++		 * mapping.
++		 */
++		if (res == -ENOENT) {
++			cred->cr_uid = -2;	/* XXX */
++			cred->cr_gid = -2;	/* XXX */
++			cred->cr_groups[0] = -2;/* XXX */
++			cred->cr_ngroups = 1;
++			res = 0;
++			goto out_free;
++		}
++		printerr(0, "WARNING: get_ids: failed to map name '%s' "
++			"to uid/gid: %s\n", sname, strerror(-res));
+ 		goto out_free;
+ 	}
+ 	cred->cr_uid = uid;
+
+_

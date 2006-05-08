@@ -1,0 +1,88 @@
+
+
+Do a call to determine mechanisms supported by the gssapi library early.
+This allows us to discover early in case the gssapi library is somehow
+misconfigured.  We can bail out early and give a meaningful message
+rather than getting errors on each attempt at a context negotiation.
+
+
+---
+
+ nfs-utils-1.0.8-kwc/utils/gssd/gss_util.c |   25 +++++++++++++++++++++++++
+ nfs-utils-1.0.8-kwc/utils/gssd/gss_util.h |    1 +
+ nfs-utils-1.0.8-kwc/utils/gssd/gssd.c     |    3 +++
+ nfs-utils-1.0.8-kwc/utils/gssd/svcgssd.c  |    5 +++++
+ 4 files changed, 34 insertions(+)
+
+diff -puN utils/gssd/gssd.c~gssd_check_gssapi_early utils/gssd/gssd.c
+--- nfs-utils-1.0.8/utils/gssd/gssd.c~gssd_check_gssapi_early	2006-04-20 12:09:08.589042000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/gssd.c	2006-04-20 12:33:46.924464000 -0400
+@@ -145,6 +145,9 @@ main(int argc, char *argv[])
+ 			    "support setting debug level\n");
+ #endif
+ 
++	if (gssd_check_mechs() != 0)
++		errx(1, "Problem with gssapi library");
++
+ 	if (!fg && daemon(0, 0) < 0)
+ 		errx(1, "fork");
+ 
+diff -puN utils/gssd/gss_util.c~gssd_check_gssapi_early utils/gssd/gss_util.c
+--- nfs-utils-1.0.8/utils/gssd/gss_util.c~gssd_check_gssapi_early	2006-04-20 12:09:08.600037000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/gss_util.c	2006-04-20 12:09:08.635002000 -0400
+@@ -224,3 +224,28 @@ gssd_acquire_cred(char *server_name)
+ 
+ 	return (maj_stat == GSS_S_COMPLETE);
+ }
++
++int gssd_check_mechs(void)
++{
++	u_int32_t maj_stat, min_stat;
++	gss_OID_set supported_mechs = GSS_C_NO_OID_SET;
++	int retval = -1;
++
++	maj_stat = gss_indicate_mechs(&min_stat, &supported_mechs);
++	if (maj_stat != GSS_S_COMPLETE) {
++		printerr(0, "Unable to obtain list of supported mechanisms. "
++			 "Check that gss library is properly configured.\n");
++		goto out;
++	}
++	if (supported_mechs == GSS_C_NO_OID_SET ||
++	    supported_mechs->count == 0) {
++		printerr(0, "Unable to obtain list of supported mechanisms. "
++			 "Check that gss library is properly configured.\n");
++		goto out;
++	}
++	maj_stat = gss_release_oid_set(&min_stat, &supported_mechs);
++	retval = 0;
++out:
++	return retval;
++}
++
+diff -puN utils/gssd/gss_util.h~gssd_check_gssapi_early utils/gssd/gss_util.h
+--- nfs-utils-1.0.8/utils/gssd/gss_util.h~gssd_check_gssapi_early	2006-04-20 12:09:08.611026000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/gss_util.h	2006-04-20 12:09:08.643995000 -0400
+@@ -40,5 +40,6 @@ extern gss_cred_id_t	gssd_creds;
+ int gssd_acquire_cred(char *server_name);
+ void pgsserr(char *msg, u_int32_t maj_stat, u_int32_t min_stat,
+ 	const gss_OID mech);
++int gssd_check_mechs(void);
+ 
+ #endif /* _GSS_UTIL_H_ */
+diff -puN utils/gssd/svcgssd.c~gssd_check_gssapi_early utils/gssd/svcgssd.c
+--- nfs-utils-1.0.8/utils/gssd/svcgssd.c~gssd_check_gssapi_early	2006-04-20 12:15:14.364976000 -0400
++++ nfs-utils-1.0.8-kwc/utils/gssd/svcgssd.c	2006-04-20 12:20:42.421053000 -0400
+@@ -204,6 +204,11 @@ main(int argc, char *argv[])
+ 			    "support setting debug level\n");
+ #endif
+ 
++	if (gssd_check_mechs() != 0) {
++		printerr(0, "ERROR: Problem with gssapi library\n");
++		exit(1);
++	}
++
+ 	if (!fg)
+ 		mydaemon(0, 0);
+ 
+
+_
