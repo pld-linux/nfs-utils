@@ -37,6 +37,10 @@ fi
 [ -x /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
+if ! is_yes "$NFS4" ; then
+	RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
+fi
+
 RETVAL=0
 # See how we were called.
 case "$1" in
@@ -44,37 +48,31 @@ case "$1" in
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
 		# Start daemons.
-		if [ "$NFSDTYPE" = "U" ]; then
-			msg_starting "NFS mountd"
-			daemon rpc.mountd $RPCMOUNTOPTIONS
-			msg_starting "NFS daemon"
-			daemon rpc.nfsd $RPCNFSDCOUNT
-		else
-			modprobe -s nfsd > /dev/null 2>&1
-			if [ "$(kernelverser)" -ge "002006" ]; then
-			    grep -q nfsd /proc/filesystems && \
-			    ! grep -q nfsd /proc/mounts && \
-			    	run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
-			    grep -q rpc_pipefs /proc/filesystems && \
-			    ! grep -q rpc_pipefs /proc/mounts && \
-			    	run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-			fi
-			msg_starting "NFS exportfs"
-			daemon /usr/sbin/exportfs -r
-			msg_starting "NFS mountd"
-			daemon rpc.mountd $RPCMOUNTOPTIONS
-			if (grep -q rpc_pipefs /proc/filesystems); then
-			    if [ ! -f /var/lock/subsys/idmapd ]; then
-				msg_starting "NFS idmapd"
-				daemon rpc.idmapd $RPCIDMAPOPTIONS
-				[ $? = 0 ] && touch /var/lock/subsys/idmapd
-			    fi
-			    msg_starting "NFS svcgssd"
-			    daemon rpc.svcgssd $RPCSVCGSSOPTIONS
-			fi
-			msg_starting "NFS daemon"
-			daemon rpc.nfsd $RPCNFSDCOUNT
+		modprobe -s nfsd > /dev/null 2>&1
+		if [ "$(kernelverser)" -ge "002006" ]; then
+		    grep -q nfsd /proc/filesystems && \
+		    ! grep -q nfsd /proc/mounts && \
+			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 		fi
+		msg_starting "NFS exportfs"
+		daemon /usr/sbin/exportfs -r
+		msg_starting "NFS mountd"
+		daemon rpc.mountd $RPCMOUNTOPTIONS
+		if is_yes "$NFS4" ; then
+		    if (grep -q rpc_pipefs /proc/filesystems); then
+			! grep -q rpc_pipefs /proc/mounts && \
+			    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+			if [ ! -f /var/lock/subsys/idmapd ]; then
+			    msg_starting "NFS idmapd"
+			    daemon rpc.idmapd $RPCIDMAPOPTIONS
+			    [ $? = 0 ] && touch /var/lock/subsys/idmapd
+			fi
+			msg_starting "NFS svcgssd"
+			daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+		    fi
+		fi
+		msg_starting "NFS daemon"
+		daemon rpc.nfsd $RPCNFSDCOUNT
 		touch /var/lock/subsys/nfs
 	else
 		msg_already_running "NFS"
@@ -83,16 +81,11 @@ case "$1" in
   stop)
 	if [ -f /var/lock/subsys/nfs ]; then
 		# Stop daemons.
-		if [ "$NFSDTYPE" = "U" ]; then
-			msg_stopping "NFS mountd"
-			killproc rpc.mountd
-			msg_stopping "NFS daemon"
-			killproc rpc.nfsd
-		else
-			msg_stopping "NFS mountd"
-			killproc rpc.mountd
-			msg_stopping "NFS daemon"
-			killproc nfsd -QUIT
+		msg_stopping "NFS mountd"
+		killproc rpc.mountd
+		msg_stopping "NFS daemon"
+		killproc nfsd -QUIT
+		if is_yes "$NFS4" ; then
 			if (grep -q rpc_pipefs /proc/filesystems); then
 			    msg_stopping "NFS svcgssd"
 			    killproc rpc.svcgssd
@@ -102,9 +95,9 @@ case "$1" in
 				rm -f /var/lock/subsys/idmapd
 			    fi
 			fi
-			msg_stopping "NFS"
-			daemon /usr/sbin/exportfs -au
 		fi
+		msg_stopping "NFS"
+		daemon /usr/sbin/exportfs -au
 		rm -f /var/lock/subsys/nfs
 	else
 		msg_not_running "NFS"
@@ -113,11 +106,7 @@ case "$1" in
   status)
 	status rpc.mountd
 	RETVAL=$?
-	if [ "$NFSDTYPE" = "U" ]; then
-		status rpc.nfsd
-	else
-		status nfsd
-	fi
+	status nfsd
 	RET=$?
 	[ $RETVAL -eq 0 ] && RETVAL=$RET
 	;;
@@ -127,15 +116,10 @@ case "$1" in
 	exit $?
 	;;
   force-reload)
-	if [ "$NFSDTYPE" = "U" ]; then
-		$0 restart
-	else
-		$0 reload
-	fi
+	$0 reload
 	exit $?
 	;;
   reload)
-	[ "$NFSDTYPE" = "U" ] && exit 0
 	if [ -f /var/lock/subsys/nfs ]; then
 		msg_reloading "NFS"
 		busy
@@ -148,7 +132,6 @@ case "$1" in
 	fi
 	;;
   probe)
-	[ "$NFSDTYPE" = "U" ] && exit 0
 	if [ ! -f /var/lock/subsys/nfs ]; then
 		echo start
 		exit 0
