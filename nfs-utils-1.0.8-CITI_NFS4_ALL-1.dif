@@ -390,7 +390,7 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
  #include <syslog.h>
  #include <string.h>
 +#include <errno.h>
- #include <gssapi/gssapi.h>
+ #include <gssapi.h>
  #include <rpc/rpc.h>
  #include <rpc/auth_gss.h>
 @@ -43,9 +44,53 @@
