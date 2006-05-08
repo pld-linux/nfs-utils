@@ -2,11 +2,15 @@
 SERVICE_RUN_NICE_LEVEL="+0"
 
 # Customized setings for knfsd
-
-# This is for 2.2 kernel server.
-#RPCMOUNTOPTIONS="--no-nfs-version 3"
+RPCMOUNTOPTIONS=""
 
 RPCNFSDCOUNT=8
 
-# Server type we are running, U for userland NFSD, K for knfsd
-NFSDTYPE=
+# Set it to "yes" if you plan to run NFSv4 server
+NFS4="no"
+
+# Options for NFSv4 ID <-> Name Mapper (idmapd)
+#RPCIDMAPOPTIONS=
+
+# Options for NFSv4 server-side rpcsec_gss daemon
+#RPCSVCGSSOPTIONS=
