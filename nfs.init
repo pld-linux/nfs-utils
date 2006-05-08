@@ -53,24 +53,23 @@ case "$1" in
 		    grep -q nfsd /proc/filesystems && \
 		    ! grep -q nfsd /proc/mounts && \
 			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
-		    grep -q rpc_pipefs /proc/filesystems && \
-		    ! grep -q rpc_pipefs /proc/mounts && \
-			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 		fi
 		msg_starting "NFS exportfs"
 		daemon /usr/sbin/exportfs -r
 		msg_starting "NFS mountd"
 		daemon rpc.mountd $RPCMOUNTOPTIONS
 		if is_yes "$NFS4" ; then
-			if (grep -q rpc_pipefs /proc/filesystems); then
-			    if [ ! -f /var/lock/subsys/idmapd ]; then
-				msg_starting "NFS idmapd"
-				daemon rpc.idmapd $RPCIDMAPOPTIONS
-				[ $? = 0 ] && touch /var/lock/subsys/idmapd
-			    fi
-			    msg_starting "NFS svcgssd"
-			    daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+		    if (grep -q rpc_pipefs /proc/filesystems); then
+			! grep -q rpc_pipefs /proc/mounts && \
+			    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+			if [ ! -f /var/lock/subsys/idmapd ]; then
+			    msg_starting "NFS idmapd"
+			    daemon rpc.idmapd $RPCIDMAPOPTIONS
+			    [ $? = 0 ] && touch /var/lock/subsys/idmapd
 			fi
+			msg_starting "NFS svcgssd"
+			daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+		    fi
 		fi
 		msg_starting "NFS daemon"
 		daemon rpc.nfsd $RPCNFSDCOUNT
