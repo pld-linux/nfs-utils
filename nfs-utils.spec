@@ -33,7 +33,7 @@ URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
 %if %{with nfs4}
-BuildRequires:	heimdal-static
+BuildRequires:	heimdal-devel
 BuildRequires:	libevent-devel
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.10
@@ -167,6 +167,10 @@ Wspólne programy do obs³ugi NFS.
 %patch5 -p1
 
 %build
+%if "%{_lib}" == "lib64"
+sed -i -e 's#/lib/#/%{_lib}/#g' aclocal/kerberos5.m4
+%endif
+sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
 %{__aclocal} -I aclocal
 %{__autoconf}
 %{__automake}
