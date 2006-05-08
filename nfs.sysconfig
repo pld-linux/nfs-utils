@@ -7,7 +7,7 @@ RPCMOUNTOPTIONS=""
 RPCNFSDCOUNT=8
 
 # Set it to "yes" if you plan to run NFSv4 server
-NFSV4="no"
+NFS4="no"
 
 # Options for NFSv4 ID <-> Name Mapper (idmapd)
 #RPCIDMAPOPTIONS=
