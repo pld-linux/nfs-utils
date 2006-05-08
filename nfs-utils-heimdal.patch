@@ -1,0 +1,120 @@
+--- nfs-utils-1.0.8/configure.in~	2006-05-05 19:55:12.000000000 +0200
++++ nfs-utils-1.0.8/configure.in	2006-05-05 19:57:11.000000000 +0200
+@@ -157,7 +157,8 @@
+        variable PKG_CONFIG_PATH to /usr/local/lib/pkgconfig])
+       ]
+      )
+-    PKG_CHECK_MODULES([GSSAPI], [libgssapi >= 0.9])
++    AC_CHECK_LIB(gssapi, main, [GSSAPI_LIBS="-lgssapi"], [AC_MSG_ERROR([Unable to locate libgssapi])])
++    AC_SUBST(GSSAPI_LIBS)
+     fi
+ 
+ fi
+diff -ur nfs-utils-1.0.8/utils/gssd/context.c nfs-utils-1.0.8.heimdal/utils/gssd/context.c
+--- nfs-utils-1.0.8/utils/gssd/context.c	2006-03-28 02:48:27.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/context.c	2006-05-05 20:03:21.000000000 +0200
+@@ -32,7 +32,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #include <rpc/rpc.h>
+ #include <rpc/auth_gss.h>
+ #include "gss_util.h"
+diff -ur nfs-utils-1.0.8/utils/gssd/context_mit.c nfs-utils-1.0.8.heimdal/utils/gssd/context_mit.c
+--- nfs-utils-1.0.8/utils/gssd/context_mit.c	2006-04-10 01:51:59.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/context_mit.c	2006-05-05 20:05:28.000000000 +0200
+@@ -32,7 +32,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #include <rpc/rpc.h>
+ #include <rpc/auth_gss.h>
+ #include "gss_util.h"
+diff -ur nfs-utils-1.0.8/utils/gssd/context_spkm3.c nfs-utils-1.0.8.heimdal/utils/gssd/context_spkm3.c
+--- nfs-utils-1.0.8/utils/gssd/context_spkm3.c	2006-04-10 01:51:59.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/context_spkm3.c	2006-05-05 20:05:36.000000000 +0200
+@@ -32,7 +32,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #include <rpc/rpc.h>
+ #include <rpc/auth_gss.h>
+ #include "gss_util.h"
+diff -ur nfs-utils-1.0.8/utils/gssd/gss_oids.c nfs-utils-1.0.8.heimdal/utils/gssd/gss_oids.c
+--- nfs-utils-1.0.8/utils/gssd/gss_oids.c	2005-08-26 03:20:13.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/gss_oids.c	2006-05-05 20:03:44.000000000 +0200
+@@ -29,7 +29,7 @@
+ */
+ 
+ #include <sys/types.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ 
+ /* from kerberos source, gssapi_krb5.c */
+ gss_OID_desc krb5oid =
+diff -ur nfs-utils-1.0.8/utils/gssd/gss_util.c nfs-utils-1.0.8.heimdal/utils/gssd/gss_util.c
+--- nfs-utils-1.0.8/utils/gssd/gss_util.c	2005-08-26 03:27:18.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/gss_util.c	2006-05-05 20:04:08.000000000 +0200
+@@ -72,7 +72,7 @@
+ #include <sys/param.h>
+ #include <netdb.h>
+ #include <fcntl.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #if defined(HAVE_KRB5) && !defined(GSS_C_NT_HOSTBASED_SERVICE)
+ #include <gssapi/gssapi_generic.h>
+ #define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
+diff -ur nfs-utils-1.0.8/utils/gssd/gssd.h nfs-utils-1.0.8.heimdal/utils/gssd/gssd.h
+--- nfs-utils-1.0.8/utils/gssd/gssd.h	2006-03-28 02:50:03.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/gssd.h	2006-05-05 20:04:27.000000000 +0200
+@@ -33,7 +33,7 @@
+ 
+ #include <sys/types.h>
+ #include <sys/queue.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ 
+ #define MAX_FILE_NAMELEN	32
+ #define FD_ALLOC_BLOCK		32
+diff -ur nfs-utils-1.0.8/utils/gssd/gssd_proc.c nfs-utils-1.0.8.heimdal/utils/gssd/gssd_proc.c
+--- nfs-utils-1.0.8/utils/gssd/gssd_proc.c	2006-04-10 11:57:20.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/gssd_proc.c	2006-05-05 20:04:35.000000000 +0200
+@@ -59,7 +59,7 @@
+ #include <signal.h>
+ #include <unistd.h>
+ #include <errno.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #include <netdb.h>
+ 
+ #include "gssd.h"
+diff -ur nfs-utils-1.0.8/utils/gssd/krb5_util.c nfs-utils-1.0.8.heimdal/utils/gssd/krb5_util.c
+--- nfs-utils-1.0.8/utils/gssd/krb5_util.c	2006-03-28 02:50:03.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/krb5_util.c	2006-05-05 20:04:53.000000000 +0200
+@@ -107,7 +107,7 @@
+ #include <dirent.h>
+ #include <errno.h>
+ #include <time.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ #ifdef USE_PRIVATE_KRB5_FUNCTIONS
+ #include <gssapi/gssapi_krb5.h>
+ #endif
+diff -ur nfs-utils-1.0.8/utils/gssd/svcgssd.h nfs-utils-1.0.8.heimdal/utils/gssd/svcgssd.h
+--- nfs-utils-1.0.8/utils/gssd/svcgssd.h	2006-03-27 02:30:09.000000000 +0200
++++ nfs-utils-1.0.8.heimdal/utils/gssd/svcgssd.h	2006-05-05 20:05:02.000000000 +0200
+@@ -33,7 +33,7 @@
+ 
+ #include <sys/types.h>
+ #include <sys/queue.h>
+-#include <gssapi/gssapi.h>
++#include <gssapi.h>
+ 
+ void handle_nullreq(FILE *f);
+ void gssd_run(void);

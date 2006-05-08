@@ -8,12 +8,12 @@ Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
 Name:		nfs-utils
-Version:	1.0.7
-Release:	4
+Version:	1.0.8
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	8f863120261cd572ad320a9152581e11
+# Source0-md5:	74fc2dd04b40c9d619ca41d3787ef8db
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -23,26 +23,25 @@ Source5:	nfs.sysconfig
 Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
-Patch0:		%{name}-paths.patch
-Patch1:		%{name}-time.patch
-Patch2:		%{name}-eepro-support.patch
-Patch3:		%{name}-install.patch
-Patch4:		%{name}-nolibs.patch
-Patch5:		%{name}-usn36.patch
-Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.7-2/nfs-utils-1.0.7-CITI_NFS4_ALL-2.dif
-Patch7:		%{name}-heimdal-internals.patch
+Source9:	nfsfs.sysconfig
+Patch0:		%{name}-time.patch
+Patch1:		%{name}-eepro-support.patch
+Patch2:		%{name}-install.patch
+Patch3:		%{name}-nolibs.patch
+Patch4:		%{name}-heimdal.patch
+Patch5:		%{name}-heimdal-internals.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
+BuildRequires:	automake
 %if %{with nfs4}
-BuildRequires:	heimdal-devel >= 0.7
+BuildRequires:	heimdal-devel
 BuildRequires:	libevent-devel
-BuildRequires:	librpcsecgss-devel
-BuildRequires:	nfsidmap-devel
+BuildRequires:	libnfsidmap-devel
+BuildRequires:	librpcsecgss-devel >= 0.10
 %endif
-BuildRequires:	libwrap-devel
-PreReq:		rc-scripts >= 0.4.0
-PreReq:		setup >= 2.4.6-7
-Requires:       %{name}-common = %{version}-%{release}
+Requires:	%{name}-common = %{version}-%{release}
+Requires:	rc-scripts >= 0.4.0
+Requires:	setup >= 2.4.6-7
 Requires(post,preun):	/sbin/chkconfig
 Requires(post):	fileutils
 Requires(post):	sed
@@ -84,10 +83,10 @@ do Linux.
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
 Group:		Networking
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
-Requires:	psmisc
 Requires:	%{name}-common = %{version}-%{release}
+Requires:	psmisc
 Provides:	nfsclient
 Provides:	nfs-server-clients
 Obsoletes:	nfsclient
@@ -112,7 +111,7 @@ zamountowania zasobów NFS.
 Summary:	Programs for NFS file locking
 Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
 Group:		Networking
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
@@ -132,7 +131,7 @@ plików (file locking) poprzez NFS.
 Summary:	Remote quota server
 Summary(pl):	Zdalny serwer quota
 Group:		Networking/Daemons
-PreReq:		rc-scripts
+Requires:	rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Obsoletes:	quota-rquotad
 
@@ -148,7 +147,7 @@ lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
 poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
 dla zdalnego systemu plików.
 
-%package common
+%package common                                                                       
 Summary:	Common programs for NFS
 Summary(pl):	Wspólne programy do obs³ugi NFS
 Group:		Networking
@@ -167,22 +166,20 @@ Wspólne programy do obs³ugi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
-%patch7 -p1
-
-chmod u+w configure
 
 %build
 %if "%{_lib}" == "lib64"
-sed -i -e 's#/lib/#/%{_lib}/#g' configure.in
+sed -i -e 's#/lib/#/%{_lib}/#g' aclocal/kerberos5.m4
 %endif
-sed -i -e 's#libroken.a#libroken.so#g' configure.in
+sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
+%{__aclocal} -I aclocal
 %{__autoconf}
+%{__automake}
 %configure \
 %if %{with nfs4}
-	--enable-nfsv4 \
 	--enable-gss \
 	--with-krb5=%{_prefix} \
+	--enable-nfsv4 \
 %else
 	--disable-gss \
 	--disable-nfsv4 \
@@ -190,18 +187,21 @@ sed -i -e 's#libroken.a#libroken.so#g' configure.in
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs
+
 %{__make} all
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT{%{_sysconfdir}/{rc.d/init.d,sysconfig},%{_var}/lib/nfs/rpc_pipefs}
+	$RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig} \
+	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery}
 
 %{__make} install \
-	install_prefix=$RPM_BUILD_ROOT
+	DESTDIR=$RPM_BUILD_ROOT
 
-install utils/idmapd/idmapd.conf	$RPM_BUILD_ROOT/etc
 install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
+install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
+
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
@@ -209,11 +209,12 @@ install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
+install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsclient
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,gssd,idmapd,svcgssd}.8
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,rquotad,statd,lockd,svcgssd,gssd,idmapd}.8
 rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
@@ -221,9 +222,9 @@ echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 %if %{with nfs4}
-echo ".so gssd.8"    >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
-echo ".so idmapd.8"  >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
-echo ".so svcgssd.8" >  $RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
+echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
+echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
+echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
 echo ".so idmapd.conf.5" > $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 %endif
 
@@ -231,9 +232,7 @@ touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-cp -a nfs nfs-copy
-mv -f nfs-copy/*.ps ./
-mv -f nfs-copy html
+mv -f nfs html
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -246,8 +245,6 @@ else
 	echo "Run \"/etc/rc.d/init.d/nfs start\" to start NFS daemon."
 fi
 umask 022
-sed -e 's/NFSDTYPE=.*/NFSDTYPE=K/' /etc/sysconfig/nfsd > /etc/sysconfig/nfsd.new
-mv -f /etc/sysconfig/nfsd.new /etc/sysconfig/nfsd
 
 %preun
 if [ "$1" = "0" ]; then
@@ -307,7 +304,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc ChangeLog README *.ps html
+%doc ChangeLog README html
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
@@ -321,11 +318,15 @@ fi
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
-%attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
-%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
-%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
-%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
-%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
+%attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
+
+%attr(664,root,fileshare) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/exports
+%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsd
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/xtab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/etab
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/rmtab
 
 %{_mandir}/man5/exports.5*
 %{_mandir}/man7/nfsd.7*
@@ -339,7 +340,6 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
-
 %if %{with nfs4}
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %{_mandir}/man8/*svcgss*
@@ -350,16 +350,17 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.lockd
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
-%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
+%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfslock
 %{_mandir}/man8/rpc.lockd.8*
 %{_mandir}/man8/lockd.8*
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/statd.8*
-%config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/state
+%config(noreplace) %verify(not size mtime md5) %{_var}/lib/nfs/state
 
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
+%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/nfsclient
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
@@ -369,19 +370,20 @@ fi
 %{_mandir}/man8/gssd*
 %endif
 
-
 #%files rquotad
 #%defattr(644,root,root,755)
 #%attr(755,root,root) %{_sbindir}/rpc.rquotad
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
-#%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
+#%config(noreplace) %verify(not size mtime md5) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
 
 %files common
 %defattr(644,root,root,755)
 %attr(755,root,root) %dir %{_var}/lib/nfs
 %attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
 %if %{with nfs4}
+%attr(755,root,root) %{_sbindir}/gss_*
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %{_mandir}/man[58]/*idmap*

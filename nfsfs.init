@@ -23,6 +23,9 @@ fi
 # Get network config
 . /etc/sysconfig/network
 
+# Get service config
+[ -f /etc/sysconfig/nfsclient ] && . /etc/sysconfig/nfsclient
+
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
@@ -33,25 +36,26 @@ else
 	exit 0
 fi
 
-
 # See how we were called.
 case "$1" in
   start)
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
-	    if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
-		modprobe -s nfs > /dev/null 2>&1
-		if [ "$(kernelverser)" -ge "002006" ]; then
-		    grep -q rpc_pipefs /proc/filesystems && \
-		    ! grep -q rpc_pipefs /proc/mounts && \
-		    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+		if is_yes "$NFS4" ; then
+		    if grep -q nfs4 /proc/filesystems; then
+			modprobe -s nfs > /dev/null 2>&1
+			if [ "$(kernelverser)" -ge "002006" ]; then
+			    grep -q rpc_pipefs /proc/filesystems && \
+			    ! grep -q rpc_pipefs /proc/mounts && \
+			    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+			fi
+			if [ ! -f /var/lock/subsys/idmapd ]; then
+			    msg_starting "NFS idmapd"
+			    daemon rpc.idmapd $RPCIDMAPOPTIONS
+			fi
+			msg_starting "NFS gssd"
+			daemon rpc.gssd -m $RPCGSSOPTIONS
+		    fi
 		fi
-		if [ ! -f /var/lock/subsys/idmapd ]; then
-		    msg_starting "NFS idmapd"
-		    daemon rpc.idmapd $RPCIDMAPOPTIONS
-		fi
-		msg_starting "NFS gssd"
-		daemon rpc.gssd -m $RPCGSSOPTIONS
-	    fi
 	    run_cmd "Mounting NFS filesystems" mount -a -t nfs
 	    touch /var/lock/subsys/nfsfs
 	else
@@ -78,14 +82,16 @@ case "$1" in
 		retry=$(($retry-1))
 	done
 	ok
-	if [ "$NFSDTYPE" != "U" ] && grep -q nfs4 /proc/filesystems; then
-	    msg_stopping "NFS gssd"
-	    killproc rpc.gssd
-	    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
-		msg_stopping "NFS idmapd"
-		killproc rpc.idmapd
-		rm -f /var/lock/subsys/idmapd
-	    fi
+	if is_yes "$NFS4" ; then
+		if grep -q nfs4 /proc/filesystems; then
+		    msg_stopping "NFS gssd"
+		    killproc rpc.gssd
+		    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
+			msg_stopping "NFS idmapd"
+			killproc rpc.idmapd
+			rm -f /var/lock/subsys/idmapd
+		    fi
+		fi
 	fi
 	rm -f /var/lock/subsys/nfsfs
 	;;
