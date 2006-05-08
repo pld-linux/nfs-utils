@@ -37,7 +37,7 @@ fi
 [ -x /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
-if is_yes "$NFS4" ; then
+if ! is_yes "$NFS4" ; then
 	RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
 fi
 
