@@ -40,7 +40,7 @@ BuildRequires:	automake
 BuildRequires:	heimdal-devel >= 0.7
 BuildRequires:	libevent-devel >= 1.1a
 BuildRequires:	libnfsidmap-devel
-BuildRequires:	librpcsecgss-devel >= 0.10
+BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
 BuildRequires:	libwrap-devel
 BuildRequires:	sed >= 4.0
