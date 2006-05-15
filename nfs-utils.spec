@@ -26,13 +26,12 @@ Source6:	nfslock.sysconfig
 Source7:	rquotad.sysconfig
 Source8:	nfsfs.init
 Source9:	nfsfs.sysconfig
-Patch0:		%{name}-time.patch
-Patch1:		%{name}-eepro-support.patch
-Patch2:		%{name}-install.patch
-Patch3:		%{name}-nolibs.patch
-Patch4:		%{name}-heimdal.patch
-Patch5:		%{name}-heimdal-internals.patch
-Patch6:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.8-1/%{name}-1.0.8-CITI_NFS4_ALL-1.dif
+Patch0:		%{name}-eepro-support.patch
+Patch1:		%{name}-install.patch
+Patch2:		%{name}-nolibs.patch
+Patch3:		%{name}-heimdal.patch
+Patch4:		%{name}-heimdal-internals.patch
+Patch5:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.8-1/%{name}-1.0.8-CITI_NFS4_ALL-1.dif
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -171,7 +170,6 @@ Wspólne programy do obs³ugi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
 
 %build
 %if "%{_lib}" == "lib64"
