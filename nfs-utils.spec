@@ -31,7 +31,8 @@ Patch1:		%{name}-install.patch
 Patch2:		%{name}-nolibs.patch
 Patch3:		%{name}-heimdal.patch
 Patch4:		%{name}-heimdal-internals.patch
-Patch5:		http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.0.8-2/%{name}-1.0.8-CITI_NFS4_ALL-2.dif
+# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
+Patch5:		%{name}-1.0.8-CITI_NFS4_ALL-2.dif
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf
 BuildRequires:	automake
