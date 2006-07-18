@@ -1,10 +1,10 @@
---- nfs-utils-1.0.8/configure.in~	2006-05-05 19:55:12.000000000 +0200
-+++ nfs-utils-1.0.8/configure.in	2006-05-05 19:57:11.000000000 +0200
-@@ -157,7 +157,8 @@
-        variable PKG_CONFIG_PATH to /usr/local/lib/pkgconfig])
+--- nfs-utils-1.0.9/configure.in.orig	2006-07-17 12:23:46.164440000 +0200
++++ nfs-utils-1.0.9/configure.in	2006-07-18 13:06:53.474440000 +0200
+@@ -164,7 +164,8 @@
+        AC_MSG_ERROR([variable PKG_CONFIG_PATH to /usr/local/lib/pkgconfig])
        ]
       )
--    PKG_CHECK_MODULES([GSSAPI], [libgssapi >= 0.9])
+-    PKG_CHECK_MODULES(GSSAPI, libgssapi >= 0.9)
 +    AC_CHECK_LIB(gssapi, main, [GSSAPI_LIBS="-lgssapi"], [AC_MSG_ERROR([Unable to locate libgssapi])])
 +    AC_SUBST(GSSAPI_LIBS)
      fi
