@@ -10,12 +10,12 @@ Summary(pt_BR):	Os utilitАrios para o cliente e servidor NFS do Linux
 Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.9
+Version:	1.0.10
 Release:	0.1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	73981058e49b0b4ce2a15e21960529f5
+# Source0-md5:	1949634d0dc896696d8a880bdca622c8
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -32,9 +32,9 @@ Patch2:		%{name}-nolibs.patch
 Patch3:		%{name}-heimdal.patch
 Patch4:		%{name}-heimdal-internals.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
-Patch5:		%{name}-1.0.9-CITI_NFS4_ALL-1.dif
+Patch5:		%{name}-1.0.10-CITI_NFS4_ALL-1.dif
 URL:		http://nfs.sourceforge.net/
-BuildRequires:	autoconf
+BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
@@ -43,6 +43,7 @@ BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
 BuildRequires:	libwrap-devel
+BuildRequires:	pkgconfig
 BuildRequires:	sed >= 4.0
 Requires(post):	fileutils
 Requires(post):	sed >= 4.0
