@@ -1,0 +1,2401 @@
+
+
+The complete set of CITI nfs-utils patches rolled into one patch.
+
+Changes since 1.0.9-CITI_NFS4_ALL-2:
+
+ * Rebase on nfs-utils-1.0.10
+
+ * Update to autoconf-2.60 to try and match the version used to
+   generate the nfs-utils-1.0.10 files.  Hopefully, this eliminates
+   the problem people are having building with the automake_catchall
+   patch on different distributions.
+
+
+---
+
+ nfs-utils-1.0.10-kwc/aclocal.m4                 |   73 ++-
+ nfs-utils-1.0.10-kwc/configure                  |  252 ++++++++---
+ nfs-utils-1.0.10-kwc/support/include/exportfs.h |    7 
+ nfs-utils-1.0.10-kwc/support/include/nfslib.h   |    2 
+ nfs-utils-1.0.10-kwc/support/nfs/exports.c      |   35 +
+ nfs-utils-1.0.10-kwc/utils/exportfs/exportfs.c  |   14 
+ nfs-utils-1.0.10-kwc/utils/exportfs/exports.man |   13 
+ nfs-utils-1.0.10-kwc/utils/gssd/context_mit.c   |  507 ++++++++++++++++++++++--
+ nfs-utils-1.0.10-kwc/utils/gssd/context_spkm3.c |   39 -
+ nfs-utils-1.0.10-kwc/utils/gssd/gssd.c          |    2 
+ nfs-utils-1.0.10-kwc/utils/gssd/krb5_util.c     |  226 ++++++++--
+ nfs-utils-1.0.10-kwc/utils/gssd/krb5_util.h     |    2 
+ nfs-utils-1.0.10-kwc/utils/mountd/Makefile.am   |    2 
+ nfs-utils-1.0.10-kwc/utils/mountd/Makefile.in   |   19 
+ nfs-utils-1.0.10-kwc/utils/mountd/cache.c       |   25 +
+ nfs-utils-1.0.10-kwc/utils/mountd/fsloc.c       |  193 +++++++++
+ nfs-utils-1.0.10-kwc/utils/mountd/fsloc.h       |   20 
+ 17 files changed, 1234 insertions(+), 197 deletions(-)
+
+diff -puN utils/gssd/context_spkm3.c~CITI_NFS4_ALL utils/gssd/context_spkm3.c
+--- nfs-utils-1.0.10/utils/gssd/context_spkm3.c~CITI_NFS4_ALL	2006-08-07 11:45:41.462005000 -0400
++++ nfs-utils-1.0.10-kwc/utils/gssd/context_spkm3.c	2006-08-07 11:45:41.503963000 -0400
+@@ -51,6 +51,7 @@
+  *
+  *	buf->length should be:
+  *
++ *      version 4
+  *	ctx_id 4 + 12
+  *	qop 4
+  *	mech_used 4 + 7
+@@ -70,60 +71,58 @@ prepare_spkm3_ctx_buffer(gss_spkm3_lucid
+ 	char *p, *end;
+ 	unsigned int buf_size = 0;
+ 
+-	buf_size = lctx->ctx_id.length +
+-		sizeof(lctx->ctx_id.length) + sizeof(lctx->qop) +
++	buf_size = sizeof(lctx->version) +
++		lctx->ctx_id.length + sizeof(lctx->ctx_id.length) +
++		sizeof(lctx->endtime) +
+ 		sizeof(lctx->mech_used.length) + lctx->mech_used.length +
+-		sizeof(lctx->ret_flags) + sizeof(lctx->req_flags) +
+-		sizeof(lctx->share_key.length) + lctx->share_key.length +
++		sizeof(lctx->ret_flags) +
+ 		sizeof(lctx->conf_alg.length) + lctx->conf_alg.length +
+ 		sizeof(lctx->derived_conf_key.length) +
+ 		lctx->derived_conf_key.length +
+ 		sizeof(lctx->intg_alg.length) + lctx->intg_alg.length +
+ 		sizeof(lctx->derived_integ_key.length) +
+-		lctx->derived_integ_key.length +
+-		sizeof(lctx->keyestb_alg.length) + lctx->keyestb_alg.length +
+-		sizeof(lctx->owf_alg.length) + lctx->owf_alg.length;
++		lctx->derived_integ_key.length;
+ 
+ 	if (!(buf->value = calloc(1, buf_size)))
+ 		goto out_err;
+ 	p = buf->value;
+ 	end = buf->value + buf_size;
+ 
++	if (WRITE_BYTES(&p, end, lctx->version))
++		goto out_err;
++	printerr(2, "DEBUG: exporting version = %d\n", lctx->version);
++
+ 	if (write_buffer(&p, end, &lctx->ctx_id))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting ctx_id(%d)\n", lctx->ctx_id.length);
+ 
+-	if (WRITE_BYTES(&p, end, lctx->qop))
++	if (WRITE_BYTES(&p, end, lctx->endtime))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting endtime = %d\n", lctx->endtime);
+ 
+ 	if (write_buffer(&p, end, &lctx->mech_used))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting mech oid (%d)\n", lctx->mech_used.length);
+ 
+ 	if (WRITE_BYTES(&p, end, lctx->ret_flags))
+ 		goto out_err;
+-
+-	if (WRITE_BYTES(&p, end, lctx->req_flags))
+-		goto out_err;
+-
+-	if (write_buffer(&p, end, &lctx->share_key))
+-		goto out_err;
++	printerr(2, "DEBUG: exporting ret_flags = %d\n", lctx->ret_flags);
+ 
+ 	if (write_buffer(&p, end, &lctx->conf_alg))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting conf_alg oid (%d)\n", lctx->conf_alg.length);
+ 
+ 	if (write_buffer(&p, end, &lctx->derived_conf_key))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting conf key (%d)\n", lctx->derived_conf_key.length);
+ 
+ 	if (write_buffer(&p, end, &lctx->intg_alg))
+ 		goto out_err;
++	printerr(2, "DEBUG: exporting intg_alg oid (%d)\n", lctx->intg_alg.length);
+ 
+ 	if (write_buffer(&p, end, &lctx->derived_integ_key))
+ 		goto out_err;
+-
+-	if (write_buffer(&p, end, &lctx->keyestb_alg))
+-		goto out_err;
+-
+-	if (write_buffer(&p, end, &lctx->owf_alg))
+-		goto out_err;
++	printerr(2, "DEBUG: exporting intg key (%d)\n", lctx->derived_integ_key.length);
+ 
+ 	buf->length = p - (char *)buf->value;
+ 	return 0;
+diff -puN support/include/exportfs.h~CITI_NFS4_ALL support/include/exportfs.h
+--- nfs-utils-1.0.10/support/include/exportfs.h~CITI_NFS4_ALL	2006-08-07 11:45:41.770710000 -0400
++++ nfs-utils-1.0.10-kwc/support/include/exportfs.h	2006-08-07 11:45:42.941259000 -0400
+@@ -23,6 +23,13 @@ enum {
+ 	MCL_MAXTYPES
+ };
+ 
++enum {
++	FSLOC_NONE = 0,
++	FSLOC_REFER,
++	FSLOC_REPLICA,
++	FSLOC_STUB
++};
++
+ typedef struct mclient {
+ 	struct mclient *	m_next;
+ 	char			m_hostname[NFSCLNT_IDMAX+1];
+diff -puN support/include/nfslib.h~CITI_NFS4_ALL support/include/nfslib.h
+--- nfs-utils-1.0.10/support/include/nfslib.h~CITI_NFS4_ALL	2006-08-07 11:45:41.918710000 -0400
++++ nfs-utils-1.0.10-kwc/support/include/nfslib.h	2006-08-07 11:45:42.961259000 -0400
+@@ -80,6 +80,8 @@ struct exportent {
+ 	int		e_nsqgids;
+ 	int		e_fsid;
+ 	char *		e_mountpoint;
++	int             e_fslocmethod;
++	char *          e_fslocdata;
+ };
+ 
+ struct rmtabent {
+diff -puN support/nfs/exports.c~CITI_NFS4_ALL support/nfs/exports.c
+--- nfs-utils-1.0.10/support/nfs/exports.c~CITI_NFS4_ALL	2006-08-07 11:45:42.063710000 -0400
++++ nfs-utils-1.0.10-kwc/support/nfs/exports.c	2006-08-07 11:45:42.985259000 -0400
+@@ -94,6 +94,8 @@ getexportent(int fromkernel, int fromexp
+ 	ee.e_squids = NULL;
+ 	ee.e_sqgids = NULL;
+ 	ee.e_mountpoint = NULL;
++	ee.e_fslocmethod = FSLOC_NONE;
++	ee.e_fslocdata = NULL;
+ 	ee.e_nsquids = 0;
+ 	ee.e_nsqgids = 0;
+ 
+@@ -199,7 +201,22 @@ putexportent(struct exportent *ep)
+ 	if (ep->e_mountpoint)
+ 		fprintf(fp, "mountpoint%s%s,",
+ 			ep->e_mountpoint[0]?"=":"", ep->e_mountpoint);
+-
++	switch (ep->e_fslocmethod) {
++	case FSLOC_NONE:
++		break;
++	case FSLOC_REFER:
++		fprintf(fp, "refer=%s,", ep->e_fslocdata);
++		break;
++	case FSLOC_REPLICA:
++		fprintf(fp, "replicas=%s,", ep->e_fslocdata);
++		break;
++	case FSLOC_STUB:
++		fprintf(fp, "fsloc=stub,");
++		break;
++	default:
++		xlog(L_ERROR, "unknown fsloc method for %s:%s",
++		     ep->e_hostname, ep->e_path);
++	}
+ 	fprintf(fp, "mapping=");
+ 	switch (ep->e_maptype) {
+ 	case CLE_MAP_IDENT:
+@@ -262,6 +279,8 @@ dupexportent(struct exportent *dst, stru
+ 	}
+ 	if (src->e_mountpoint)
+ 		dst->e_mountpoint = strdup(src->e_mountpoint);
++	if (src->e_fslocdata)
++		dst->e_fslocdata = strdup(src->e_fslocdata);
+ }
+ 
+ struct exportent *
+@@ -437,6 +456,20 @@ bad_option:
+ 				ep->e_mountpoint = strdup(mp+1);
+ 			else
+ 				ep->e_mountpoint = strdup("");
++		} else if (strncmp(opt, "fsloc=", 6) == 0) {
++			if (strcmp(opt+6, "stub") == 0)
++				ep->e_fslocmethod = FSLOC_STUB;
++			else {
++				xlog(L_ERROR, "%s:%d: bad option %s\n",
++				     flname, flline, opt);
++				goto bad_option;
++			}
++		} else if (strncmp(opt, "refer=", 6) == 0) {
++			ep->e_fslocmethod = FSLOC_REFER;
++			ep->e_fslocdata = strdup(opt+6);
++		} else if (strncmp(opt, "replicas=", 9) == 0) {
++			ep->e_fslocmethod = FSLOC_REPLICA;
++			ep->e_fslocdata = strdup(opt+9);
+ 		} else {
+ 			xlog(L_ERROR, "%s:%d: unknown keyword \"%s\"\n",
+ 					flname, flline, opt);
+diff -puN utils/exportfs/exportfs.c~CITI_NFS4_ALL utils/exportfs/exportfs.c
+--- nfs-utils-1.0.10/utils/exportfs/exportfs.c~CITI_NFS4_ALL	2006-08-07 11:45:42.205710000 -0400
++++ nfs-utils-1.0.10-kwc/utils/exportfs/exportfs.c	2006-08-07 11:45:43.008259000 -0400
+@@ -416,7 +416,19 @@ dump(int verbose)
+ 				c = dumpopt(c, "anonuid=%d", ep->e_anonuid);
+ 			if (ep->e_anongid != -2)
+ 				c = dumpopt(c, "anongid=%d", ep->e_anongid);
+-
++			switch(ep->e_fslocmethod) {
++			case FSLOC_NONE:
++				break;
++			case FSLOC_REFER:
++				c = dumpopt(c, "refer=%s", ep->e_fslocdata);
++				break;
++			case FSLOC_REPLICA:
++				c = dumpopt(c, "replicas=%s", ep->e_fslocdata);
++				break;
++			case FSLOC_STUB:
++				c = dumpopt(c, "fsloc=stub");
++				break;
++			}
+ 			printf("%c\n", (c != '(')? ')' : ' ');
+ 		}
+ 	}
+diff -puN utils/exportfs/exports.man~CITI_NFS4_ALL utils/exportfs/exports.man
+--- nfs-utils-1.0.10/utils/exportfs/exports.man~CITI_NFS4_ALL	2006-08-07 11:45:42.354662000 -0400
++++ nfs-utils-1.0.10-kwc/utils/exportfs/exports.man	2006-08-07 11:45:43.039260000 -0400
+@@ -322,6 +322,19 @@ The value  0 has a special meaning when 
+ concept of a root of the overall exported filesystem. The export point
+ exported with fsid=0 will be used as this root.
+ 
++.TP
++.IR refer= path@host[+host][:path@host[+host]]
++A client referencing the export point will be directed to choose from
++the given list an alternative location for the filesystem.
++(Note that the server currently needs to have a filesystem mounted here,
++generally using mount --bind, although it is not actually exported.)
++
++.TP
++.IR replicas= path@host[+host][:path@host[+host]]
++If the client asks for alternative locations for the export point, it
++will be given this list of alternatives. (Note that actual replication
++of the filesystem must be handled elsewhere.)
++
+ .SS User ID Mapping
+ .PP
+ .I nfsd
+diff -puN utils/mountd/cache.c~CITI_NFS4_ALL utils/mountd/cache.c
+--- nfs-utils-1.0.10/utils/mountd/cache.c~CITI_NFS4_ALL	2006-08-07 11:45:42.497519000 -0400
++++ nfs-utils-1.0.10-kwc/utils/mountd/cache.c	2006-08-07 11:45:43.062259000 -0400
+@@ -26,6 +26,7 @@
+ #include "exportfs.h"
+ #include "mountd.h"
+ #include "xmalloc.h"
++#include "fsloc.h"
+ 
+ /*
+  * Support routines for text-based upcalls.
+@@ -239,6 +240,29 @@ void nfsd_fh(FILE *f)
+ 	return;		
+ }
+ 
++static void write_fsloc(FILE *f, struct exportent *ep, char *path)
++{
++	struct servers *servers;
++
++	if (ep->e_fslocmethod == FSLOC_NONE)
++		return;
++
++	servers = replicas_lookup(ep->e_fslocmethod, ep->e_fslocdata, path);
++	if (!servers)
++		return;
++	qword_print(f, "fsloc");
++	qword_printint(f, servers->h_num);
++	if (servers->h_num >= 0) {
++		int i;
++		for (i=0; i<servers->h_num; i++) {
++			qword_print(f, servers->h_mp[i]->h_host);
++			qword_print(f, servers->h_mp[i]->h_path);
++		}
++	}
++	qword_printint(f, servers->h_referral);
++	release_replicas(servers);
++}
++
+ void nfsd_export(FILE *f)
+ {
+ 	/* requests are:
+@@ -295,6 +319,7 @@ void nfsd_export(FILE *f)
+ 		qword_printint(f, found->m_export.e_anonuid);
+ 		qword_printint(f, found->m_export.e_anongid);
+ 		qword_printint(f, found->m_export.e_fsid);
++		write_fsloc(f, &found->m_export, path);
+ 		mountlist_add(dom, path);
+ 	}
+ 	qword_eol(f);
+diff -puN /dev/null utils/mountd/fsloc.c
+--- /dev/null	2006-08-07 09:21:41.858758048 -0400
++++ nfs-utils-1.0.10-kwc/utils/mountd/fsloc.c	2006-08-07 11:45:43.081259000 -0400
+@@ -0,0 +1,193 @@
++#include <stdlib.h>
++#include <string.h>
++#include <syslog.h>
++
++#include "fsloc.h"
++#include "exportfs.h"
++
++/* Debugging tool: prints out @servers info to syslog */
++static void replicas_print(struct servers *sp)
++{
++	int i;
++	if (!sp) {
++		syslog(LOG_INFO, "NULL replicas pointer");
++		return;
++	}
++	syslog(LOG_INFO, "replicas listsize=%i", sp->h_num);
++	for (i=0; i<sp->h_num; i++) {
++		syslog(LOG_INFO, "%s:/%s",
++		       sp->h_mp[i]->h_host, sp->h_mp[i]->h_path);
++	}
++}
++
++/* Called by setting 'Method = stub' in config file.  Just returns
++ * some syntactically correct gibberish for testing purposes.
++ */
++static struct servers *method_stub(char *key)
++{
++	struct servers *sp;
++	struct mount_point *mp;
++
++	syslog(LOG_INFO, "called method_stub");
++	sp = malloc(sizeof(struct servers));
++	if (!sp)
++		return NULL;
++	mp = calloc(1, sizeof(struct mount_point));
++	if (!mp) {
++		free(sp);
++		return NULL;
++	}
++	sp->h_num = 1;
++	sp->h_mp[0] = mp;
++	mp->h_host = strdup("stub_server");
++	mp->h_path = strdup("/my/test/path");
++	sp->h_referral = 1;
++	return sp;
++}
++
++/* Scan @list, which is a NULL-terrminated array of strings of the
++ * form host[:host]:/path, and return corresponding servers structure.
++ */
++static struct servers *parse_list(char **list)
++{
++	int i;
++	struct servers *res;
++	struct mount_point *mp;
++	char *cp;
++
++	res = malloc(sizeof(struct servers));
++	if (!res)
++		return NULL;
++	res->h_num = 0;
++
++	/* parse each of the answers in sucession. */
++	for (i=0; list[i] && i<FSLOC_MAX_LIST; i++) {
++		mp = calloc(1, sizeof(struct mount_point));
++		if (!mp) {
++			release_replicas(res);
++			return NULL;
++		}
++		cp = strstr(list[i], ":/");
++		if (!cp) {
++			syslog(LOG_WARNING, "invalid entry '%s'", list[i]);
++			continue; /* XXX Need better error handling */
++		}
++		res->h_mp[i] = mp;
++		res->h_num++;
++		mp->h_host = strndup(list[i], cp - list[i]);
++		cp++;
++		mp->h_path = strdup(cp);
++	}
++	return res;
++}
++
++/* Converts from path@host[+host][:path@host[+host]] to
++ * host[:host]:path[@host[:host]:path]
++ *
++ * XXX Once the interface is stabilized, we can put the kernel and
++ * userland formats into agreement, so this won't be necessary.
++ */
++static char *strconvert(const char *in)
++{
++	char *path, *ptr, *copy, *rv, *rvptr, *next;
++	next = copy = strdup(in);
++	rvptr = rv = malloc(strlen(in) + 1);
++	if (!copy || !rv)
++		goto error;
++	while (next) {
++		ptr = strsep(&next, ":");
++		path = strsep(&ptr, "@");
++		if (!ptr)
++			goto error;
++		while (*ptr) {
++			if (*ptr == '+') {
++				*rvptr++ = ':';
++				ptr++;
++			}
++			else
++				*rvptr++ =  *ptr++;
++		}
++		*rvptr++ = ':';
++		while (*path) {
++			*rvptr++ = *path++;
++		}
++		if (next)
++			*rvptr++ = '@';
++		else
++			*rvptr = '\0';
++	}
++	free(copy);
++	return rv;
++error:
++	free(copy);
++	free(rv);
++	return NULL;
++}
++
++/* @data is a string of form path@host[+host][:path@host[+host]]
++ */
++static struct servers *method_list(char *data)
++{
++	char *copy, *ptr=data;
++	char **list;
++	int i, listsize;
++	struct servers *rv=NULL;
++
++	syslog(LOG_INFO, "method_list(%s)\n", data);
++	for (ptr--, listsize=1; ptr; ptr=index(ptr, ':'), listsize++)
++		ptr++;
++	list = malloc(listsize * sizeof(char *));
++	copy = strconvert(data);
++	syslog(LOG_INFO, "converted to %s\n", copy);
++	if (list && copy) {
++		ptr = copy;
++		for (i=0; i<listsize; i++) {
++			list[i] = strsep(&ptr, "@");
++		}
++		rv = parse_list(list);
++	}
++	free(copy);
++	free(list);
++	replicas_print(rv);
++	return rv;
++}
++
++/* Returns appropriately filled struct servers, or NULL if had a problem */
++struct servers *replicas_lookup(int method, char *data, char *key)
++{
++	struct servers *sp=NULL;
++	switch(method) {
++	case FSLOC_NONE:
++		break;
++	case FSLOC_REFER:
++		sp = method_list(data);
++		if (sp)
++			sp->h_referral = 1;
++		break;
++	case FSLOC_REPLICA:
++		sp = method_list(data);
++		if (sp)
++			sp->h_referral = 0;
++		break;
++	case FSLOC_STUB:
++		sp = method_stub(data);
++		break;
++	default:
++		syslog(LOG_WARNING, "Unknown method = %i", method);
++	}
++	replicas_print(sp);
++	return sp;
++}
++
++void release_replicas(struct servers *server)
++{
++	int i;
++
++	if (!server) return;
++	for (i = 0; i < server->h_num; i++) {
++		free(server->h_mp[i]->h_host);
++		free(server->h_mp[i]->h_path);
++		free(server->h_mp[i]);
++	}
++	free(server);
++}
+diff -puN /dev/null utils/mountd/fsloc.h
+--- /dev/null	2006-08-07 09:21:41.858758048 -0400
++++ nfs-utils-1.0.10-kwc/utils/mountd/fsloc.h	2006-08-07 11:45:43.100259000 -0400
+@@ -0,0 +1,20 @@
++#ifndef FSLOC_H
++#define FSLOC_H
++
++#define FSLOC_MAX_LIST 40
++
++struct mount_point {
++	char *h_host;
++	char *h_path;
++};
++
++struct servers {
++	int h_num;
++	struct mount_point *h_mp[FSLOC_MAX_LIST];
++	int h_referral;         /* 0=replica, 1=referral */
++};
++
++struct servers *replicas_lookup(int method, char *data, char *key);
++void release_replicas(struct servers *server);
++
++#endif /* FSLOC_H */
+diff -puN utils/mountd/Makefile.am~CITI_NFS4_ALL utils/mountd/Makefile.am
+--- nfs-utils-1.0.10/utils/mountd/Makefile.am~CITI_NFS4_ALL	2006-08-07 11:45:42.865259000 -0400
++++ nfs-utils-1.0.10-kwc/utils/mountd/Makefile.am	2006-08-07 11:45:43.116259000 -0400
+@@ -8,7 +8,7 @@ KPREFIX		= @kprefix@
+ sbin_PROGRAMS	= mountd
+ 
+ mountd_SOURCES = mountd.c mount_dispatch.c auth.c rmtab.c cache.c \
+-		 svc_run.c mountd.h
++		 svc_run.c fsloc.c mountd.h
+ mountd_LDADD = ../../support/export/libexport.a \
+ 	       ../../support/nfs/libnfs.a \
+ 	       ../../support/misc/libmisc.a \
+diff -puN utils/gssd/gssd.c~CITI_NFS4_ALL utils/gssd/gssd.c
+--- nfs-utils-1.0.10/utils/gssd/gssd.c~CITI_NFS4_ALL	2006-08-07 11:45:43.366200000 -0400
++++ nfs-utils-1.0.10-kwc/utils/gssd/gssd.c	2006-08-07 11:45:43.706859000 -0400
+@@ -157,6 +157,8 @@ main(int argc, char *argv[])
+ 
+ 	/* Process keytab file and get machine credentials */
+ 	gssd_refresh_krb5_machine_creds();
++	/* Determine Kerberos information from the kernel */
++	gssd_obtain_kernel_krb5_info();
+ 
+ 	gssd_run();
+ 	printerr(0, "gssd_run returned!\n");
+diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
+--- nfs-utils-1.0.10/utils/gssd/krb5_util.c~CITI_NFS4_ALL	2006-08-07 11:45:43.533033000 -0400
++++ nfs-utils-1.0.10-kwc/utils/gssd/krb5_util.c	2006-08-07 11:45:43.743822000 -0400
+@@ -97,6 +97,7 @@
+ #include "config.h"
+ #include <sys/param.h>
+ #include <rpc/rpc.h>
++#include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/socket.h>
+ #include <arpa/inet.h>
+@@ -105,6 +106,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <dirent.h>
++#include <fcntl.h>
+ #include <errno.h>
+ #include <time.h>
+ #include <gssapi/gssapi.h>
+@@ -123,6 +125,10 @@
+ /* Global list of principals/cache file names for machine credentials */
+ struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
+ 
++/* Encryption types supported by the kernel rpcsec_gss code */
++int num_krb5_enctypes = 0;
++krb5_enctype *krb5_enctypes = NULL;
++
+ /*==========================*/
+ /*===  Internal routines ===*/
+ /*==========================*/
+@@ -261,56 +267,6 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ }
+ 
+ 
+-#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+-/*
+- * this routine obtains a credentials handle via gss_acquire_cred()
+- * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
+- * types negotiated.
+- *
+- * XXX Should call some function to determine the enctypes supported
+- * by the kernel. (Only need to do that once!)
+- *
+- * Returns:
+- *	0 => all went well
+- *     -1 => there was an error
+- */
+-
+-int
+-limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
+-{
+-	u_int maj_stat, min_stat;
+-	gss_cred_id_t credh;
+-	gss_OID_set_desc  desired_mechs;
+-	krb5_enctype enctypes[] = { ENCTYPE_DES_CBC_CRC };
+-	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
+-
+-	/* We only care about getting a krb5 cred */
+-	desired_mechs.count = 1;
+-	desired_mechs.elements = &krb5oid;
+-
+-	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
+-				    &desired_mechs, GSS_C_INITIATE,
+-				    &credh, NULL, NULL);
+-
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_acquire_cred",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-
+-	maj_stat = gss_set_allowable_enctypes(&min_stat, credh, &krb5oid,
+-					     num_enctypes, &enctypes);
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_set_allowable_enctypes",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-	sec->cred = credh;
+-
+-	return 0;
+-}
+-#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
+-
+ /*
+  * Obtain credentials via a key in the keytab given
+  * a keytab handle and a gssd_k5_kt_princ structure.
+@@ -608,6 +564,56 @@ gssd_set_krb5_ccache_name(char *ccname)
+ #endif
+ }
+ 
++/*
++ * Parse the supported encryption type information
++ */
++static int
++parse_enctypes(char *enctypes)
++{
++	int n = 0;
++	char *curr, *comma;
++	int i;
++
++	/* Just in case this ever gets called more than once */
++	if (krb5_enctypes != NULL) {
++		free(krb5_enctypes);
++		krb5_enctypes = NULL;
++		num_krb5_enctypes = 0;
++	}
++
++	/* count the number of commas */
++	for (curr = enctypes; curr && *curr != '\0'; curr = ++comma) {
++		comma = strchr(curr, ',');
++		if (comma != NULL)
++			n++;
++		else
++			break;
++	}
++	/* If no more commas and we're not at the end, there's one more value */
++	if (*curr != '\0')
++		n++;
++
++	/* Empty string, return an error */
++	if (n == 0)
++		return ENOENT;
++
++	/* Allocate space for enctypes array */
++	if ((krb5_enctypes = (int *) calloc(n, sizeof(int))) == NULL) {
++		return ENOMEM;
++	}
++
++	/* Now parse each value into the array */
++	for (curr = enctypes, i = 0; curr && *curr != '\0'; curr = ++comma) {
++		krb5_enctypes[i++] = atoi(curr);
++		comma = strchr(curr, ',');
++		if (comma == NULL)
++			break;
++	}
++
++	num_krb5_enctypes = n;
++	return 0;
++}
++
+ /*==========================*/
+ /*===  External routines ===*/
+ /*==========================*/
+@@ -859,3 +865,123 @@ gssd_destroy_krb5_machine_creds(void)
+ 	krb5_free_context(context);
+ }
+ 
++#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
++/*
++ * this routine obtains a credentials handle via gss_acquire_cred()
++ * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
++ * types negotiated.
++ *
++ * Returns:
++ *	0 => all went well
++ *     -1 => there was an error
++ */
++
++int
++limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
++{
++	u_int maj_stat, min_stat;
++	gss_cred_id_t credh;
++	gss_OID_set_desc  desired_mechs;
++	krb5_enctype enctypes[] = {ENCTYPE_DES_CBC_CRC};
++	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
++
++	/* We only care about getting a krb5 cred */
++	desired_mechs.count = 1;
++	desired_mechs.elements = &krb5oid;
++
++	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
++				    &desired_mechs, GSS_C_INITIATE,
++				    &credh, NULL, NULL);
++
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_acquire_cred",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++
++	/*
++	 * If we failed for any reason to produce global
++	 * list of supported enctypes, use local default here.
++	 */
++	if (krb5_enctypes == NULL)
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_enctypes, &enctypes);
++	else
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_krb5_enctypes,
++					krb5_enctypes);
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_set_allowable_enctypes",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++	sec->cred = credh;
++
++	return 0;
++}
++#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
++
++/*
++ * Obtain supported enctypes from kernel.
++ * Set defaults if info is not available.
++ */
++void
++gssd_obtain_kernel_krb5_info(void)
++{
++	char enctype_file_name[128];
++	char buf[1024];
++	char enctypes[128];
++	char extrainfo[1024];
++	int fd;
++	int use_default_enctypes = 0;
++	int nbytes, numfields;
++	char default_enctypes[] = "1,3,2";
++	int code;
++
++	snprintf(enctype_file_name, sizeof(enctype_file_name),
++		 "%s/%s", pipefsdir, "krb5_info");
++
++	if ((fd = open(enctype_file_name, O_RDONLY)) == -1) {
++		printerr(1, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Unable to open '%s'. Unable to determine "
++			 "Kerberos encryption types supported by the "
++			 "kernel; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	if ((nbytes = read(fd, buf, sizeof(buf))) == -1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Error reading Kerberos encryption type "
++			 "information file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	numfields = sscanf(buf, "enctypes: %s\n%s", enctypes, extrainfo);
++	if (numfields < 1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "error parsing Kerberos encryption type "
++			 "information from file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	if (numfields > 1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Extra information, '%s', from '%s' is ignored\n",
++			 enctype_file_name, extrainfo);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++  do_the_parse:
++  	if (use_default_enctypes)
++		strcpy(enctypes, default_enctypes);
++
++	if ((code = parse_enctypes(enctypes)) != 0) {
++		printerr(0, "ERROR: gssd_obtain_kernel_krb5_info: "
++			 "parse_enctypes%s failed with code %d\n",
++			 use_default_enctypes ? " (with default enctypes)" : "",
++			 code);
++	}
++}
+diff -puN utils/gssd/krb5_util.h~CITI_NFS4_ALL utils/gssd/krb5_util.h
+--- nfs-utils-1.0.10/utils/gssd/krb5_util.h~CITI_NFS4_ALL	2006-08-07 11:45:43.667898000 -0400
++++ nfs-utils-1.0.10-kwc/utils/gssd/krb5_util.h	2006-08-07 11:45:43.759808000 -0400
+@@ -22,6 +22,8 @@ int  gssd_refresh_krb5_machine_creds(voi
+ void gssd_free_krb5_machine_cred_list(char **list);
+ void gssd_setup_krb5_machine_gss_ccache(char *servername);
+ void gssd_destroy_krb5_machine_creds(void);
++void gssd_obtain_kernel_krb5_info(void);
++
+ 
+ #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+ int limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid);
+diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
+--- nfs-utils-1.0.10/utils/gssd/context_mit.c~CITI_NFS4_ALL	2006-08-07 11:45:44.022808000 -0400
++++ nfs-utils-1.0.10-kwc/utils/gssd/context_mit.c	2006-08-07 11:45:44.075808000 -0400
+@@ -32,6 +32,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
++#include <errno.h>
+ #include <gssapi.h>
+ #include <rpc/rpc.h>
+ #include <rpc/auth_gss.h>
+@@ -43,9 +44,53 @@
+ #ifdef HAVE_KRB5
+ #include <krb5.h>
+ 
++/* for 3DES */
++#define KG_USAGE_SEAL 22
++#define KG_USAGE_SIGN 23
++#define KG_USAGE_SEQ  24
++
++/* for rfc???? */
++#define KG_USAGE_ACCEPTOR_SEAL  22
++#define KG_USAGE_ACCEPTOR_SIGN  23
++#define KG_USAGE_INITIATOR_SEAL 24
++#define KG_USAGE_INITIATOR_SIGN 25
++
++/* Lifted from mit src/lib/gssapi/krb5/gssapiP_krb5.h */
++enum seal_alg {
++  SEAL_ALG_NONE            = 0xffff,
++  SEAL_ALG_DES             = 0x0000,
++  SEAL_ALG_1               = 0x0001, /* not published */
++  SEAL_ALG_MICROSOFT_RC4   = 0x0010, /* microsoft w2k;  */
++  SEAL_ALG_DES3KD          = 0x0002
++};
++
++#define KEY_USAGE_SEED_ENCRYPTION	0xAA
++#define KEY_USAGE_SEED_INTEGRITY	0x55
++#define KEY_USAGE_SEED_CHECKSUM		0x99
++#define K5CLENGTH 5
++
++/* Flags for version 2 context flags */
++#define KRB5_CTX_FLAG_INITIATOR		0x00000001
++#define KRB5_CTX_FLAG_CFX		0x00000002
++#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
++
++/*
++ * XXX Hack alert.  We don't have "legal" access to these
++ * structures located in libk5crypto
++ */
++extern void krb5int_enc_arcfour;
++extern void krb5int_enc_des3;
++extern void krb5int_enc_aes128;
++extern void krb5int_enc_aes256;
++extern int krb5_derive_key();
++
++void *get_enc_provider();
++
+ /* XXX spkm3 seems to actually want it this big, yipes. */
+ #define MAX_CTX_LEN 4096
+ 
++
++
+ #ifdef HAVE_LUCID_CONTEXT_SUPPORT
+ 
+ /* Don't use the private structure, use the exported lucid structure */
+@@ -144,6 +189,96 @@ write_lucid_keyblock(char **p, char *end
+ 	return 0;
+ }
+ 
++static void
++key_lucid_to_krb5(const gss_krb5_lucid_key_t *lin, krb5_keyblock *kout)
++{
++	memset(kout, '\0', sizeof(kout));
++	kout->enctype = lin->type;
++	kout->length = lin->length;
++	kout->contents = lin->data;
++}
++
++static void
++key_krb5_to_lucid(const krb5_keyblock *kin, gss_krb5_lucid_key_t *lout)
++{
++	memset(lout, '\0', sizeof(lout));
++	lout->type = kin->enctype;
++	lout->length = kin->length;
++	lout->data = kin->contents;
++}
++
++/*
++ * Function to derive a new key from a given key and given constant data.
++ */
++static krb5_error_code
++derive_key_lucid(const gss_krb5_lucid_key_t *in, gss_krb5_lucid_key_t *out,
++		 int usage, char extra)
++{
++	krb5_error_code code;
++	unsigned char constant_data[K5CLENGTH];
++	krb5_data datain;
++	int keylength;
++	void *enc;
++	krb5_keyblock kin, kout;  /* must send krb5_keyblock, not lucid! */
++
++	/*
++	 * XXX Hack alert.  We don't have "legal" access to these
++	 * values and structures located in libk5crypto
++	 */
++	switch (in->type) {
++	case ENCTYPE_DES3_CBC_RAW:
++		keylength = 24;
++		enc = &krb5int_enc_des3;
++		break;
++	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
++		keylength = 16;
++		enc = &krb5int_enc_aes128;
++		break;
++	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
++		keylength = 32;
++		enc = &krb5int_enc_aes256;
++		break;
++	default:
++		code = KRB5_BAD_ENCTYPE;
++		goto out;
++	}
++
++	/* allocate memory for output key */
++	if ((out->data = malloc(keylength)) == NULL) {
++		code = ENOMEM;
++		goto out;
++	}
++	out->length = keylength;
++	out->type = in->type;
++
++	/* Convert to correct format for call to krb5_derive_key */
++	key_lucid_to_krb5(in, &kin);
++	key_lucid_to_krb5(out, &kout);
++
++	datain.data = (char *) constant_data;
++	datain.length = K5CLENGTH;
++
++	datain.data[0] = (usage>>24)&0xff;
++	datain.data[1] = (usage>>16)&0xff;
++	datain.data[2] = (usage>>8)&0xff;
++	datain.data[3] = usage&0xff;
++
++	datain.data[4] = (char) extra;
++
++	if ((code = krb5_derive_key(enc, &kin, &kout, &datain))) {
++		free(out->data);
++		out->data = NULL;
++		goto out;
++	}
++	key_krb5_to_lucid(&kout, out);
++
++  out:
++  	if (code)
++		printerr(0, "ERROR: derive_key_lucid returning error %d (%s)\n",
++			 code, error_message(code));
++	return (code);
++}
++
+ static int
+ prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t *lctx,
+ 	gss_buffer_desc *buf)
+@@ -183,7 +318,7 @@ prepare_krb5_rfc1964_buffer(gss_krb5_luc
+ 	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
+ 	word_send_seq = lctx->send_seq;	/* XXX send_seq is 64-bit */
+ 	if (WRITE_BYTES(&p, end, word_send_seq)) goto out_err;
+-	if (write_buffer(&p, end, (gss_buffer_desc*)&krb5oid)) goto out_err;
++	if (write_oid(&p, end, &krb5oid)) goto out_err;
+ 
+ 	printerr(2, "prepare_krb5_rfc1964_buffer: serializing keys with "
+ 		 "enctype %d and length %d\n",
+@@ -212,17 +347,180 @@ prepare_krb5_rfc1964_buffer(gss_krb5_luc
+ 	return 0;
+ out_err:
+ 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
+-	if (buf->value) free(buf->value);
++	if (buf->value) {
++		free(buf->value);
++		buf->value = NULL;
++	}
+ 	buf->length = 0;
+-	if (enc_key.data) free(enc_key.data);
++	if (enc_key.data) {
++		free(enc_key.data);
++		enc_key.data = NULL;
++	}
+ 	return -1;
+ }
+ 
++/*
++ * Prepare a new-style buffer to send to the kernel for newer encryption
++ * types -- or for DES3.
++ *
++ * The new format is:
++ *
++ *	u32 version;          This is two (2)
++ *	s32 endtime;
++ *	u32 flags;
++ *	#define KRB5_CTX_FLAG_INITIATOR		0x00000001
++ *	#define KRB5_CTX_FLAG_CFX		0x00000002
++ *	#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
++ *	u64 seq_send;
++ *	u32  enctype;			( encrption type of keys )
++ *	u32  size_of_each_key;		( size of each key in bytes )
++ *	u32  number_of_keys;		( N -- should always be 3 for now )
++ *	keydata-1;                      ( Ke )
++ *	keydata-2;                      ( Ki )
++ *	keydata-3;                      ( Kc )
++ *
++ */
+ static int
+-prepare_krb5_rfc_cfx_buffer(gss_krb5_lucid_context_v1_t *lctx,
++prepare_krb5_ctx_v2_buffer(gss_krb5_lucid_context_v1_t *lctx,
+ 	gss_buffer_desc *buf)
+ {
+-	printerr(0, "ERROR: prepare_krb5_rfc_cfx_buffer: not implemented\n");
++	char *p, *end;
++	static uint32_t version = 2;
++	uint32_t v2_flags = 0;
++	gss_krb5_lucid_key_t enc_key;
++	gss_krb5_lucid_key_t derived_key;
++	gss_buffer_desc fakeoid;
++	uint32_t enctype;
++	uint32_t keysize;
++	uint32_t numkeys;
++
++	memset(&enc_key, 0, sizeof(enc_key));
++	memset(&fakeoid, 0, sizeof(fakeoid));
++
++	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
++		goto out_err;
++	p = buf->value;
++	end = buf->value + MAX_CTX_LEN;
++
++	/* Version 2 */
++	if (WRITE_BYTES(&p, end , version)) goto out_err;
++	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
++
++	if (lctx->initiate)
++		v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++	if (lctx->protocol != 0)
++		v2_flags |= KRB5_CTX_FLAG_CFX;
++	if (lctx->protocol != 0 && lctx->cfx_kd.have_acceptor_subkey == 1)
++		v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
++
++	if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
++
++	if (WRITE_BYTES(&p, end, lctx->send_seq)) goto out_err;
++
++	/* Protocol 0 here implies DES3 or RC4 */
++	if (lctx->protocol == 0) {
++		enctype = lctx->rfc1964_kd.ctx_key.type;
++		keysize = lctx->rfc1964_kd.ctx_key.length;
++		numkeys = 3;	/* XXX is always gonna be three? */
++	} else {
++		if (lctx->cfx_kd.have_acceptor_subkey) {
++			enctype = lctx->cfx_kd.acceptor_subkey.type;
++			keysize = lctx->cfx_kd.acceptor_subkey.length;
++		} else {
++			enctype = lctx->cfx_kd.ctx_key.type;
++			keysize = lctx->cfx_kd.ctx_key.length;
++		}
++		numkeys = 3;
++	}
++	printerr(2, "prepare_krb5_ctx_v2_buffer: serializing %d keys with "
++		 "enctype %d and size %d\n", numkeys, enctype, keysize);
++	if (WRITE_BYTES(&p, end, enctype)) goto out_err;
++	if (WRITE_BYTES(&p, end, keysize)) goto out_err;
++	if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
++
++	if (lctx->protocol == 0) {
++		/* derive and send down: Ke, Ki, and Kc */
++		/* Ke */
++		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
++				lctx->rfc1964_kd.ctx_key.length))
++			goto out_err;
++
++		/* Ki */
++		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
++				lctx->rfc1964_kd.ctx_key.length))
++			goto out_err;
++
++		/* Kc */
++		if (derive_key_lucid(&lctx->rfc1964_kd.ctx_key,
++				&derived_key,
++				KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++	} else {
++		gss_krb5_lucid_key_t *keyptr;
++		uint32_t sign_usage, seal_usage;
++
++		if (lctx->cfx_kd.have_acceptor_subkey)
++			keyptr = &lctx->cfx_kd.acceptor_subkey;
++		else
++			keyptr = &lctx->cfx_kd.ctx_key;
++
++		if (lctx->initiate == 1) {
++			sign_usage = KG_USAGE_INITIATOR_SIGN;
++			seal_usage = KG_USAGE_INITIATOR_SEAL;
++		} else {
++			sign_usage = KG_USAGE_ACCEPTOR_SIGN;
++			seal_usage = KG_USAGE_ACCEPTOR_SEAL;
++		}
++
++		/* derive and send down: Ke, Ki, and Kc */
++
++		/* Ke */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       seal_usage, KEY_USAGE_SEED_ENCRYPTION))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++
++		/* Ki */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       seal_usage, KEY_USAGE_SEED_INTEGRITY))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++
++		/* Kc */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       sign_usage, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++	}
++
++	buf->length = p - (char *)buf->value;
++	return 0;
++
++out_err:
++	printerr(0, "ERROR: prepare_krb5_ctx_v2_buffer: "
++		 "failed serializing krb5 context for kernel\n");
++	if (buf->value) {
++		free(buf->value);
++		buf->value = NULL;
++	}
++	buf->length = 0;
++	if (enc_key.data) {
++		free(enc_key.data);
++		enc_key.data = NULL;
++	}
+ 	return -1;
+ }
+ 
+@@ -258,11 +556,21 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ 		break;
+ 	}
+ 
+-	/* Now lctx points to a lucid context that we can send down to kernel */
+-	if (lctx->protocol == 0)
++	/*
++	 * Now lctx points to a lucid context that we can send down to kernel
++	 *
++	 * Note: we send down different information to the kernel depending
++	 * on the protocol version and the enctyption type.
++	 * For protocol version 0 with all enctypes besides DES3, we use
++	 * the original format.  For protocol version != 0 or DES3, we
++	 * send down the new style information.
++	 */
++
++	if (lctx->protocol == 0 &&
++		lctx->rfc1964_kd.ctx_key.type == ENCTYPE_DES_CBC_RAW)
+ 		retcode = prepare_krb5_rfc1964_buffer(lctx, buf);
+ 	else
+-		retcode = prepare_krb5_rfc_cfx_buffer(lctx, buf);
++		retcode = prepare_krb5_ctx_v2_buffer(lctx, buf);
+ 
+ 	maj_stat = gss_free_lucid_sec_context(&min_stat, ctx, return_ctx);
+ 	if (maj_stat != GSS_S_COMPLETE) {
+@@ -300,6 +608,66 @@ write_keyblock(char **p, char *end, stru
+ }
+ 
+ /*
++ * Function to derive a new key from a given key and given constant data.
++ */
++static krb5_error_code
++derive_key(const krb5_keyblock *in, krb5_keyblock *out, int usage, char extra)
++{
++	krb5_error_code code;
++	unsigned char constant_data[K5CLENGTH];
++	krb5_data datain;
++	int keylength;
++	void *enc;
++
++	/*
++	 * XXX Hack alert.  We don't have "legal" access to these
++	 * values and structures located in libk5crypto
++	 */
++	switch (in->enctype) {
++	case ENCTYPE_DES3_CBC_RAW:
++		keylength = 24;
++		enc = &krb5int_enc_des3;
++		break;
++	case ENCTYPE_ARCFOUR_HMAC:
++		keylength = 16;
++		enc = &krb5int_enc_arcfour;
++		break;
++	default:
++		code = KRB5_BAD_ENCTYPE;
++		goto out;
++	}
++
++	/* allocate memory for output key */
++	if ((out->contents = malloc(keylength)) == NULL) {
++		code = ENOMEM;
++		goto out;
++	}
++	out->length = keylength;
++	out->enctype = in->enctype;
++
++	datain.data = (char *) constant_data;
++	datain.length = K5CLENGTH;
++
++	datain.data[0] = (usage>>24)&0xff;
++	datain.data[1] = (usage>>16)&0xff;
++	datain.data[2] = (usage>>8)&0xff;
++	datain.data[3] = usage&0xff;
++
++	datain.data[4] = (char) extra;
++
++	if ((code = krb5_derive_key(enc, in, out, &datain))) {
++		free(out->contents);
++		out->contents = NULL;
++	}
++
++  out:
++  	if (code)
++		printerr(0, "ERROR: derive_key returning error %d (%s)\n",
++			 code, error_message(code));
++	return (code);
++}
++
++/*
+  * We really shouldn't know about glue-layer context structure, but
+  * we need to get at the real krb5 context pointer.  This should be
+  * removed as soon as we say there is no support for MIT Kerberos
+@@ -315,45 +683,114 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ {
+ 	krb5_gss_ctx_id_t kctx = ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
+ 	char *p, *end;
+-	static int constant_one = 1;
+ 	static int constant_zero = 0;
++	static int constant_one = 1;
++	static int constant_two = 2;
+ 	uint32_t word_seq_send;
++	u_int64_t seq_send_64bit;
++	uint32_t v2_flags = 0;
++	krb5_keyblock derived_key;
++	uint32_t numkeys;
+ 
+ 	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+ 		goto out_err;
+ 	p = buf->value;
+ 	end = buf->value + MAX_CTX_LEN;
+ 
+-	if (kctx->initiate) {
+-		if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
+-	}
+-	else {
+-		if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+-	}
+-	if (kctx->seed_init) {
+-		if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
+-	}
+-	else {
+-		if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+-	}
+-	if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
+-		goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
+-	word_seq_send = kctx->seq_send;
+-	if (WRITE_BYTES(&p, end, word_seq_send)) goto out_err;
+-	if (write_oid(&p, end, kctx->mech_used)) goto out_err;
+-
+-	printerr(2, "serialize_krb5_ctx: serializing keys with "
+-		 "enctype %d and length %d\n",
+-		 kctx->enc->enctype, kctx->enc->length);
++	switch (kctx->sealalg) {
++	case SEAL_ALG_DES:
++		/* Versions 0 and 1 */
++		if (kctx->initiate) {
++			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
++		}
++		else {
++			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
++		}
++		if (kctx->seed_init) {
++			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
++		}
++		else {
++			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
++		}
++		if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
++			goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
++		word_seq_send = kctx->seq_send;
++		if (WRITE_BYTES(&p, end, word_seq_send)) goto out_err;
++		if (write_oid(&p, end, kctx->mech_used)) goto out_err;
++
++		printerr(2, "serialize_krb5_ctx: serializing keys with "
++			 "enctype %d and length %d\n",
++			 kctx->enc->enctype, kctx->enc->length);
+ 
+-	if (write_keyblock(&p, end, kctx->enc)) goto out_err;
+-	if (write_keyblock(&p, end, kctx->seq)) goto out_err;
++		if (write_keyblock(&p, end, kctx->enc)) goto out_err;
++		if (write_keyblock(&p, end, kctx->seq)) goto out_err;
++		break;
++	case SEAL_ALG_MICROSOFT_RC4:
++	case SEAL_ALG_DES3KD:
++		/* u32 version;   ( 2 )
++		 * s32 endtime;
++		 * u32 flags;
++		 * #define KRB5_CTX_FLAG_INITIATOR        0x00000001
++		 * #define KRB5_CTX_FLAG_CFX              0x00000002
++		 * #define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY  0x00000004
++		 * u64 seq_send;
++		 * u32  enctype;
++		 * u32  size_of_each_key;    (  size in bytes )
++		 * u32  number_of_keys;      (  N (assumed to be 3 for now) )
++		 * keydata-1;                (  Ke  (Kenc for DES3) )
++		 * keydata-2;                (  Ki  (Kseq for DES3) )
++		 * keydata-3;                (  Kc (derived checksum key) )
++		 */
++		 /* Version 2 */
++		if (WRITE_BYTES(&p, end , constant_two)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
++
++		/* Only applicable flag for is initiator */
++		if (kctx->initiate) v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++		if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
++
++		seq_send_64bit = kctx->seq_send;
++		if (WRITE_BYTES(&p, end, seq_send_64bit)) goto out_err;
++
++		if (WRITE_BYTES(&p, end, kctx->enc->enctype)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->enc->length)) goto out_err;
++		numkeys = 3;
++		if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
++		printerr(2, "serialize_krb5_ctx: serializing %d keys with "
++			 "enctype %d and size %d\n",
++			 numkeys, kctx->enc->enctype, kctx->enc->length);
++
++		/* Ke */
++		if (write_bytes(&p, end, kctx->enc->contents,
++				kctx->enc->length))
++			goto out_err;
++
++		/* Ki */
++		if (write_bytes(&p, end, kctx->enc->contents,
++				kctx->enc->length))
++			goto out_err;
++
++		/* Kc */
++		if (derive_key(kctx->seq, &derived_key,
++			       KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.contents,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.contents);
++		break;
++	default:
++		printerr(0, "ERROR: serialize_krb5_ctx: unsupported seal "
++			 "algorithm %d\n", kctx->sealalg);
++		goto out_err;
++	}
+ 
+ 	buf->length = p - (char *)buf->value;
+ 	return 0;
++
+ out_err:
+ 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
+ 	if (buf->value) free(buf->value);
+diff -puN aclocal.m4~CITI_NFS4_ALL aclocal.m4
+--- nfs-utils-1.0.10/aclocal.m4~CITI_NFS4_ALL	2006-08-07 11:45:44.538578000 -0400
++++ nfs-utils-1.0.10-kwc/aclocal.m4	2006-08-07 11:45:46.918455000 -0400
+@@ -13,7 +13,7 @@
+ 
+ # libtool.m4 - Configure libtool for the host system. -*-Autoconf-*-
+ 
+-# serial 48 Debian 1.5.22-4 AC_PROG_LIBTOOL
++# serial 48 AC_PROG_LIBTOOL
+ 
+ 
+ # AC_PROVIDE_IFELSE(MACRO-NAME, IF-PROVIDED, IF-NOT-PROVIDED)
+@@ -1397,6 +1397,18 @@ freebsd1*)
+   dynamic_linker=no
+   ;;
+ 
++kfreebsd*-gnu)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='GNU ld.so'
++  ;;
++
+ freebsd* | dragonfly*)
+   # DragonFly does not have aout.  When/if they implement a new
+   # versioning mechanism, adjust this.
+@@ -1552,7 +1564,7 @@ linux*oldld* | linux*aout* | linux*coff*
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -1566,10 +1578,27 @@ linux* | k*bsd*-gnu)
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # find out which ABI we are using
++  libsuff=
++  case "$host_cpu" in
++  x86_64*|s390x*|powerpc64*)
++    echo '[#]line __oline__ "configure"' > conftest.$ac_ext
++    if AC_TRY_EVAL(ac_compile); then
++      case `/usr/bin/file conftest.$ac_objext` in
++      *64-bit*)
++        libsuff=64
++        sys_lib_search_path_spec="/lib${libsuff} /usr/lib${libsuff} /usr/local/lib${libsuff}"
++        ;;
++      esac
++    fi
++    rm -rf conftest*
++    ;;
++  esac
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -1581,7 +1610,7 @@ linux* | k*bsd*-gnu)
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
++knetbsd*-gnu)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -1590,7 +1619,7 @@ netbsdelf*-gnu)
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=no
+   hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
++  dynamic_linker='GNU ld.so'
+   ;;
+ 
+ netbsd*)
+@@ -2298,7 +2327,7 @@ darwin* | rhapsody*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+-freebsd* | dragonfly*)
++freebsd* | kfreebsd*-gnu | dragonfly*)
+   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
+     case $host_cpu in
+     i*86 )
+@@ -2352,11 +2381,11 @@ irix5* | irix6* | nonstopux*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+-netbsd* | netbsdelf*-gnu)
++netbsd*)
+   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'
+   else
+@@ -3104,7 +3133,7 @@ case $host_os in
+   freebsd-elf*)
+     _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
+     ;;
+-  freebsd* | dragonfly*)
++  freebsd* | kfreebsd*-gnu | dragonfly*)
+     # FreeBSD 3 and later use GNU C++ and GNU ld with standard ELF
+     # conventions
+     _LT_AC_TAGVAR(ld_shlibs, $1)=yes
+@@ -3263,7 +3292,7 @@ case $host_os in
+     _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath ${wl}$libdir'
+     _LT_AC_TAGVAR(hardcode_libdir_separator, $1)=:
+     ;;
+-  linux* | k*bsd*-gnu)
++  linux*)
+     case $cc_basename in
+       KCC*)
+ 	# Kuck and Associates, Inc. (KAI) C++ Compiler
+@@ -3365,7 +3394,7 @@ case $host_os in
+ 	;;
+     esac
+     ;;
+-  netbsd* | netbsdelf*-gnu)
++  netbsd*)
+     if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+       _LT_AC_TAGVAR(archive_cmds, $1)='$LD -Bshareable  -o $lib $predep_objects $libobjs $deplibs $postdep_objects $linker_flags'
+       wlarc=
+@@ -4630,7 +4659,7 @@ hpux*) # Its linker distinguishes data f
+   lt_cv_sys_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern int \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
+   lt_cv_sys_global_symbol_to_c_name_address="sed -n -e 's/^: \([[^ ]]*\) $/  {\\\"\1\\\", (lt_ptr) 0},/p' -e 's/^$symcode* \([[^ ]]*\) \([[^ ]]*\)$/  {\"\2\", (lt_ptr) \&\2},/p'"
+   ;;
+-linux* | k*bsd*-gnu)
++linux*)
+   if test "$host_cpu" = ia64; then
+     symcode='[[ABCDGIRSTW]]'
+     lt_cv_sys_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern int \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
+@@ -4903,7 +4932,7 @@ AC_MSG_CHECKING([for $compiler option to
+ 	    ;;
+ 	esac
+ 	;;
+-      freebsd* | dragonfly*)
++      freebsd* | kfreebsd*-gnu | dragonfly*)
+ 	# FreeBSD uses GNU C++
+ 	;;
+       hpux9* | hpux10* | hpux11*)
+@@ -4946,7 +4975,7 @@ AC_MSG_CHECKING([for $compiler option to
+ 	    ;;
+ 	esac
+ 	;;
+-      linux* | k*bsd*-gnu)
++      linux*)
+ 	case $cc_basename in
+ 	  KCC*)
+ 	    # KAI C++ Compiler
+@@ -4989,7 +5018,7 @@ AC_MSG_CHECKING([for $compiler option to
+ 	    ;;
+ 	esac
+ 	;;
+-      netbsd* | netbsdelf*-gnu)
++      netbsd*)
+ 	;;
+       osf3* | osf4* | osf5*)
+ 	case $cc_basename in
+@@ -5200,7 +5229,7 @@ AC_MSG_CHECKING([for $compiler option to
+       _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       case $cc_basename in
+       icc* | ecc*)
+ 	_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+@@ -5341,9 +5370,6 @@ ifelse([$1],[CXX],[
+   cygwin* | mingw*)
+     _LT_AC_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[[BCDGRS]] /s/.* \([[^ ]]*\)/\1 DATA/;/^.* __nm__/s/^.* __nm__\([[^ ]]*\) [[^ ]]*/\1 DATA/;/^I /d;/^[[AITW]] /s/.* //'\'' | sort | uniq > $export_symbols'
+   ;;
+-  linux* | k*bsd*-gnu)
+-    _LT_AC_TAGVAR(link_all_deplibs, $1)=no
+-  ;;
+   *)
+     _LT_AC_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
+   ;;
+@@ -5514,7 +5540,7 @@ EOF
+       _LT_AC_TAGVAR(archive_expsym_cmds, $1)='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
+ 	tmp_addflag=
+ 	case $cc_basename,$host_cpu in
+@@ -5540,13 +5566,12 @@ EOF
+   $echo "local: *; };" >> $output_objdir/$libname.ver~
+ 	  $CC -shared'"$tmp_addflag"' $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
+ 	fi
+-	_LT_AC_TAGVAR(link_all_deplibs, $1)=no
+       else
+ 	_LT_AC_TAGVAR(ld_shlibs, $1)=no
+       fi
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	_LT_AC_TAGVAR(archive_cmds, $1)='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
+ 	wlarc=
+@@ -5876,7 +5901,7 @@ _LT_EOF
+       ;;
+ 
+     # FreeBSD 3 and greater uses gcc -shared to do shared libraries.
+-    freebsd* | dragonfly*)
++    freebsd* | kfreebsd*-gnu | dragonfly*)
+       _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared -o $lib $libobjs $deplibs $compiler_flags'
+       _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='-R$libdir'
+       _LT_AC_TAGVAR(hardcode_direct, $1)=yes
+@@ -5978,7 +6003,7 @@ _LT_EOF
+       _LT_AC_TAGVAR(link_all_deplibs, $1)=yes
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	_LT_AC_TAGVAR(archive_cmds, $1)='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
+       else
+diff -puN configure~CITI_NFS4_ALL configure
+--- nfs-utils-1.0.10/configure~CITI_NFS4_ALL	2006-08-07 11:45:46.456758000 -0400
++++ nfs-utils-1.0.10-kwc/configure	2006-08-07 11:45:47.865004000 -0400
+@@ -6355,7 +6355,7 @@ darwin* | rhapsody*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+-freebsd* | dragonfly*)
++freebsd* | kfreebsd*-gnu | dragonfly*)
+   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
+     case $host_cpu in
+     i*86 )
+@@ -6409,11 +6409,11 @@ irix5* | irix6* | nonstopux*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+-netbsd* | netbsdelf*-gnu)
++netbsd*)
+   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
+   else
+@@ -7888,7 +7888,7 @@ hpux*) # Its linker distinguishes data f
+   lt_cv_sys_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern int \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
+   lt_cv_sys_global_symbol_to_c_name_address="sed -n -e 's/^: \([^ ]*\) $/  {\\\"\1\\\", (lt_ptr) 0},/p' -e 's/^$symcode* \([^ ]*\) \([^ ]*\)$/  {\"\2\", (lt_ptr) \&\2},/p'"
+   ;;
+-linux* | k*bsd*-gnu)
++linux*)
+   if test "$host_cpu" = ia64; then
+     symcode='[ABCDGIRSTW]'
+     lt_cv_sys_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern int \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
+@@ -8856,7 +8856,7 @@ echo $ECHO_N "checking for $compiler opt
+       lt_prog_compiler_static='-Bstatic'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       case $cc_basename in
+       icc* | ecc*)
+ 	lt_prog_compiler_wl='-Wl,'
+@@ -9295,7 +9295,7 @@ EOF
+       archive_expsym_cmds='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
+ 	tmp_addflag=
+ 	case $cc_basename,$host_cpu in
+@@ -9321,13 +9321,12 @@ EOF
+   $echo "local: *; };" >> $output_objdir/$libname.ver~
+ 	  $CC -shared'"$tmp_addflag"' $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
+ 	fi
+-	link_all_deplibs=no
+       else
+ 	ld_shlibs=no
+       fi
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
+ 	wlarc=
+@@ -9787,7 +9786,7 @@ if test -z "$aix_libpath"; then aix_libp
+       ;;
+ 
+     # FreeBSD 3 and greater uses gcc -shared to do shared libraries.
+-    freebsd* | dragonfly*)
++    freebsd* | kfreebsd*-gnu | dragonfly*)
+       archive_cmds='$CC -shared -o $lib $libobjs $deplibs $compiler_flags'
+       hardcode_libdir_flag_spec='-R$libdir'
+       hardcode_direct=yes
+@@ -9889,7 +9888,7 @@ if test -z "$aix_libpath"; then aix_libp
+       link_all_deplibs=yes
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
+       else
+@@ -10379,6 +10378,18 @@ freebsd1*)
+   dynamic_linker=no
+   ;;
+ 
++kfreebsd*-gnu)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='GNU ld.so'
++  ;;
++
+ freebsd* | dragonfly*)
+   # DragonFly does not have aout.  When/if they implement a new
+   # versioning mechanism, adjust this.
+@@ -10534,7 +10545,7 @@ linux*oldld* | linux*aout* | linux*coff*
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -10548,10 +10559,31 @@ linux* | k*bsd*-gnu)
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # find out which ABI we are using
++  libsuff=
++  case "$host_cpu" in
++  x86_64*|s390x*|powerpc64*)
++    echo '#line 10566 "configure"' > conftest.$ac_ext
++    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; then
++      case `/usr/bin/file conftest.$ac_objext` in
++      *64-bit*)
++        libsuff=64
++        sys_lib_search_path_spec="/lib${libsuff} /usr/lib${libsuff} /usr/local/lib${libsuff}"
++        ;;
++      esac
++    fi
++    rm -rf conftest*
++    ;;
++  esac
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -10563,7 +10595,7 @@ linux* | k*bsd*-gnu)
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
++knetbsd*-gnu)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -10572,7 +10604,7 @@ netbsdelf*-gnu)
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=no
+   hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
++  dynamic_linker='GNU ld.so'
+   ;;
+ 
+ netbsd*)
+@@ -11507,7 +11539,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 11510 "configure"
++#line 11542 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -11607,7 +11639,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 11610 "configure"
++#line 11642 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -12952,7 +12984,7 @@ if test -z "$aix_libpath"; then aix_libp
+   freebsd-elf*)
+     archive_cmds_need_lc_CXX=no
+     ;;
+-  freebsd* | dragonfly*)
++  freebsd* | kfreebsd*-gnu | dragonfly*)
+     # FreeBSD 3 and later use GNU C++ and GNU ld with standard ELF
+     # conventions
+     ld_shlibs_CXX=yes
+@@ -13111,7 +13143,7 @@ if test -z "$aix_libpath"; then aix_libp
+     hardcode_libdir_flag_spec_CXX='${wl}-rpath ${wl}$libdir'
+     hardcode_libdir_separator_CXX=:
+     ;;
+-  linux* | k*bsd*-gnu)
++  linux*)
+     case $cc_basename in
+       KCC*)
+ 	# Kuck and Associates, Inc. (KAI) C++ Compiler
+@@ -13213,7 +13245,7 @@ if test -z "$aix_libpath"; then aix_libp
+ 	;;
+     esac
+     ;;
+-  netbsd* | netbsdelf*-gnu)
++  netbsd*)
+     if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+       archive_cmds_CXX='$LD -Bshareable  -o $lib $predep_objects $libobjs $deplibs $postdep_objects $linker_flags'
+       wlarc=
+@@ -13780,7 +13812,7 @@ echo $ECHO_N "checking for $compiler opt
+ 	    ;;
+ 	esac
+ 	;;
+-      freebsd* | dragonfly*)
++      freebsd* | kfreebsd*-gnu | dragonfly*)
+ 	# FreeBSD uses GNU C++
+ 	;;
+       hpux9* | hpux10* | hpux11*)
+@@ -13823,7 +13855,7 @@ echo $ECHO_N "checking for $compiler opt
+ 	    ;;
+ 	esac
+ 	;;
+-      linux* | k*bsd*-gnu)
++      linux*)
+ 	case $cc_basename in
+ 	  KCC*)
+ 	    # KAI C++ Compiler
+@@ -13866,7 +13898,7 @@ echo $ECHO_N "checking for $compiler opt
+ 	    ;;
+ 	esac
+ 	;;
+-      netbsd* | netbsdelf*-gnu)
++      netbsd*)
+ 	;;
+       osf3* | osf4* | osf5*)
+ 	case $cc_basename in
+@@ -13975,11 +14007,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:13978: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:14010: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:13982: \$? = $ac_status" >&5
++   echo "$as_me:14014: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -14079,11 +14111,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:14082: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:14114: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:14086: \$? = $ac_status" >&5
++   echo "$as_me:14118: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -14151,9 +14183,6 @@ echo $ECHO_N "checking whether the $comp
+   cygwin* | mingw*)
+     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[BCDGRS] /s/.* \([^ ]*\)/\1 DATA/;/^.* __nm__/s/^.* __nm__\([^ ]*\) [^ ]*/\1 DATA/;/^I /d;/^[AITW] /s/.* //'\'' | sort | uniq > $export_symbols'
+   ;;
+-  linux* | k*bsd*-gnu)
+-    link_all_deplibs_CXX=no
+-  ;;
+   *)
+     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
+   ;;
+@@ -14433,6 +14462,18 @@ freebsd1*)
+   dynamic_linker=no
+   ;;
+ 
++kfreebsd*-gnu)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='GNU ld.so'
++  ;;
++
+ freebsd* | dragonfly*)
+   # DragonFly does not have aout.  When/if they implement a new
+   # versioning mechanism, adjust this.
+@@ -14588,7 +14629,7 @@ linux*oldld* | linux*aout* | linux*coff*
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -14602,10 +14643,31 @@ linux* | k*bsd*-gnu)
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # find out which ABI we are using
++  libsuff=
++  case "$host_cpu" in
++  x86_64*|s390x*|powerpc64*)
++    echo '#line 14650 "configure"' > conftest.$ac_ext
++    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; then
++      case `/usr/bin/file conftest.$ac_objext` in
++      *64-bit*)
++        libsuff=64
++        sys_lib_search_path_spec="/lib${libsuff} /usr/lib${libsuff} /usr/local/lib${libsuff}"
++        ;;
++      esac
++    fi
++    rm -rf conftest*
++    ;;
++  esac
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -14617,7 +14679,7 @@ linux* | k*bsd*-gnu)
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
++knetbsd*-gnu)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -14626,7 +14688,7 @@ netbsdelf*-gnu)
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=no
+   hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
++  dynamic_linker='GNU ld.so'
+   ;;
+ 
+ netbsd*)
+@@ -15534,7 +15596,7 @@ echo $ECHO_N "checking for $compiler opt
+       lt_prog_compiler_static_F77='-Bstatic'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       case $cc_basename in
+       icc* | ecc*)
+ 	lt_prog_compiler_wl_F77='-Wl,'
+@@ -15640,11 +15702,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:15643: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:15705: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:15647: \$? = $ac_status" >&5
++   echo "$as_me:15709: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -15744,11 +15806,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:15747: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:15809: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:15751: \$? = $ac_status" >&5
++   echo "$as_me:15813: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -15973,7 +16035,7 @@ EOF
+       archive_expsym_cmds_F77='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
+ 	tmp_addflag=
+ 	case $cc_basename,$host_cpu in
+@@ -15999,13 +16061,12 @@ EOF
+   $echo "local: *; };" >> $output_objdir/$libname.ver~
+ 	  $CC -shared'"$tmp_addflag"' $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
+ 	fi
+-	link_all_deplibs_F77=no
+       else
+ 	ld_shlibs_F77=no
+       fi
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds_F77='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
+ 	wlarc=
+@@ -16445,7 +16506,7 @@ if test -z "$aix_libpath"; then aix_libp
+       ;;
+ 
+     # FreeBSD 3 and greater uses gcc -shared to do shared libraries.
+-    freebsd* | dragonfly*)
++    freebsd* | kfreebsd*-gnu | dragonfly*)
+       archive_cmds_F77='$CC -shared -o $lib $libobjs $deplibs $compiler_flags'
+       hardcode_libdir_flag_spec_F77='-R$libdir'
+       hardcode_direct_F77=yes
+@@ -16547,7 +16608,7 @@ if test -z "$aix_libpath"; then aix_libp
+       link_all_deplibs_F77=yes
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds_F77='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
+       else
+@@ -17037,6 +17098,18 @@ freebsd1*)
+   dynamic_linker=no
+   ;;
+ 
++kfreebsd*-gnu)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='GNU ld.so'
++  ;;
++
+ freebsd* | dragonfly*)
+   # DragonFly does not have aout.  When/if they implement a new
+   # versioning mechanism, adjust this.
+@@ -17192,7 +17265,7 @@ linux*oldld* | linux*aout* | linux*coff*
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -17206,10 +17279,31 @@ linux* | k*bsd*-gnu)
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # find out which ABI we are using
++  libsuff=
++  case "$host_cpu" in
++  x86_64*|s390x*|powerpc64*)
++    echo '#line 17286 "configure"' > conftest.$ac_ext
++    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; then
++      case `/usr/bin/file conftest.$ac_objext` in
++      *64-bit*)
++        libsuff=64
++        sys_lib_search_path_spec="/lib${libsuff} /usr/lib${libsuff} /usr/local/lib${libsuff}"
++        ;;
++      esac
++    fi
++    rm -rf conftest*
++    ;;
++  esac
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -17221,7 +17315,7 @@ linux* | k*bsd*-gnu)
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
++knetbsd*-gnu)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -17230,7 +17324,7 @@ netbsdelf*-gnu)
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=no
+   hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
++  dynamic_linker='GNU ld.so'
+   ;;
+ 
+ netbsd*)
+@@ -17963,11 +18057,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:17966: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:18060: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:17970: \$? = $ac_status" >&5
++   echo "$as_me:18064: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -18125,7 +18219,7 @@ echo $ECHO_N "checking for $compiler opt
+       lt_prog_compiler_static_GCJ='-Bstatic'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       case $cc_basename in
+       icc* | ecc*)
+ 	lt_prog_compiler_wl_GCJ='-Wl,'
+@@ -18231,11 +18325,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:18234: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:18328: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:18238: \$? = $ac_status" >&5
++   echo "$as_me:18332: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -18335,11 +18429,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:18338: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:18432: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:18342: \$? = $ac_status" >&5
++   echo "$as_me:18436: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -18564,7 +18658,7 @@ EOF
+       archive_expsym_cmds_GCJ='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
+       ;;
+ 
+-    linux* | k*bsd*-gnu)
++    linux*)
+       if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
+ 	tmp_addflag=
+ 	case $cc_basename,$host_cpu in
+@@ -18590,13 +18684,12 @@ EOF
+   $echo "local: *; };" >> $output_objdir/$libname.ver~
+ 	  $CC -shared'"$tmp_addflag"' $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
+ 	fi
+-	link_all_deplibs_GCJ=no
+       else
+ 	ld_shlibs_GCJ=no
+       fi
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds_GCJ='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
+ 	wlarc=
+@@ -19056,7 +19149,7 @@ if test -z "$aix_libpath"; then aix_libp
+       ;;
+ 
+     # FreeBSD 3 and greater uses gcc -shared to do shared libraries.
+-    freebsd* | dragonfly*)
++    freebsd* | kfreebsd*-gnu | dragonfly*)
+       archive_cmds_GCJ='$CC -shared -o $lib $libobjs $deplibs $compiler_flags'
+       hardcode_libdir_flag_spec_GCJ='-R$libdir'
+       hardcode_direct_GCJ=yes
+@@ -19158,7 +19251,7 @@ if test -z "$aix_libpath"; then aix_libp
+       link_all_deplibs_GCJ=yes
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
+ 	archive_cmds_GCJ='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
+       else
+@@ -19648,6 +19741,18 @@ freebsd1*)
+   dynamic_linker=no
+   ;;
+ 
++kfreebsd*-gnu)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  dynamic_linker='GNU ld.so'
++  ;;
++
+ freebsd* | dragonfly*)
+   # DragonFly does not have aout.  When/if they implement a new
+   # versioning mechanism, adjust this.
+@@ -19803,7 +19908,7 @@ linux*oldld* | linux*aout* | linux*coff*
+   ;;
+ 
+ # This must be Linux ELF.
+-linux* | k*bsd*-gnu)
++linux*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -19817,10 +19922,31 @@ linux* | k*bsd*-gnu)
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # find out which ABI we are using
++  libsuff=
++  case "$host_cpu" in
++  x86_64*|s390x*|powerpc64*)
++    echo '#line 19929 "configure"' > conftest.$ac_ext
++    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; then
++      case `/usr/bin/file conftest.$ac_objext` in
++      *64-bit*)
++        libsuff=64
++        sys_lib_search_path_spec="/lib${libsuff} /usr/lib${libsuff} /usr/local/lib${libsuff}"
++        ;;
++      esac
++    fi
++    rm -rf conftest*
++    ;;
++  esac
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -19832,7 +19958,7 @@ linux* | k*bsd*-gnu)
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
++knetbsd*-gnu)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+@@ -19841,7 +19967,7 @@ netbsdelf*-gnu)
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=no
+   hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
++  dynamic_linker='GNU ld.so'
+   ;;
+ 
+ netbsd*)
+diff -puN utils/mountd/Makefile.in~CITI_NFS4_ALL utils/mountd/Makefile.in
+--- nfs-utils-1.0.10/utils/mountd/Makefile.in~CITI_NFS4_ALL	2006-08-07 11:45:46.653561000 -0400
++++ nfs-utils-1.0.10-kwc/utils/mountd/Makefile.in	2006-08-07 11:45:47.916004000 -0400
+@@ -56,7 +56,7 @@ PROGRAMS = $(sbin_PROGRAMS)
+ am_mountd_OBJECTS = mountd-mountd.$(OBJEXT) \
+ 	mountd-mount_dispatch.$(OBJEXT) mountd-auth.$(OBJEXT) \
+ 	mountd-rmtab.$(OBJEXT) mountd-cache.$(OBJEXT) \
+-	mountd-svc_run.$(OBJEXT)
++	mountd-svc_run.$(OBJEXT) mountd-fsloc.$(OBJEXT)
+ mountd_OBJECTS = $(am_mountd_OBJECTS)
+ am__DEPENDENCIES_1 =
+ mountd_DEPENDENCIES = ../../support/export/libexport.a \
+@@ -234,7 +234,7 @@ EXTRA_DIST = $(man8_MANS)
+ RPCPREFIX = rpc.
+ KPREFIX = @kprefix@
+ mountd_SOURCES = mountd.c mount_dispatch.c auth.c rmtab.c cache.c \
+-		 svc_run.c mountd.h
++		 svc_run.c fsloc.c mountd.h
+ 
+ mountd_LDADD = ../../support/export/libexport.a \
+ 	       ../../support/nfs/libnfs.a \
+@@ -319,6 +319,7 @@ distclean-compile:
+ 
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-auth.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-cache.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-fsloc.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-mount_dispatch.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-mountd.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mountd-rmtab.Po@am__quote@
+@@ -429,6 +430,20 @@ mountd-svc_run.obj: svc_run.c
+ @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+ @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mountd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mountd-svc_run.obj `if test -f 'svc_run.c'; then $(CYGPATH_W) 'svc_run.c'; else $(CYGPATH_W) '$(srcdir)/svc_run.c'; fi`
+ 
++mountd-fsloc.o: fsloc.c
++@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mountd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mountd-fsloc.o -MD -MP -MF "$(DEPDIR)/mountd-fsloc.Tpo" -c -o mountd-fsloc.o `test -f 'fsloc.c' || echo '$(srcdir)/'`fsloc.c; \
++@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mountd-fsloc.Tpo" "$(DEPDIR)/mountd-fsloc.Po"; else rm -f "$(DEPDIR)/mountd-fsloc.Tpo"; exit 1; fi
++@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='fsloc.c' object='mountd-fsloc.o' libtool=no @AMDEPBACKSLASH@
++@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
++@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mountd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mountd-fsloc.o `test -f 'fsloc.c' || echo '$(srcdir)/'`fsloc.c
++
++mountd-fsloc.obj: fsloc.c
++@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mountd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mountd-fsloc.obj -MD -MP -MF "$(DEPDIR)/mountd-fsloc.Tpo" -c -o mountd-fsloc.obj `if test -f 'fsloc.c'; then $(CYGPATH_W) 'fsloc.c'; else $(CYGPATH_W) '$(srcdir)/fsloc.c'; fi`; \
++@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mountd-fsloc.Tpo" "$(DEPDIR)/mountd-fsloc.Po"; else rm -f "$(DEPDIR)/mountd-fsloc.Tpo"; exit 1; fi
++@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='fsloc.c' object='mountd-fsloc.obj' libtool=no @AMDEPBACKSLASH@
++@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
++@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mountd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mountd-fsloc.obj `if test -f 'fsloc.c'; then $(CYGPATH_W) 'fsloc.c'; else $(CYGPATH_W) '$(srcdir)/fsloc.c'; fi`
++
+ mostlyclean-libtool:
+ 	-rm -f *.lo
+ 
+
+_
