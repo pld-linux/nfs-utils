@@ -6,3 +6,6 @@ NFS4="no"
 
 # Options for NFSv4 rpcsec_gss daemon
 #RPCGSSOPTIONS=
+
+# Enable if you don't want rpm upgrade to remount Your NFS mounts
+#RPM_SKIP_AUTO_RESTART=yes
