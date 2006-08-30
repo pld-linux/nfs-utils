@@ -11,7 +11,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.10
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -215,7 +215,7 @@ install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsclient
+install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
@@ -238,7 +238,8 @@ touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-mv -f nfs html
+rm -rf html
+cp -a nfs html
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -281,6 +282,12 @@ fi
 if [ "$1" = "0" ]; then
 	%service rquotad stop
 	/sbin/chkconfig --del rquotad
+fi
+
+%triggerpostun clients -- %{name}-clients < 1.0.10-1.2
+if [ -f /etc/sysconfig/nfsclient.rpmsave ]; then
+	mv -f /etc/sysconfig/nfsfs{,.rpmnew}
+	mv -f /etc/sysconfig/nfsclient.rpmsave /etc/sysconfig/nfsfs
 fi
 
 %files
@@ -337,7 +344,7 @@ fi
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
-%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsclient
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
 
