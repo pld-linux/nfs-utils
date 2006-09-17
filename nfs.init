@@ -127,7 +127,7 @@ case "$1" in
 		[ $? -ne 0 ] && RETVAL=7
 		[ $RETVAL -eq 0 ] && ok || died
 	else
-		msg_not_running "NFS" >&2
+		msg_not_running "NFS"
 		exit 7
 	fi
 	;;
