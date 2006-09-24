@@ -11,7 +11,7 @@ Summary(ru):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk):	Утил╕ти для NFS та демони п╕дтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.10
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -42,6 +42,7 @@ BuildRequires:	libevent-devel >= 1.1a
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
+BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
 BuildRequires:	sed >= 4.0
@@ -192,7 +193,8 @@ sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
 %endif
 	--enable-nfsv3 \
 	--enable-secure-statd \
-	--with-statedir=/var/lib/nfs
+	--with-statedir=/var/lib/nfs \
+	--with-tcp-wrappers
 
 %{__make} all
 
