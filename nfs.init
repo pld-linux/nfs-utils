@@ -41,10 +41,7 @@ if ! is_yes "$NFS4" ; then
 	RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
 fi
 
-RETVAL=0
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
 		# Start daemons.
@@ -77,8 +74,9 @@ case "$1" in
 	else
 		msg_already_running "NFS"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /var/lock/subsys/nfs ]; then
 		# Stop daemons.
 		msg_stopping "NFS mountd"
@@ -102,6 +100,16 @@ case "$1" in
 	else
 		msg_not_running "NFS"
 	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	status rpc.mountd
@@ -111,8 +119,8 @@ case "$1" in
 	[ $RETVAL -eq 0 ] && RETVAL=$RET
 	;;
   restart)
-	$0 stop
-	$0 start
+	stop
+	start
 	exit $?
 	;;
   force-reload)
