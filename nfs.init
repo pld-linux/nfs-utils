@@ -33,10 +33,6 @@ fi
 [ -x /usr/sbin/rpc.mountd ] || exit 0
 [ -f /etc/exports ] || exit 0
 
-if ! is_yes "$NFS4" ; then
-	RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
-fi
-
 start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
@@ -45,6 +41,10 @@ start() {
 			   	nls "Error: portmap isn't running"
 			   	exit 0
 			fi
+		fi
+
+		if ! is_yes "$NFS4" ; then
+			RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
 		fi
 
 		# Start daemons.
