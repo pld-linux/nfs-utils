@@ -121,13 +121,8 @@ case "$1" in
   restart)
 	stop
 	start
-	exit $?
 	;;
-  force-reload)
-	$0 reload
-	exit $?
-	;;
-  reload)
+  reload|force-reload)
 	if [ -f /var/lock/subsys/nfs ]; then
 		msg_reloading "NFS"
 		busy
