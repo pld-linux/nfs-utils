@@ -8,4 +8,5 @@ NFS4="no"
 #RPCGSSOPTIONS=
 
 # Enable if you don't want rpm upgrade to remount Your NFS mounts
-#RPM_SKIP_AUTO_RESTART=yes
+# By default is on, because it's really dangerous to remount i.e. /home
+RPM_SKIP_AUTO_RESTART=yes
