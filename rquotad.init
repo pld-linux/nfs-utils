@@ -35,6 +35,12 @@ fi
 # Sanity checks
 [ -x /usr/sbin/rpc.rquotad ] || exit 0
 
+if is_yes "$REMOTE_QUOTA_SETTING"; then
+    RQUOTADOPTIONS="$RQUOTADOPTIONS --setquota"
+else
+    RQUOTADOPTIONS="$RQUOTADOPTIONS --no-setquota"
+fi
+
 RETVAL=0
 # See how we were called.
 case "$1" in
@@ -43,7 +49,7 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/rquotad ]; then
 		# Start daemons.
 		msg_starting "NFS quotas"
-		daemon rpc.rquotad
+		daemon rpc.rquotad $RQUOTADOPTIONS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rquotad
 	else
