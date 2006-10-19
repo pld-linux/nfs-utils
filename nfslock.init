@@ -35,10 +35,7 @@ fi
 # Sanity checks
 [ -x /usr/sbin/rpc.statd ] || exit 0
 
-RETVAL=0
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfslock ]; then
 		# Start daemons.
@@ -49,8 +46,9 @@ case "$1" in
 	else
 		msg_already_running "NFS statd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /var/lock/subsys/nfslock ]; then
 		# Stop daemons.
 		msg_stopping "NFS statd"
@@ -59,15 +57,24 @@ case "$1" in
 	else
 		msg_not_running "NFS statd"
 	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	status rpc.statd
 	exit $?
 	;;
   restart|force-reload)
-	$0 stop
-	$0 start
-	exit $?
+	stop
+	start
 	;;
   probe)
 	if [ ! -f /var/lock/subsys/nfslock ]; then

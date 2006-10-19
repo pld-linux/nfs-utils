@@ -36,9 +36,7 @@ else
 	exit 0
 fi
 
-# See how we were called.
-case "$1" in
-  start)
+start() {
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
 		if is_yes "$NFS4" ; then
 		    if grep -q nfs4 /proc/filesystems; then
@@ -61,8 +59,9 @@ case "$1" in
 	else
 	    msg_already_running "NFSFS"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /proc/mounts ]; then
 		fsfile="/proc/mounts"
 	else
@@ -94,6 +93,15 @@ case "$1" in
 		fi
 	fi
 	rm -f /var/lock/subsys/nfsfs
+}
+
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	if [ -f /proc/mounts ]; then
@@ -108,8 +116,8 @@ case "$1" in
 	fi
 	;;
   restart)
-	$0 stop
-	$0 start
+	stop
+	start
 	;;
   reload|force-reload)
 	mount -a -t nfs
