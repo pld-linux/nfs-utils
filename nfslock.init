@@ -32,9 +32,6 @@ if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
 	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
 fi
 
-# Sanity checks
-[ -x /usr/sbin/rpc.statd ] || exit 0
-
 start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfslock ]; then
