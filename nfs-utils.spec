@@ -38,7 +38,7 @@ BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
-BuildRequires:	libevent-devel >= 1.1a
+BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
