@@ -1,0 +1,16 @@
+# Set nice level for rpc.mountd, rpc.nfsd or knfsd
+SERVICE_RUN_NICE_LEVEL="+0"
+
+# Customized setings for knfsd
+RPCMOUNTOPTIONS=""
+
+RPCNFSDCOUNT=8
+
+# Set it to "yes" if you plan to run NFSv4 server
+NFS4="no"
+
+# Options for NFSv4 ID <-> Name Mapper (idmapd)
+#RPCIDMAPOPTIONS=
+
+# Options for NFSv4 server-side rpcsec_gss daemon
+#RPCSVCGSSOPTIONS=

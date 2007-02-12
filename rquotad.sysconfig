@@ -1,0 +1,8 @@
+# Define nice level for rpc.rquotad daemon
+SERVICE_RUN_NICE_LEVEL="+0"
+
+# Allow remote quota setting
+REMOTE_QUOTA_SETTING=no
+
+# Options for rquotad
+RQUOTADOPTIONS=""
