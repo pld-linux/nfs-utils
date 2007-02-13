@@ -5,10 +5,10 @@
 %bcond_without	nfs4		# without NFSv4 support
 #
 Summary:	Kernel NFS server
-Summary(pl.UTF-8):   Działający na poziomie jądra serwer NFS
-Summary(pt_BR.UTF-8):   Os utilitários para o cliente e servidor NFS do Linux
-Summary(ru.UTF-8):   Утилиты для NFS и демоны поддержки для NFS-сервера ядра
-Summary(uk.UTF-8):   Утиліти для NFS та демони підтримки для NFS-сервера ядра
+Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
+Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
+Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
+Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.10
 Release:	6
@@ -88,7 +88,7 @@ do Linux.
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
-Summary(pl.UTF-8):   Klienci do łączenia się ze zdalnym serwerem NFS
+Summary(pl.UTF-8):	Klienci do łączenia się ze zdalnym serwerem NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
@@ -116,7 +116,7 @@ zamountowania zasobów NFS.
 
 %package lock
 Summary:	Programs for NFS file locking
-Summary(pl.UTF-8):   Programy do obsługi blokowania plików poprzez NFS (lock)
+Summary(pl.UTF-8):	Programy do obsługi blokowania plików poprzez NFS (lock)
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
@@ -136,7 +136,7 @@ plików (file locking) poprzez NFS.
 
 %package rquotad
 Summary:	Remote quota server
-Summary(pl.UTF-8):   Zdalny serwer quota
+Summary(pl.UTF-8):	Zdalny serwer quota
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
 Requires:	rc-scripts
@@ -156,7 +156,7 @@ dla zdalnego systemu plików.
 
 %package common
 Summary:	Common programs for NFS
-Summary(pl.UTF-8):   Wspólne programy do obsługi NFS
+Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
 
 %description common
