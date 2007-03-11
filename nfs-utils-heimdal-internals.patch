@@ -1,10 +1,11 @@
-diff -urN nfs-utils-1.0.7.org/utils/gssd/context_heimdal.c nfs-utils-1.0.7/utils/gssd/context_heimdal.c
---- nfs-utils-1.0.7.org/utils/gssd/context_heimdal.c	2005-07-10 12:14:01.526867000 +0200
-+++ nfs-utils-1.0.7/utils/gssd/context_heimdal.c	2005-07-10 12:14:32.815110736 +0200
-@@ -46,6 +46,20 @@
+--- nfs-utils-1.0.11/utils/gssd/context_heimdal.c.orig	2007-02-25 20:42:02.000000000 +0100
++++ nfs-utils-1.0.11/utils/gssd/context_heimdal.c	2007-03-10 22:48:54.599236929 +0100
+@@ -46,6 +46,22 @@
+ #include "err_util.h"
  #include "gss_oids.h"
  #include "write_bytes.h"
- 
++#include "context.h"
++
 +typedef struct gss_ctx_id_t_desc_struct {
 +  struct krb5_auth_context_data *auth_context;
 +  gss_name_t source, target;
@@ -19,6 +20,6 @@ diff -urN nfs-utils-1.0.7.org/utils/gssd/context_heimdal.c nfs-utils-1.0.7/utils
 +  struct gss_msg_order *order;
 +} gss_ctx_id_t_desc;
 +
- #define MAX_CTX_LEN 4096
  
  int write_heimdal_keyblock(char **p, char *end, krb5_keyblock *key)
+ {
