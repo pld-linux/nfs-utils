@@ -1,0 +1,2674 @@
+
+
+The complete set of CITI nfs-utils patches rolled into one patch.
+
+Changes since 1.0.10-CITI_NFS4_ALL-4:
+
+ * Update to nfs-utils-1.0.11
+
+ * Include missing fslocations files and a small change so that
+   fslocations works.
+
+ * Include several mount patches from Steve Dickson
+
+ * Add a patch to put the mount.nfs[4] and umount.nfs[4] in the
+   place where mount expects them during install.
+
+
+---
+
+ nfs-utils-1.0.11-kwc/Makefile.in                        |  136 
+ nfs-utils-1.0.11-kwc/aclocal.m4                         |  250 
+ nfs-utils-1.0.11-kwc/configure                          | 4436 +++++++++++-----
+ nfs-utils-1.0.11-kwc/linux-nfs/Makefile.in              |   88 
+ nfs-utils-1.0.11-kwc/support/Makefile.in                |  120 
+ nfs-utils-1.0.11-kwc/support/export/Makefile.in         |  113 
+ nfs-utils-1.0.11-kwc/support/export/export.c            |    2 
+ nfs-utils-1.0.11-kwc/support/include/Makefile.in        |  124 
+ nfs-utils-1.0.11-kwc/support/include/fstab.h            |    8 
+ nfs-utils-1.0.11-kwc/support/include/nfs/Makefile.in    |   88 
+ nfs-utils-1.0.11-kwc/support/include/nfs_mntent.h       |    8 
+ nfs-utils-1.0.11-kwc/support/include/nfslib.h           |    6 
+ nfs-utils-1.0.11-kwc/support/include/rpcsvc/Makefile.in |   88 
+ nfs-utils-1.0.11-kwc/support/include/sys/Makefile.in    |  120 
+ nfs-utils-1.0.11-kwc/support/include/sys/fs/Makefile.in |   88 
+ nfs-utils-1.0.11-kwc/support/misc/Makefile.in           |  113 
+ nfs-utils-1.0.11-kwc/support/nfs/Makefile.in            |  113 
+ nfs-utils-1.0.11-kwc/support/nfs/conn.c                 |    2 
+ nfs-utils-1.0.11-kwc/support/nfs/exports.c              |  149 
+ nfs-utils-1.0.11-kwc/support/nfs/fstab.c                |   57 
+ nfs-utils-1.0.11-kwc/tools/Makefile.in                  |  120 
+ nfs-utils-1.0.11-kwc/tools/getiversion/Makefile.in      |  126 
+ nfs-utils-1.0.11-kwc/tools/locktest/Makefile.in         |  126 
+ nfs-utils-1.0.11-kwc/tools/nlmtest/Makefile.in          |   88 
+ nfs-utils-1.0.11-kwc/tools/rpcdebug/Makefile.in         |  135 
+ nfs-utils-1.0.11-kwc/tools/rpcgen/Makefile.in           |  198 
+ nfs-utils-1.0.11-kwc/utils/Makefile.in                  |  120 
+ nfs-utils-1.0.11-kwc/utils/exportfs/Makefile.in         |  130 
+ nfs-utils-1.0.11-kwc/utils/exportfs/exportfs.c          |    5 
+ nfs-utils-1.0.11-kwc/utils/exportfs/exports.man         |   14 
+ nfs-utils-1.0.11-kwc/utils/gssd/Makefile.in             |  356 -
+ nfs-utils-1.0.11-kwc/utils/gssd/context.h               |    6 
+ nfs-utils-1.0.11-kwc/utils/gssd/context_lucid.c         |  391 +
+ nfs-utils-1.0.11-kwc/utils/gssd/context_mit.c           |  256 
+ nfs-utils-1.0.11-kwc/utils/gssd/gssd.c                  |   17 
+ nfs-utils-1.0.11-kwc/utils/gssd/gssd.h                  |    3 
+ nfs-utils-1.0.11-kwc/utils/gssd/gssd_main_loop.c        |    4 
+ nfs-utils-1.0.11-kwc/utils/gssd/gssd_proc.c             |   22 
+ nfs-utils-1.0.11-kwc/utils/gssd/krb5_util.c             |  228 
+ nfs-utils-1.0.11-kwc/utils/gssd/krb5_util.h             |    2 
+ nfs-utils-1.0.11-kwc/utils/idmapd/Makefile.in           |  124 
+ nfs-utils-1.0.11-kwc/utils/lockd/Makefile.in            |  126 
+ nfs-utils-1.0.11-kwc/utils/mount/Makefile.am            |   15 
+ nfs-utils-1.0.11-kwc/utils/mount/Makefile.in            |  140 
+ nfs-utils-1.0.11-kwc/utils/mount/mount.c                |  211 
+ nfs-utils-1.0.11-kwc/utils/mount/nfs4mount.c            |    3 
+ nfs-utils-1.0.11-kwc/utils/mount/nfs_mount.h            |    4 
+ nfs-utils-1.0.11-kwc/utils/mount/nfsmount.c             |   70 
+ nfs-utils-1.0.11-kwc/utils/mount/nfsumount.c            |   53 
+ nfs-utils-1.0.11-kwc/utils/mountd/Makefile.in           |  182 
+ nfs-utils-1.0.11-kwc/utils/mountd/cache.c               |   16 
+ nfs-utils-1.0.11-kwc/utils/mountd/fsloc.c               |  188 
+ nfs-utils-1.0.11-kwc/utils/mountd/fsloc.h               |   50 
+ nfs-utils-1.0.11-kwc/utils/nfsd/Makefile.in             |  126 
+ nfs-utils-1.0.11-kwc/utils/nfsstat/Makefile.in          |  124 
+ nfs-utils-1.0.11-kwc/utils/rquotad/Makefile.in          |  166 
+ nfs-utils-1.0.11-kwc/utils/showmount/Makefile.in        |  132 
+ nfs-utils-1.0.11-kwc/utils/statd/Makefile.in            |  126 
+ 58 files changed, 6974 insertions(+), 3338 deletions(-)
+
+--- nfs-utils-1.0.12/utils/mountd/cache.c.orig	2007-02-27 05:55:40.000000000 +0100
++++ nfs-utils-1.0.12/utils/mountd/cache.c	2007-03-11 00:38:34.746218136 +0100
+@@ -445,6 +445,19 @@
+ 	release_replicas(servers);
+ }
+ 
++static void write_secinfo(FILE *f, struct exportent *ep)
++{
++	int *p;
++	qword_print(f, "secinfo");
++	for (p=ep->e_secinfo_order; *p>=0; p++)
++		; /* Do nothing */
++	qword_printint(f, p - ep->e_secinfo_order);
++	for (p=ep->e_secinfo_order; *p>=0; p++) {
++		qword_print(f, secflavor_name[*p]);
++		qword_printint(f, ep->e_secinfo_flags[*p]);
++	}
++}
++
+ static int dump_to_cache(FILE *f, char *domain, char *path, struct exportent *exp)
+ {
+ 	qword_print(f, domain);
+@@ -466,6 +479,7 @@
+  			qword_print(f, "uuid");
+  			qword_printhex(f, exp->e_uuid, 16);
+  		}
++		write_secinfo(f, exp);
+ 	}
+ 	return qword_eol(f);
+ }
+--- nfs-utils-1.0.12/support/nfs/exports.c.orig	2007-02-27 05:55:40.000000000 +0100
++++ nfs-utils-1.0.12/support/nfs/exports.c	2007-03-11 00:39:09.496198423 +0100
+@@ -51,6 +51,10 @@
+ static int	parsemaptype(char *type);
+ static void	freesquash(void);
+ static void	syntaxerr(char *msg);
++static unsigned int parse_flavors(char *str, struct exportent *ep);
++static int	secinfo_default(struct exportent *ep);
++static void	setflags(int mask, unsigned int *ap, struct exportent *ep);
++static void	clearflags(int mask, unsigned int *ap, struct exportent *ep);
+ 
+ void
+ setexportent(char *fname, char *type)
+@@ -102,6 +106,7 @@
+ 		def_ee.e_mountpoint = NULL;
+ 		def_ee.e_fslocmethod = FSLOC_NONE;
+ 		def_ee.e_fslocdata = NULL;
++		def_ee.e_secinfo_order[0] = -1;
+ 		def_ee.e_nsquids = 0;
+ 		def_ee.e_nsqgids = 0;
+ 
+@@ -182,6 +187,19 @@
+ }
+ 
+ void
++secinfo_show(FILE *fp, struct exportent *ep)
++{
++	int *p1, *p2;
++	for (p1=ep->e_secinfo_order; *p1>=0; p1=p2) {
++		fprintf(fp, ",sec=%s", secflavor_name[*p1]);
++		for (p2=p1+1; (*p2>=0) && (ep->e_secinfo_flags[*p1]==ep->e_secinfo_flags[*p2]); p2++) {
++			fprintf(fp, ":%s", secflavor_name[*p2]);
++		}
++		fprintf(fp, ",%s", (ep->e_secinfo_flags[*p1] & NFSEXP_READONLY)? "ro" : "rw");
++	}
++}
++
++void
+ putexportent(struct exportent *ep)
+ {
+ 	FILE	*fp;
+@@ -199,7 +217,6 @@
+ 			fprintf(fp, "%c", esc[i]);
+ 
+ 	fprintf(fp, "\t%s(", ep->e_hostname);
+-	fprintf(fp, "%s,", (ep->e_flags & NFSEXP_READONLY)? "ro" : "rw");
+ 	fprintf(fp, "%ssync,", (ep->e_flags & NFSEXP_ASYNC)? "a" : "");
+ 	fprintf(fp, "%swdelay,", (ep->e_flags & NFSEXP_GATHERED_WRITES)?
+ 				"" : "no_");
+@@ -276,7 +293,9 @@
+ 			else
+ 				fprintf(fp, "%d,", id[i]);
+ 	}
+-	fprintf(fp, "anonuid=%d,anongid=%d)\n", ep->e_anonuid, ep->e_anongid);
++	fprintf(fp, "anonuid=%d,anongid=%d", ep->e_anonuid, ep->e_anongid);
++	secinfo_show(fp, ep);
++	fprintf(fp, ")\n");
+ }
+ 
+ void
+@@ -325,6 +344,7 @@
+ 	ee.e_mountpoint = NULL;
+ 	ee.e_fslocmethod = FSLOC_NONE;
+ 	ee.e_fslocdata = NULL;
++	ee.e_secinfo_order[0] = -1;
+ 	ee.e_nsquids = 0;
+ 	ee.e_nsqgids = 0;
+ 	ee.e_uuid = NULL;
+@@ -376,6 +396,9 @@
+ 	int	had_subtree_opt = 0;
+ 	char 	*flname = efname?efname:"command line";
+ 	int	flline = efp?efp->x_line:0;
++	int	*p;
++	unsigned int active = 0;
++	int secmask = NFSEXP_READONLY;	/* options that can vary per flavor */
+ 
+ 	squids = ep->e_squids; nsquids = ep->e_nsquids;
+ 	sqgids = ep->e_sqgids; nsqgids = ep->e_nsqgids;
+@@ -398,9 +421,9 @@
+ 
+ 		/* process keyword */
+ 		if (strcmp(opt, "ro") == 0)
+-			ep->e_flags |= NFSEXP_READONLY;
++			setflags(NFSEXP_READONLY, &active, ep);
+ 		else if (strcmp(opt, "rw") == 0)
+-			ep->e_flags &= ~NFSEXP_READONLY;
++			clearflags(NFSEXP_READONLY, &active, ep);
+ 		else if (!strcmp(opt, "secure"))
+ 			ep->e_flags &= ~NFSEXP_INSECURE_PORT;
+ 		else if (!strcmp(opt, "insecure"))
+@@ -522,6 +545,10 @@
+ 		} else if (strncmp(opt, "replicas=", 9) == 0) {
+ 			ep->e_fslocmethod = FSLOC_REPLICA;
+ 			ep->e_fslocdata = strdup(opt+9);
++		} else if (strncmp(opt, "sec=", 4) == 0) {
++			active = parse_flavors(opt+4, ep);
++			if (!active)
++				goto bad_option;
+ 		} else {
+ 			xlog(L_ERROR, "%s:%d: unknown keyword \"%s\"\n",
+ 					flname, flline, opt);
+@@ -533,6 +560,12 @@
+ 			cp++;
+ 	}
+ 
++	if (!active)
++		active = secinfo_default(ep);
++	for (p=ep->e_secinfo_order; *p>=0; p++)
++		ep->e_secinfo_flags[*p] |= (ep->e_flags & ~secmask);
++	/* If did not use sec= option, ensure e_flags is backward compatible */
++	ep->e_flags = ep->e_secinfo_flags[ep->e_secinfo_order[0]];
+ 	ep->e_squids = squids;
+ 	ep->e_sqgids = sqgids;
+ 	ep->e_nsquids = nsquids;
+@@ -663,3 +696,107 @@
+ 			efname, efp?efp->x_line:0, msg);
+ }
+ 
++char *secflavor_name[SECFLAVOR_COUNT] = { "sys",
++					  "krb5",
++					  "krb5i",
++					  "krb5p",
++					  "spkm3",
++					  "spkm3i",
++					  "spkm3p"
++};
++
++static void
++secinfo_addflavor(int bit, struct exportent *ep)
++{
++	int *p;
++	for (p=ep->e_secinfo_order; *p>=0; p++) {
++		if (*p == bit)
++			return;
++	}
++	*p++ = bit;
++	*p = -1;
++	ep->e_secinfo_flags[bit] = 0;
++}
++
++static int
++secinfo_nameindex(char *name)
++{
++	int i;
++	for (i=0; i<SECFLAVOR_COUNT; i++) {
++		if (strcmp(secflavor_name[i], name) == 0)
++			return i;
++	}
++	return -1;
++}
++
++/* @str is a colon seperated list of security flavors.  Their order
++ * is recorded in @ep, and a bitmap corresponding to the list is returned.
++ * A zero return indicates an error.
++ */
++static unsigned int
++parse_flavors(char *str, struct exportent *ep)
++{
++	unsigned int out=0;
++	char *flavor;
++	int bit; 
++
++	while ( (flavor=strsep(&str, ":")) ) {
++		bit = secinfo_nameindex(flavor);
++		if (bit == -1) {
++			xlog(L_ERROR, "unknown flavor %s\n", flavor);
++			return 0;
++		}
++		out |= 1<<bit;
++		secinfo_addflavor(bit, ep);
++	}
++	return out;
++}
++
++/* Determine a default security flavor based on ep->e_hostname. */
++static int
++secinfo_default(struct exportent *ep)
++{
++	int i=-1;
++	if (strncmp(ep->e_hostname, "gss/", 4) == 0) {
++		i = secinfo_nameindex(ep->e_hostname + 4);
++		if (i < 0)
++			xlog(L_WARNING, "unknown flavor %s\n", ep->e_hostname);
++	}
++	/* Default to auth_sys */
++	if (i < 0)
++		i = secinfo_nameindex("sys");
++	secinfo_addflavor(i, ep);
++	return 1<<i;
++}
++
++/* Sets the bits in @mask for the appropriate security flavor flags. */
++static void
++setflags(int mask, unsigned int *ap, struct exportent *ep)
++{
++	int active, flavor=0;
++	if (!*ap)
++		*ap = secinfo_default(ep);
++	active = *ap;
++	while (active) {
++		if (active & 1)
++			ep->e_secinfo_flags[flavor] |= mask;
++		flavor++;
++		active >>= 1;
++	}
++}
++
++/* Clears the bits in @mask for the appropriate security flavor flags. */
++static void
++clearflags(int mask, unsigned int *ap, struct exportent *ep)
++{
++	int active, flavor=0;
++	if (!*ap)
++		*ap = secinfo_default(ep);
++	active = *ap;
++	while (active) {
++		if (active & 1)
++			ep->e_secinfo_flags[flavor] &= ~mask;
++		flavor++;
++		active >>= 1;
++	}
++}
+--- nfs-utils-1.0.12/utils/exportfs/exportfs.c.orig	2007-02-27 05:55:40.000000000 +0100
++++ nfs-utils-1.0.12/utils/exportfs/exportfs.c	2007-03-11 00:39:30.569399317 +0100
+@@ -376,10 +376,12 @@
+ 				continue;
+ 			}
+ 			c = '(';
++			/*
+ 			if (ep->e_flags & NFSEXP_READONLY)
+ 				c = dumpopt(c, "ro");
+ 			else
+ 				c = dumpopt(c, "rw");
++			*/
+ 			if (ep->e_flags & NFSEXP_ASYNC)
+ 				c = dumpopt(c, "async");
+ 			if (ep->e_flags & NFSEXP_GATHERED_WRITES)
+@@ -433,6 +435,7 @@
+ 				break;
+ #endif
+ 			}
++			secinfo_show(stdout, ep);
+ 			printf("%c\n", (c != '(')? ')' : ' ');
+ 		}
+ 	}
+diff -puN utils/exportfs/exports.man~CITI_NFS4_ALL utils/exportfs/exports.man
+--- nfs-utils-1.0.11/utils/exportfs/exports.man~CITI_NFS4_ALL	2007-02-26 18:52:07.928367000 -0500
++++ nfs-utils-1.0.11-kwc/utils/exportfs/exports.man	2007-02-26 18:52:08.691050000 -0500
+@@ -348,6 +348,20 @@ If the client asks for alternative locat
+ will be given this list of alternatives. (Note that actual replication
+ of the filesystem must be handled elsewhere.)
+ 
++.TP
++.IR refer= path@host[+host][:path@host[+host]]
++A client referencing the export point will be directed to choose from
++the given list an alternative location for the filesystem.
++(Note that the server must have a mountpoint here, though a different
++filesystem is not required; so, for example,
++.IR "mount --bind" " /path /path"
++is sufficient.)
++.TP
++.IR replicas= path@host[+host][:path@host[+host]]
++If the client asks for alternative locations for the export point, it
++will be given this list of alternatives. (Note that actual replication
++of the filesystem must be handled elsewhere.)
++
+ .SS User ID Mapping
+ .PP
+ .I nfsd
+diff -puN /dev/null utils/mountd/fsloc.c
+--- /dev/null	2007-02-26 18:43:11.800773059 -0500
++++ nfs-utils-1.0.11-kwc/utils/mountd/fsloc.c	2007-02-26 18:52:08.724017000 -0500
+@@ -0,0 +1,188 @@
++/*
++ * COPYRIGHT (c) 2006
++ * THE REGENTS OF THE UNIVERSITY OF MICHIGAN
++ * ALL RIGHTS RESERVED
++ *
++ * Permission is granted to use, copy, create derivative works
++ * and redistribute this software and such derivative works
++ * for any purpose, so long as the name of The University of
++ * Michigan is not used in any advertising or publicity
++ * pertaining to the use of distribution of this software
++ * without specific, written prior authorization.  If the
++ * above copyright notice or any other identification of the
++ * University of Michigan is included in any copy of any
++ * portion of this software, then the disclaimer below must
++ * also be included.
++ *
++ * THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION
++ * FROM THE UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY
++ * PURPOSE, AND WITHOUT WARRANTY BY THE UNIVERSITY OF
++ * MICHIGAN OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
++ * WITHOUT LIMITATION THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
++ * REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE LIABLE
++ * FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
++ * CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING
++ * OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
++ * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGES.
++ */
++
++#include <stdlib.h>
++#include <string.h>
++#include <syslog.h>
++
++#include "fsloc.h"
++#include "exportfs.h"
++
++/* Debugging tool: prints out @servers info to syslog */
++static void replicas_print(struct servers *sp)
++{
++	int i;
++	if (!sp) {
++		xlog(L_NOTICE, "NULL replicas pointer\n");
++		return;
++	}
++	xlog(L_NOTICE, "replicas listsize=%i\n", sp->h_num);
++	for (i=0; i<sp->h_num; i++) {
++		xlog(L_NOTICE, "    %s:%s\n",
++		       sp->h_mp[i]->h_host, sp->h_mp[i]->h_path);
++	}
++}
++
++#ifdef DEBUG
++/* Called by setting 'Method = stub' in config file.  Just returns
++ * some syntactically correct gibberish for testing purposes.
++ */
++static struct servers *method_stub(char *key)
++{
++	struct servers *sp;
++	struct mount_point *mp;
++
++	xlog(L_NOTICE, "called method_stub\n");
++	sp = malloc(sizeof(struct servers));
++	if (!sp)
++		return NULL;
++	mp = calloc(1, sizeof(struct mount_point));
++	if (!mp) {
++		free(sp);
++		return NULL;
++	}
++	sp->h_num = 1;
++	sp->h_mp[0] = mp;
++	mp->h_host = strdup("stub_server");
++	mp->h_path = strdup("/my/test/path");
++	sp->h_referral = 1;
++	return sp;
++}
++#endif	/* DEBUG */
++
++/* Scan @list, which is a NULL-terminated array of strings of the
++ * form path@host[+host], and return corresponding servers structure.
++ */
++static struct servers *parse_list(char **list)
++{
++	int i;
++	struct servers *res;
++	struct mount_point *mp;
++	char *cp;
++
++	res = malloc(sizeof(struct servers));
++	if (!res)
++		return NULL;
++	res->h_num = 0;
++
++	/* parse each of the answers in sucession. */
++	for (i=0; list[i] && i<FSLOC_MAX_LIST; i++) {
++		mp = calloc(1, sizeof(struct mount_point));
++		if (!mp) {
++			release_replicas(res);
++			return NULL;
++		}
++		cp = strchr(list[i], '@');
++		if ((!cp) || list[i][0] != '/') {
++			xlog(L_WARNING, "invalid entry '%s'", list[i]);
++			continue; /* XXX Need better error handling */
++		}
++		res->h_mp[i] = mp;
++		res->h_num++;
++		mp->h_path = strndup(list[i], cp - list[i]);
++		cp++;
++		mp->h_host = strdup(cp);
++		/* hosts are '+' separated, kernel expects ':' separated */
++		while ( (cp = strchr(mp->h_host, '+')) )
++		       *cp = ':';
++	}
++	return res;
++}
++
++/* @data is a string of form path@host[+host][:path@host[+host]]
++ */
++static struct servers *method_list(char *data)
++{
++	char *copy, *ptr=data;
++	char **list;
++	int i, listsize;
++	struct servers *rv=NULL;
++
++	xlog(L_NOTICE, "method_list(%s)\n", data);
++	for (ptr--, listsize=1; ptr; ptr=index(ptr, ':'), listsize++)
++		ptr++;
++	list = malloc(listsize * sizeof(char *));
++	copy = strdup(data);
++	if (copy)
++		xlog(L_NOTICE, "converted to %s\n", copy);
++	if (list && copy) {
++		ptr = copy;
++		for (i=0; i<listsize; i++) {
++			list[i] = strsep(&ptr, ":");
++		}
++		rv = parse_list(list);
++	}
++	free(copy);
++	free(list);
++	replicas_print(rv);
++	return rv;
++}
++
++/* Returns appropriately filled struct servers, or NULL if had a problem */
++struct servers *replicas_lookup(int method, char *data, char *key)
++{
++	struct servers *sp=NULL;
++	switch(method) {
++	case FSLOC_NONE:
++		break;
++	case FSLOC_REFER:
++		sp = method_list(data);
++		if (sp)
++			sp->h_referral = 1;
++		break;
++	case FSLOC_REPLICA:
++		sp = method_list(data);
++		if (sp)
++			sp->h_referral = 0;
++		break;
++#ifdef DEBUG
++	case FSLOC_STUB:
++		sp = method_stub(data);
++		break;
++#endif
++	default:
++		xlog(L_WARNING, "Unknown method = %i", method);
++	}
++	replicas_print(sp);
++	return sp;
++}
++
++void release_replicas(struct servers *server)
++{
++	int i;
++
++	if (!server) return;
++	for (i = 0; i < server->h_num; i++) {
++		free(server->h_mp[i]->h_host);
++		free(server->h_mp[i]->h_path);
++		free(server->h_mp[i]);
++	}
++	free(server);
++}
+diff -puN /dev/null utils/mountd/fsloc.h
+--- /dev/null	2007-02-26 18:43:11.800773059 -0500
++++ nfs-utils-1.0.11-kwc/utils/mountd/fsloc.h	2007-02-26 18:52:08.764976000 -0500
+@@ -0,0 +1,50 @@
++/*
++ * COPYRIGHT (c) 2006
++ * THE REGENTS OF THE UNIVERSITY OF MICHIGAN
++ * ALL RIGHTS RESERVED
++ *
++ * Permission is granted to use, copy, create derivative works
++ * and redistribute this software and such derivative works
++ * for any purpose, so long as the name of The University of
++ * Michigan is not used in any advertising or publicity
++ * pertaining to the use of distribution of this software
++ * without specific, written prior authorization.  If the
++ * above copyright notice or any other identification of the
++ * University of Michigan is included in any copy of any
++ * portion of this software, then the disclaimer below must
++ * also be included.
++ *
++ * THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION
++ * FROM THE UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY
++ * PURPOSE, AND WITHOUT WARRANTY BY THE UNIVERSITY OF
++ * MICHIGAN OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
++ * WITHOUT LIMITATION THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
++ * REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE LIABLE
++ * FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
++ * CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING
++ * OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
++ * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGES.
++ */
++
++#ifndef FSLOC_H
++#define FSLOC_H
++
++#define FSLOC_MAX_LIST 40
++
++struct mount_point {
++	char *h_host;
++	char *h_path;
++};
++
++struct servers {
++	int h_num;
++	struct mount_point *h_mp[FSLOC_MAX_LIST];
++	int h_referral;		/* 0=replica, 1=referral */
++};
++
++struct servers *replicas_lookup(int method, char *data, char *key);
++void release_replicas(struct servers *server);
++
++#endif /* FSLOC_H */
+diff -puN support/include/fstab.h~CITI_NFS4_ALL support/include/fstab.h
+--- nfs-utils-1.0.11/support/include/fstab.h~CITI_NFS4_ALL	2007-02-26 18:52:09.366915000 -0500
++++ nfs-utils-1.0.11-kwc/support/include/fstab.h	2007-02-26 18:52:11.399987000 -0500
+@@ -3,6 +3,10 @@
+ 
+ #include "nfs_mntent.h"
+ 
++#ifndef _PATH_FSTAB
++#define _PATH_FSTAB "/etc/fstab"
++#endif
++
+ int mtab_is_writable(void);
+ int mtab_does_not_exist(void);
+ 
+@@ -16,6 +20,10 @@ struct mntentchn *getmntoptfile (const c
+ struct mntentchn *getmntdirbackward (const char *dir, struct mntentchn *mc);
+ struct mntentchn *getmntdevbackward (const char *dev, struct mntentchn *mc);
+ 
++struct mntentchn *fstab_head (void);
++struct mntentchn *getfsfile (const char *file);
++struct mntentchn *getfsspec (const char *spec);
++
+ void lock_mtab (void);
+ void unlock_mtab (void);
+ void update_mtab (const char *special, nfs_mntent_t *with);
+diff -puN support/include/nfs_mntent.h~CITI_NFS4_ALL support/include/nfs_mntent.h
+--- nfs-utils-1.0.11/support/include/nfs_mntent.h~CITI_NFS4_ALL	2007-02-26 18:52:09.630659000 -0500
++++ nfs-utils-1.0.11-kwc/support/include/nfs_mntent.h	2007-02-26 18:52:11.440946000 -0500
+@@ -7,10 +7,10 @@
+ #define _NFS_MNTENT_H
+ 
+ typedef struct nfs_mntent_s {
+-	const char *mnt_fsname;
+-	const char *mnt_dir;
+-	const char *mnt_type;
+-	const char *mnt_opts;
++	char *mnt_fsname;
++	char *mnt_dir;
++	char *mnt_type;
++	char *mnt_opts;
+ 	int mnt_freq;
+ 	int mnt_passno;
+ } nfs_mntent_t;
+diff -puN support/nfs/fstab.c~CITI_NFS4_ALL support/nfs/fstab.c
+--- nfs-utils-1.0.11/support/nfs/fstab.c~CITI_NFS4_ALL	2007-02-26 18:52:09.908463000 -0500
++++ nfs-utils-1.0.11-kwc/support/nfs/fstab.c	2007-02-26 18:52:11.493894000 -0500
+@@ -78,10 +78,10 @@ mtab_is_writable() {
+ 
+ /* Contents of mtab and fstab ---------------------------------*/
+ 
+-struct mntentchn mounttable;
+-static int got_mtab = 0;
++struct mntentchn mounttable, fstab;
++static int got_mtab = 0, got_fstab = 0;
+ 
+-static void read_mounttable(void);
++static void read_mounttable(void), read_fstab(void);
+ 
+ struct mntentchn *
+ mtab_head() {
+@@ -96,6 +96,13 @@ my_free(const void *s) {
+ 		free((void *) s);
+ }
+ 
++struct mntentchn *
++fstab_head() {
++	if (!got_fstab)
++		read_fstab();
++	return &fstab;
++}
++
+ static void
+ discard_mntentchn(struct mntentchn *mc0) {
+ 	struct mntentchn *mc, *mc1;
+@@ -167,6 +174,26 @@ read_mounttable() {
+         read_mntentchn(mfp, fnam, mc);
+ }
+ 
++static void
++read_fstab() {
++	mntFILE *mfp = NULL;
++	const char *fnam;
++	struct mntentchn *mc = &fstab;
++
++	got_fstab = 1;
++	mc->nxt = mc->prev = NULL;
++
++	fnam = _PATH_FSTAB;
++	mfp = nfs_setmntent (fnam, "r");
++	if (mfp == NULL || mfp->mntent_fp == NULL) {
++		int errsv = errno;
++		error(_("warning: can't open %s: %s"),
++			_PATH_FSTAB, strerror (errsv));
++		return;
++	}
++	read_mntentchn(mfp, fnam, mc);
++}
++
+ /*
+  * Given the directory name NAME, and the place MCPREV we found it last time,
+  * try to find more occurrences.
+@@ -201,6 +228,30 @@ getmntdevbackward (const char *name, str
+ 	return NULL;
+ }
+ 
++/* Find the dir FILE in fstab.  */
++struct mntentchn *
++getfsfile (const char *file) {
++	struct mntentchn *mc, *mc0;
++
++	mc0 = fstab_head();
++	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
++		if (streq(mc->m.mnt_dir, file))
++			return mc;
++	return NULL;
++}
++
++/* Find the device SPEC in fstab.  */
++struct mntentchn *
++getfsspec (const char *spec) {
++	struct mntentchn *mc, *mc0;
++
++	mc0 = fstab_head();
++	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
++		if (streq(mc->m.mnt_fsname, spec))
++			return mc;
++	return NULL;
++}
++
+ /* Updating mtab ----------------------------------------------*/
+ 
+ /* Flag for already existing lock file. */
+diff -puN utils/mount/Makefile.am~CITI_NFS4_ALL utils/mount/Makefile.am
+--- nfs-utils-1.0.11/utils/mount/Makefile.am~CITI_NFS4_ALL	2007-02-26 18:52:10.207463000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/Makefile.am	2007-02-26 18:52:17.352299000 -0500
+@@ -1,5 +1,7 @@
+ ## Process this file with automake to produce Makefile.in
+ 
++abs_sbindir = /sbin
++
+ man8_MANS	= mount.nfs.man umount.nfs.man
+ 
+ sbin_PROGRAMS	= mount.nfs
+@@ -13,13 +15,14 @@ mount_nfs_LDADD = ../../support/nfs/libn
+ MAINTAINERCLEANFILES = Makefile.in
+ 
+ install-exec-hook:
+-	(cd $(DESTDIR)$(sbindir) && \
+-	  ln -sf $(sbin_PROGRAMS) mount.nfs4 && \
+-	  ln -sf $(sbin_PROGRAMS) umount.nfs && \
+-	  ln -sf $(sbin_PROGRAMS) umount.nfs4)
++	(chmod +s $(sbin_PROGRAMS) && \
++	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/mount.nfs && \
++	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/umount.nfs && \
++	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/mount.nfs4 && \
++	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/umount.nfs4 )
+ uninstall-hook:
+-	(cd $(DESTDIR)$(sbindir) && \
+-	    rm -f mount.nfs4 umount.nfs umount.nfs4)
++	(cd $(abs_sbindir) && \
++	    rm -f mount.nfs umount.nfs mount.nfs4 umount.nfs4)
+ 
+ 
+ install-man-links:
+diff -puN utils/mount/mount.c~CITI_NFS4_ALL utils/mount/mount.c
+--- nfs-utils-1.0.11/utils/mount/mount.c~CITI_NFS4_ALL	2007-02-26 18:52:10.515323000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/mount.c	2007-02-26 18:52:16.671458000 -0500
+@@ -28,6 +28,7 @@
+ #include <sys/mount.h>
+ #include <getopt.h>
+ #include <mntent.h>
++#include <pwd.h>
+ 
+ #include "fstab.h"
+ #include "xcommon.h"
+@@ -43,6 +44,7 @@ char *progname;
+ int nomtab;
+ int verbose;
+ int mounttype;
++int sloppy;
+ 
+ static struct option longopts[] = {
+   { "fake", 0, 0, 'f' },
+@@ -74,6 +76,12 @@ struct opt_map {
+   int  mask;                    /* flag mask value */
+ };
+ 
++/* Custom mount options for our own purposes.  */
++/* Maybe these should now be freed for kernel use again */
++#define MS_DUMMY	0x00000000
++#define MS_USERS	0x40000000
++#define MS_USER		0x20000000
++
+ static const struct opt_map opt_map[] = {
+   { "defaults", 0, 0, 0         },      /* default options */
+   { "ro",       1, 0, MS_RDONLY },      /* read-only */
+@@ -90,6 +98,18 @@ static const struct opt_map opt_map[] = 
+   { "remount",  0, 0, MS_REMOUNT},      /* Alter flags of mounted FS */
+   { "bind",     0, 0, MS_BIND   },      /* Remount part of tree elsewhere */
+   { "rbind",    0, 0, MS_BIND|MS_REC }, /* Idem, plus mounted subtrees */
++  { "auto",     0, 0, MS_DUMMY },       /* Can be mounted using -a */
++  { "noauto",   0, 0, MS_DUMMY },       /* Can  only be mounted explicitly */
++  { "users",    0, 0, MS_USERS  },      /* Allow ordinary user to mount */
++  { "nousers",  0, 1, MS_USERS  },      /* Forbid ordinary user to mount */
++  { "user",     0, 0, MS_USER   },      /* Allow ordinary user to mount */
++  { "nouser",   0, 1, MS_USER   },      /* Forbid ordinary user to mount */
++  { "owner",    0, 0, MS_DUMMY  },      /* Let the owner of the device mount */
++  { "noowner",  0, 0, MS_DUMMY  },      /* Device owner has no special privs */
++  { "group",    0, 0, MS_DUMMY  },      /* Let the group of the device mount */
++  { "nogroup",  0, 0, MS_DUMMY  },      /* Device group has no special privs */
++  { "_netdev",  0, 0, MS_DUMMY},        /* Device requires network */
++  { "comment",  0, 0, MS_DUMMY},        /* fstab comment only (kudzu,_netdev)*/
+ 
+   /* add new options here */
+ #ifdef MS_NOSUB
+@@ -104,6 +124,7 @@ static const struct opt_map opt_map[] = 
+   { "mand",     0, 0, MS_MANDLOCK },    /* Allow mandatory locks on this FS */
+   { "nomand",   0, 1, MS_MANDLOCK },    /* Forbid mandatory locks on this FS */
+ #endif
++  { "loop",     1, 0, MS_DUMMY   },      /* use a loop device */
+ #ifdef MS_NOATIME
+   { "atime",    0, 1, MS_NOATIME },     /* Update access time */
+   { "noatime",  0, 0, MS_NOATIME },     /* Do not update access time */
+@@ -121,6 +142,12 @@ static char * fix_opts_string (int flags
+ 	char *new_opts;
+ 
+ 	new_opts = xstrdup((flags & MS_RDONLY) ? "ro" : "rw");
++	if (flags & MS_USER) {
++		struct passwd *pw = getpwuid(getuid());
++		if(pw)
++			new_opts = xstrconcat3(new_opts, ",user=", pw->pw_name);
++	}
++	
+ 	for (om = opt_map; om->opt != NULL; om++) {
+ 		if (om->skip)
+ 			continue;
+@@ -132,22 +159,54 @@ static char * fix_opts_string (int flags
+ 	if (extra_opts && *extra_opts) {
+ 		new_opts = xstrconcat3(new_opts, ",", extra_opts);
+ 	}
++
+ 	return new_opts;
+ }
+ 
++static inline void dup_mntent(struct mntent *ment, nfs_mntent_t *nment)
++{
++	/* Not sure why nfs_mntent_t should exist */
++	nment->mnt_fsname = strdup(ment->mnt_fsname);
++	nment->mnt_dir = strdup(ment->mnt_dir);
++	nment->mnt_type = strdup(ment->mnt_type);
++	nment->mnt_opts = strdup(ment->mnt_opts);
++	nment->mnt_freq = ment->mnt_freq;
++	nment->mnt_passno = ment->mnt_passno;
++}
++static inline void 
++free_mntent(nfs_mntent_t *ment, int remount)
++{
++	free(ment->mnt_fsname);
++	free(ment->mnt_dir);
++	free(ment->mnt_type);
++	/* 
++	 * Note: free(ment->mnt_opts) happens in discard_mntentchn()
++	 * via update_mtab() on remouts
++	 */
++	 if (!remount)
++	 	free(ment->mnt_opts);
++}
+ 
+ int add_mtab(char *fsname, char *mount_point, char *fstype, int flags, char *opts, int freq, int passno)
+ {
+ 	struct mntent ment;
+-	int fd;
+ 	FILE *mtab;
+ 
+ 	ment.mnt_fsname = fsname;
+ 	ment.mnt_dir = mount_point;
+ 	ment.mnt_type = fstype;
+ 	ment.mnt_opts = fix_opts_string(flags, opts);
+-	ment.mnt_freq = 0;
+-	ment.mnt_passno= 0;
++	ment.mnt_freq = freq;
++	ment.mnt_passno= passno;
++
++	if(flags & MS_REMOUNT) {
++		nfs_mntent_t nment;
++		
++		dup_mntent(&ment, &nment);
++		update_mtab(nment.mnt_dir, &nment);
++		free_mntent(&nment, 1);
++		return 0;
++	}
+ 
+ 	lock_mtab();
+ 
+@@ -191,6 +250,7 @@ void mount_usage()
+ 	printf("\t-w\t\tMount file system read-write\n");
+ 	printf("\t-f\t\tFake mount, don't actually mount\n");
+ 	printf("\t-n\t\tDo not update /etc/mtab\n");
++	printf("\t-s\t\tTolerate sloppy mount options rather than failing.\n");
+ 	printf("\t-h\t\tPrint this help\n");
+ 	printf("\tversion\t\tnfs4 - NFS version 4, nfs - older NFS version supported\n");
+ 	printf("\tnfsoptions\tRefer mount.nfs(8) or nfs(5)\n\n");
+@@ -225,52 +285,98 @@ static void parse_opts (const char *opti
+ {
+ 	if (options != NULL) {
+ 		char *opts = xstrdup(options);
+-		char *opt;
+-		int len = strlen(opts) + 20;
+-
++		char *opt, *p;
++		int len = strlen(opts) + 256;
++		int open_quote = 0;
++ 
+ 		*extra_opts = xmalloc(len);
+ 		**extra_opts = '\0';
+ 
+-		for (opt = strtok(opts, ","); opt; opt = strtok(NULL, ","))
+-			parse_opt(opt, flags, *extra_opts, len);
+-
++		for (p=opts, opt=NULL; p && *p; p++) {
++			if (!opt)
++				opt = p;		/* begin of the option item */
++			if (*p == '"') 
++				open_quote ^= 1;	/* reverse the status */
++			if (open_quote)
++				continue;		/* still in quoted block */
++			if (*p == ',')
++				*p = '\0';		/* terminate the option item */
++			/* end of option item or last item */
++			if (*p == '\0' || *(p+1) == '\0') {
++				parse_opt(opt, flags, *extra_opts, len);
++				opt = NULL;
++			}
++		} 
+ 		free(opts);
+ 	}
++}
+ 
++/*
++ * Look for an option in a comma-separated list
++ */
++int
++contains(const char *list, const char *s) {
++	int n = strlen(s);
++
++	while (*list) {
++		if (strncmp(list, s, n) == 0 &&
++		  (list[n] == 0 || list[n] == ','))
++			return 1;
++		while (*list && *list++ != ',') ;
++	}
++	return 0;
++}
++
++/*
++ * If list contains "user=peter" and we ask for "user=", return "peter"
++ */
++char *
++get_value(const char *list, const char *s) {
++	const char *t;
++	int n = strlen(s);
++
++	while (*list) {
++		if (strncmp(list, s, n) == 0) {
++			s = t = list+n;
++			while (*s && *s != ',')
++				s++;
++			return xstrndup(t, s-t);
++		}
++		while (*list && *list++ != ',') ;
++	}
++	return 0;
+ }
+ 
+ static void mount_error(char *node)
+ {
+ 	switch(errno) {
+ 		case ENOTDIR:
+-			printf("%s: mount point %s is not a directory\n", progname, node);
++			fprintf(stderr, "%s: mount point %s is not a directory\n", progname, node);
+ 			break;
+ 		case EBUSY:
+-			printf("%s: %s is already mounted or busy\n", progname, node);
++			fprintf(stderr, "%s: %s is already mounted or busy\n", progname, node);
+ 			break;
+ 		case ENOENT:
+-			printf("%s: mount point %s does not exist\n", progname, node);
++			fprintf(stderr, "%s: mount point %s does not exist\n", progname, node);
+ 			break;
+ 		default:
+-			printf("%s: %s\n", progname, strerror(errno));
++			fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+ 	}
+ }
++#define NFS_MOUNT_VERS_DEFAULT 3
+ 
+ int main(int argc, char *argv[])
+ {
+-	int c, flags = 0, nfs_mount_vers = 0, mnt_err = 1, fake = 0;
++	int c, flags = 0, nfs_mount_vers, mnt_err = 1, fake = 0;
+ 	char *spec, *mount_point, *extra_opts = NULL;
+ 	char *mount_opts = NULL, *p;
++	struct mntentchn *mc;
++	uid_t uid = getuid();
+ 
+ 	progname = argv[0];
+ 	if ((p = strrchr(progname, '/')) != NULL)
+ 		progname = p+1;
+ 
+-	if (getuid() != 0) {
+-		printf("%s: only root can do that.\n", progname);
+-		exit(1);
+-	}
+-
+ 	if(!strncmp(progname, "umount", strlen("umount"))) {
+ 		if(argc < 2) {
+ 			umount_usage();
+@@ -292,7 +398,11 @@ int main(int argc, char *argv[])
+ 		return 0;
+ 	}
+ 
+-	while ((c = getopt_long (argc - 2, argv + 2, "rt:vVwfno:h",
++	nfs_mount_vers = NFS_MOUNT_VERS_DEFAULT;
++	if (!strcmp(progname, "mount.nfs4"))
++		nfs_mount_vers = 4;
++
++	while ((c = getopt_long (argc - 2, argv + 2, "rt:vVwfno:hs",
+ 				longopts, NULL)) != -1) {
+ 		switch (c) {
+ 		case 'r':
+@@ -322,6 +432,9 @@ int main(int argc, char *argv[])
+ 			else
+ 				mount_opts = xstrdup(optarg);
+ 			break;
++		case 's':
++			++sloppy;
++			break;
+ 		case 128: /* bind */
+ 			mounttype = MS_BIND;
+ 			break;
+@@ -352,31 +465,59 @@ int main(int argc, char *argv[])
+ 
+ 	spec = argv[1];
+ 	mount_point = canonicalize(argv[2]);
+-	
++
+ 	parse_opts(mount_opts, &flags, &extra_opts);
+ 
+-	if (!strcmp(progname, "mount.nfs4") || nfs_mount_vers == 4) {
+-		nfs_mount_vers = 4;
+-		mnt_err = nfs4mount(spec, mount_point, &flags, &extra_opts, &mount_opts, 0);
++	if (uid != 0 && !(flags & MS_USERS) && !(flags & MS_USER)) {
++		fprintf(stderr, "%s: permission denied\n", progname);
++		exit(1);
++	}
++
++	if ((flags & MS_USER || flags & MS_USERS) && uid != 0) {
++		/* check if fstab has entry, and further see if the user or users option is given */
++		if ((mc = getfsspec(spec)) == NULL &&
++		    (mc = getfsfile(spec)) == NULL) {
++			fprintf(stderr, "%s: permission denied - invalid option\n", progname);
++			exit(1);
++		}
++		else {
++			if((flags & MS_USER) && !contains(mc->m.mnt_opts, "user")) {
++				fprintf(stderr, "%s: permission denied - invalid option\n", progname);
++				exit(1);
++			}
++			if((flags & MS_USERS) && !contains(mc->m.mnt_opts, "users")) {
++				fprintf(stderr, "%s: permission denied - invalid option\n", progname);
++				exit(1);
++			}
++		}
++	}
++
++	if (nfs_mount_vers == 4) {
++		mnt_err = nfs4mount(spec, mount_point, &flags, 
++			&extra_opts, &mount_opts, 0);
+ 	}
+ 	else {
+ 		if (!strcmp(progname, "mount.nfs")) {
+ 			mnt_err = nfsmount(spec, mount_point, &flags,
+-					&extra_opts, &mount_opts, &nfs_mount_vers, 0);
++					&extra_opts, &mount_opts,  0);
+ 		}
+ 	}
++	if (fake)
++		return 0;
++	if (mnt_err)
++		exit(EX_FAIL);
+ 
+-	if (!mnt_err && !fake) {
+-		mnt_err = do_mount_syscall(spec, mount_point, nfs_mount_vers == 4 ? "nfs4" : "nfs", flags, mount_opts);
+-		
+-		if(mnt_err) {
+-			mount_error(mount_point);
+-			exit(-1);
+-		}
++	mnt_err = do_mount_syscall(spec, mount_point,
++			nfs_mount_vers == 4 ? "nfs4" : "nfs", flags, mount_opts);
++
++	if(mnt_err) {
++		mount_error(mount_point);
++		exit(EX_FAIL);
++	}
+ 
+-		if(!nomtab)
+-			add_mtab(spec, mount_point, nfs_mount_vers == 4 ? "nfs4" : "nfs",
+-				 flags, extra_opts, 0, 0);
++	if(!nomtab) {
++		add_mtab(spec, mount_point, nfs_mount_vers == 4 ? "nfs4" : "nfs",
++			 flags, extra_opts, 0, 0);
+ 	}
+ 
+ 	return 0;
+diff -puN utils/mount/nfs_mount.h~CITI_NFS4_ALL utils/mount/nfs_mount.h
+--- nfs-utils-1.0.11/utils/mount/nfs_mount.h~CITI_NFS4_ALL	2007-02-26 18:52:10.854011000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/nfs_mount.h	2007-02-26 18:52:14.652380000 -0500
+@@ -78,7 +78,9 @@ struct nfs_mount_data {
+ #define AUTH_GSS_SPKMP		390011
+ #endif
+ 
+-int nfsmount(const char *, const char *, int *, char **, char **, int *, int);
++int nfsmount(const char *, const char *, int *, char **, char **, int);
+ void mount_errors(char *, int, int);
++int contains(const char *, const char *);
++char *get_value(const char *, const char *);
+ 
+ #endif /* _NFS_MOUNT_H */
+diff -puN utils/mount/nfsumount.c~CITI_NFS4_ALL utils/mount/nfsumount.c
+--- nfs-utils-1.0.11/utils/mount/nfsumount.c~CITI_NFS4_ALL	2007-02-26 18:52:11.207011000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/nfsumount.c	2007-02-26 18:52:16.013751000 -0500
+@@ -19,16 +19,19 @@
+ 
+ #include <stdio.h>
+ #include <errno.h>
++#include <unistd.h>
+ #include <getopt.h>
+ #include <mntent.h>
+ #include <sys/mount.h>
+ #include <ctype.h>
++#include <pwd.h>
+ 
+ #include "xcommon.h"
+ #include "fstab.h"
+ #include "nls.h"
+ #include "conn.h"
+ 
++#include "nfs_mount.h"
+ #include "mount_constants.h"
+ #include "mount.h"
+ #include "nfsumount.h"
+@@ -98,9 +101,9 @@ int nfs_call_umount(clnt_addr_t *mnt_ser
+ 	}
+ 	mnt_closeclnt(clnt, msock);
+ 	if (res == RPC_SUCCESS)
+-		return 1;
++		return 0;
+  out_bad:
+-	return 0;
++	return 1;
+ }
+ 
+ u_int get_mntproto(const char *);
+@@ -249,9 +252,6 @@ int add_mtab2(const char *spec, const ch
+         return 1;
+ }
+ 
+-/*
+- * Returns 1 if everything went well, else 0.
+- */
+ int _nfsumount(const char *spec, const char *opts)
+ {
+ 	char *hostname;
+@@ -307,8 +307,8 @@ int _nfsumount(const char *spec, const c
+ 		goto out_bad;
+ 	return nfs_call_umount(&mnt_server, &dirname);
+  out_bad:
+-	printf("%s: %s: not found or not mounted\n", progname, spec);
+-	return 0;
++	fprintf(stderr, "%s: %s: not found / mounted or server not reachable\n", progname, spec);
++	return 1;
+ }
+ 
+ static struct option umount_longopts[] =
+@@ -334,7 +334,7 @@ void umount_usage()
+ 
+ int nfsumount(int argc, char *argv[])
+ {
+-	int c, ret;
++	int c, ret, v4=0;
+ 	char *spec;
+ 	struct mntentchn *mc;
+ 
+@@ -372,20 +372,33 @@ int nfsumount(int argc, char *argv[])
+ 	mc = getmntdirbackward(spec, NULL);
+ 	if (!mc)
+ 		mc = getmntdevbackward(spec, NULL);
+-	if (!mc && verbose)
+-		printf(_("Could not find %s in mtab\n"), spec);
+-
+-	if(mc) {
+-		ret = _nfsumount(mc->m.mnt_fsname, mc->m.mnt_opts);
+-		if(ret)
+-			ret = add_mtab2(mc->m.mnt_fsname, mc->m.mnt_dir,
+-				mc->m.mnt_type, mc->m.mnt_opts, mc);
++	if (mc == NULL) {
++		fprintf(stderr, "%s: Unable to find '%s' in mount table\n",
++				progname, spec);
++		exit(1);
+ 	}
+-	else {
+-		ret = _nfsumount(spec, NULL);
+-		if(ret)
+-			ret = add_mtab2(spec, spec, spec, spec, NULL);
++	if(contains(mc->m.mnt_opts, "user") && getuid() != 0) {
++		struct passwd *pw = getpwuid(getuid());
++		if(!pw || strcmp(pw->pw_name, get_value(mc->m.mnt_opts, "user="))) {
++			fprintf(stderr, "%s: permission denied to unmount %s\n",
++					progname, spec);
++			exit(1);
++		}
++	} else {
++		if(!contains(mc->m.mnt_opts, "users") && getuid() != 0) {
++			fprintf(stderr, "%s: only root can unmount %s from %s\n",
++					progname, mc->m.mnt_fsname, mc->m.mnt_dir);
++			exit(1);
++		}
+ 	}
++	v4 = contains(mc->m.mnt_type, "nfs4");
++
++	ret = 0;
++	if(!force && !lazy && !v4)
++		ret = _nfsumount(mc->m.mnt_fsname, mc->m.mnt_opts);
++	if(!ret)
++		ret = add_mtab2(mc->m.mnt_fsname, mc->m.mnt_dir,
++			mc->m.mnt_type, mc->m.mnt_opts, mc);
+ 
+ 	return(ret);
+ }
+diff -puN utils/mount/nfs4mount.c~CITI_NFS4_ALL utils/mount/nfs4mount.c
+--- nfs-utils-1.0.11/utils/mount/nfs4mount.c~CITI_NFS4_ALL	2007-02-26 18:52:12.678257000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/nfs4mount.c	2007-02-26 18:52:13.199107000 -0500
+@@ -50,6 +50,7 @@
+ #endif
+ 
+ extern int verbose;
++extern int sloppy;
+ 
+ char *IDMAPLCK = DEFAULT_DIR "/rpcidmapd";
+ #define idmapd_check() do { \
+@@ -335,7 +336,7 @@ int nfs4mount(const char *spec, const ch
+ 				nocto = !val;
+ 			else if (!strcmp(opt, "ac"))
+ 				noac = !val;
+-			else {
++			else if (!sloppy) {
+ 				printf(_("unknown nfs mount option: "
+ 					 "%s%s\n"), val ? "" : "no", opt);
+ 				goto fail;
+diff -puN utils/mount/nfsmount.c~CITI_NFS4_ALL utils/mount/nfsmount.c
+--- nfs-utils-1.0.11/utils/mount/nfsmount.c~CITI_NFS4_ALL	2007-02-26 18:52:13.028107000 -0500
++++ nfs-utils-1.0.11-kwc/utils/mount/nfsmount.c	2007-02-26 18:52:16.886299000 -0500
+@@ -104,6 +104,7 @@ typedef union {
+ static char errbuf[BUFSIZ];
+ static char *erreob = &errbuf[BUFSIZ];
+ extern int verbose;
++extern int sloppy;
+ 
+ /* Convert RPC errors into strings */
+ int rpc_strerror(int);
+@@ -547,15 +548,31 @@ parse_options(char *old_opts, struct nfs
+ 	struct pmap *mnt_pmap = &mnt_server->pmap;
+ 	struct pmap *nfs_pmap = &nfs_server->pmap;
+ 	int len;
+-	char *opt, *opteq;
++	char *opt, *opteq, *p, *opt_b;
+ 	char *mounthost = NULL;
+ 	char cbuf[128];
++	int open_quote = 0;
+ 
+ 	data->flags = 0;
+ 	*bg = 0;
+ 
+ 	len = strlen(new_opts);
+-	for (opt = strtok(old_opts, ","); opt; opt = strtok(NULL, ",")) {
++	for (p=old_opts, opt_b=NULL; p && *p; p++) {
++		if (!opt_b)
++			opt_b = p;		/* begin of the option item */
++		if (*p == '"') 
++			open_quote ^= 1;	/* reverse the status */
++		if (open_quote)
++			continue;		/* still in quoted block */
++		if (*p == ',')
++			*p = '\0';		/* terminate the option item */
++		if (*p == '\0' || *(p+1) == '\0') {
++			opt = opt_b;		/* opt is useful now */
++			opt_b = NULL;
++		}
++		else
++			continue;		/* still somewhere in the option item */
++
+ 		if (strlen(opt) >= sizeof(cbuf))
+ 			goto bad_parameter;
+ 		if ((opteq = strchr(opt, '=')) && isdigit(opteq[1])) {
+@@ -606,13 +623,13 @@ parse_options(char *old_opts, struct nfs
+ 			} else if (!strcmp(opt, "namlen")) {
+ 				if (nfs_mount_version >= 2)
+ 					data->namlen = val;
+-				else
++				else if (!sloppy)
+ 					goto bad_parameter;
+ #endif
+ 			} else if (!strcmp(opt, "addr")) {
+ 				/* ignore */;
+ 				continue;
+- 			} else
++ 			} else if (!sloppy)
+ 				goto bad_parameter;
+ 			sprintf(cbuf, "%s=%s,", opt, opteq+1);
+ 		} else if (opteq) {
+@@ -629,7 +646,7 @@ parse_options(char *old_opts, struct nfs
+ 					mnt_pmap->pm_prot = IPPROTO_TCP;
+ 					data->flags |= NFS_MOUNT_TCP;
+ #endif
+-				} else
++				} else if (!sloppy)
+ 					goto bad_parameter;
+ #if NFS_MOUNT_VERSION >= 5
+ 			} else if (!strcmp(opt, "sec")) {
+@@ -658,7 +675,7 @@ parse_options(char *old_opts, struct nfs
+ 					data->pseudoflavor = AUTH_GSS_SPKMI;
+ 				else if (!strcmp(secflavor, "spkm3p"))
+ 					data->pseudoflavor = AUTH_GSS_SPKMP;
+-				else {
++				else if (!sloppy) {
+ 					printf(_("Warning: Unrecognized security flavor %s.\n"),
+ 						secflavor);
+ 					goto bad_parameter;
+@@ -670,14 +687,24 @@ parse_options(char *old_opts, struct nfs
+ 						   strcspn(opteq+1," \t\n\r,"));
+ 			 else if (!strcmp(opt, "context")) {
+  				char *context = opteq + 1;
++				int ctxlen = strlen(context);
+  				
+- 				if (strlen(context) > NFS_MAX_CONTEXT_LEN) {
++ 				if (ctxlen > NFS_MAX_CONTEXT_LEN) {
+  					printf(_("context parameter exceeds limit of %d\n"),
+  						 NFS_MAX_CONTEXT_LEN);
+ 					goto bad_parameter;
+  				}
+- 				strncpy(data->context, context, NFS_MAX_CONTEXT_LEN);
+- 			} else
++				/* The context string is in the format of
++				 * "system_u:object_r:...".  We only want
++				 * the context str between the quotes.
++				 */
++				if (*context == '"')
++					strncpy(data->context, context+1, 
++							ctxlen-2);
++				else
++					strncpy(data->context, context, 
++							NFS_MAX_CONTEXT_LEN);
++ 			} else if (!sloppy)
+ 				goto bad_parameter;
+ 			sprintf(cbuf, "%s=%s,", opt, opteq+1);
+ 		} else {
+@@ -764,9 +791,11 @@ parse_options(char *old_opts, struct nfs
+ #endif
+ 			} else {
+ 			bad_option:
+-				printf(_("Unsupported nfs mount option: "
+-					 "%s%s\n"), val ? "" : "no", opt);
+-				goto out_bad;
++				if (!sloppy) {
++					printf(_("Unsupported nfs mount option: "
++						 "%s%s\n"), val ? "" : "no", opt);
++					goto out_bad;
++				}
+ 			}
+ 			sprintf(cbuf, val ? "%s,":"no%s,", opt);
+ 		}
+@@ -815,8 +844,7 @@ nfsmnt_check_compat(const struct pmap *n
+ 
+ int
+ nfsmount(const char *spec, const char *node, int *flags,
+-	 char **extra_opts, char **mount_opts, int *nfs_mount_vers,
+-	 int running_bg)
++	 char **extra_opts, char **mount_opts, int running_bg)
+ {
+ 	static char *prev_bg_host;
+ 	char hostdir[1024];
+@@ -847,9 +875,7 @@ nfsmount(const char *spec, const char *n
+ 
+ 	/* The version to try is either specified or 0
+ 	   In case it is 0 we tell the caller what we tried */
+-	if (!*nfs_mount_vers)
+-		*nfs_mount_vers = find_kernel_nfs_mount_version();
+-	nfs_mount_version = *nfs_mount_vers;
++	nfs_mount_version = find_kernel_nfs_mount_version();
+ 
+ 	retval = EX_FAIL;
+ 	fsock = -1;
+@@ -1090,12 +1116,14 @@ nfsmount(const char *spec, const char *n
+ 
+ 		flavor = mountres->auth_flavors.auth_flavors_val;
+ 		while (--i >= 0) {
+-			if (flavor[i] == data.pseudoflavor)
+-				yum = 1;
+ #ifdef NFS_MOUNT_DEBUG
+-			printf("auth flavor %d: %d\n",
+-				i, flavor[i]);
++			printf("auth flavor[%d] %d\n", i, flavor[i]);
+ #endif
++			if (flavor[i] == data.pseudoflavor ||
++				flavor[i] == AUTH_NONE) {
++				yum = 1;
++				break;
++			}
+ 		}
+ 		if (!yum) {
+ 			fprintf(stderr,
+diff -puN support/nfs/conn.c~CITI_NFS4_ALL support/nfs/conn.c
+--- nfs-utils-1.0.11/support/nfs/conn.c~CITI_NFS4_ALL	2007-02-26 18:52:15.411170000 -0500
++++ nfs-utils-1.0.11-kwc/support/nfs/conn.c	2007-02-26 18:52:15.506075000 -0500
+@@ -98,7 +98,7 @@ int get_socket(struct sockaddr_in *saddr
+ 			return RPC_ANYSOCK;
+ 		}
+ 	}
+-	if (type == SOCK_STREAM || type == SOCK_DGRAM) {
++	if (type == SOCK_STREAM) {
+ 		cc = connect(so, (struct sockaddr *)saddr, namelen);
+ 		if (cc < 0) {
+ 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+diff -puN utils/gssd/gssd.c~CITI_NFS4_ALL utils/gssd/gssd.c
+--- nfs-utils-1.0.11/utils/gssd/gssd.c~CITI_NFS4_ALL	2007-02-26 18:52:17.909847000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/gssd.c	2007-02-26 18:52:21.146491000 -0500
+@@ -53,7 +53,8 @@
+ #include "gss_util.h"
+ #include "krb5_util.h"
+ 
+-char pipefsdir[PATH_MAX] = GSSD_PIPEFS_DIR;
++char pipefs_dir[PATH_MAX] = GSSD_PIPEFS_DIR;
++char pipefs_nfsdir[PATH_MAX] = GSSD_PIPEFS_DIR;
+ char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
+ char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
+ int  use_memcache = 0;
+@@ -111,8 +112,8 @@ main(int argc, char *argv[])
+ 				rpc_verbosity++;
+ 				break;
+ 			case 'p':
+-				strncpy(pipefsdir, optarg, sizeof(pipefsdir));
+-				if (pipefsdir[sizeof(pipefsdir)-1] != '\0')
++				strncpy(pipefs_dir, optarg, sizeof(pipefs_dir));
++				if (pipefs_dir[sizeof(pipefs_dir)-1] != '\0')
+ 					errx(1, "pipefs path name too long");
+ 				break;
+ 			case 'k':
+@@ -130,10 +131,10 @@ main(int argc, char *argv[])
+ 				break;
+ 		}
+ 	}
+-	strncat(pipefsdir + strlen(pipefsdir), "/" GSSD_SERVICE_NAME,
+-		sizeof(pipefsdir)-strlen(pipefsdir));
+-	if (pipefsdir[sizeof(pipefsdir)-1] != '\0')
+-		errx(1, "pipefs path name too long");
++	snprintf(pipefs_nfsdir, sizeof(pipefs_nfsdir), "%s/%s",
++		 pipefs_dir, GSSD_SERVICE_NAME);
++	if (pipefs_nfsdir[sizeof(pipefs_nfsdir)-1] != '\0')
++		errx(1, "pipefs_nfsdir path name too long");
+ 
+ 	if ((progname = strrchr(argv[0], '/')))
+ 		progname++;
+@@ -161,6 +162,8 @@ main(int argc, char *argv[])
+ 
+ 	/* Process keytab file and get machine credentials */
+ 	gssd_refresh_krb5_machine_creds();
++	/* Determine Kerberos information from the kernel */
++	gssd_obtain_kernel_krb5_info();
+ 
+ 	gssd_run();
+ 	printerr(0, "gssd_run returned!\n");
+diff -puN utils/gssd/gssd.h~CITI_NFS4_ALL utils/gssd/gssd.h
+--- nfs-utils-1.0.11/utils/gssd/gssd.h~CITI_NFS4_ALL	2007-02-26 18:52:18.243847000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/gssd.h	2007-02-26 18:52:19.072395000 -0500
+@@ -58,7 +58,8 @@ enum {AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUT
+ 
+ 
+ 
+-extern char			pipefsdir[PATH_MAX];
++extern char			pipefs_dir[PATH_MAX];
++extern char			pipefs_nfsdir[PATH_MAX];
+ extern char			keytabfile[PATH_MAX];
+ extern char			ccachedir[PATH_MAX];
+ extern int			use_memcache;
+diff -puN utils/gssd/gssd_main_loop.c~CITI_NFS4_ALL utils/gssd/gssd_main_loop.c
+--- nfs-utils-1.0.11/utils/gssd/gssd_main_loop.c~CITI_NFS4_ALL	2007-02-26 18:52:18.584642000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/gssd_main_loop.c	2007-02-26 18:52:19.111395000 -0500
+@@ -106,9 +106,9 @@ gssd_run()
+ 	dn_act.sa_flags = SA_SIGINFO;
+ 	sigaction(DNOTIFY_SIGNAL, &dn_act, NULL);
+ 
+-	if ((fd = open(pipefsdir, O_RDONLY)) == -1) {
++	if ((fd = open(pipefs_nfsdir, O_RDONLY)) == -1) {
+ 		printerr(0, "ERROR: failed to open %s: %s\n",
+-			 pipefsdir, strerror(errno));
++			 pipefs_nfsdir, strerror(errno));
+ 		exit(1);
+ 	}
+ 	fcntl(fd, F_SETSIG, DNOTIFY_SIGNAL);
+diff -puN utils/gssd/gssd_proc.c~CITI_NFS4_ALL utils/gssd/gssd_proc.c
+--- nfs-utils-1.0.11/utils/gssd/gssd_proc.c~CITI_NFS4_ALL	2007-02-26 18:52:18.936395000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/gssd_proc.c	2007-02-26 18:52:19.165395000 -0500
+@@ -80,19 +80,19 @@
+  *	with an index into pollarray[], and other basic data about that client.
+  *
+  * Directory structure: created by the kernel nfs client
+- *      /pipefsdir/clntXX             : one per rpc_clnt struct in the kernel
+- *      /pipefsdir/clntXX/krb5        : read uid for which kernel wants
+- *      				 a context, write the resulting context
+- *      /pipefsdir/clntXX/info        : stores info such as server name
++ *      {pipefs_nfsdir}/clntXX             : one per rpc_clnt struct in the kernel
++ *      {pipefs_nfsdir}/clntXX/krb5        : read uid for which kernel wants
++ *					    a context, write the resulting context
++ *      {pipefs_nfsdir}/clntXX/info        : stores info such as server name
+  *
+  * Algorithm:
+- *      Poll all /pipefsdir/clntXX/krb5 files.  When ready, data read
++ *      Poll all {pipefs_nfsdir}/clntXX/krb5 files.  When ready, data read
+  *      is a uid; performs rpcsec_gss context initialization protocol to
+  *      get a cred for that user.  Writes result to corresponding krb5 file
+  *      in a form the kernel code will understand.
+  *      In addition, we make sure we are notified whenever anything is
+- *      created or destroyed in pipefsdir/ or in an of the clntXX directories,
+- *      and rescan the whole pipefsdir when this happens.
++ *      created or destroyed in {pipefs_nfsdir} or in an of the clntXX directories,
++ *      and rescan the whole {pipefs_nfsdir} when this happens.
+  */
+ 
+ struct pollfd * pollarray;
+@@ -389,16 +389,16 @@ update_client_list(void)
+ 	struct dirent **namelist;
+ 	int i, j;
+ 
+-	if (chdir(pipefsdir) < 0) {
++	if (chdir(pipefs_nfsdir) < 0) {
+ 		printerr(0, "ERROR: can't chdir to %s: %s\n",
+-			 pipefsdir, strerror(errno));
++			 pipefs_nfsdir, strerror(errno));
+ 		return -1;
+ 	}
+ 
+-	j = scandir(pipefsdir, &namelist, NULL, alphasort);
++	j = scandir(pipefs_nfsdir, &namelist, NULL, alphasort);
+ 	if (j < 0) {
+ 		printerr(0, "ERROR: can't scandir %s: %s\n",
+-			 pipefsdir, strerror(errno));
++			 pipefs_nfsdir, strerror(errno));
+ 		return -1;
+ 	}
+ 	update_old_clients(namelist, j);
+diff -puN support/include/nfslib.h~CITI_NFS4_ALL support/include/nfslib.h
+--- nfs-utils-1.0.11/support/include/nfslib.h~CITI_NFS4_ALL	2007-02-26 18:52:19.914943000 -0500
++++ nfs-utils-1.0.11-kwc/support/include/nfslib.h	2007-02-26 18:52:20.001943000 -0500
+@@ -57,6 +57,9 @@ enum cle_maptypes {
+ 	CLE_MAP_UGIDD,
+ };
+ 
++#define SECFLAVOR_COUNT 7
++extern char *secflavor_name[SECFLAVOR_COUNT];
++
+ /*
+  * Data related to a single exports entry as returned by getexportent.
+  * FIXME: export options should probably be parsed at a later time to
+@@ -83,6 +86,8 @@ struct exportent {
+ 	int             e_fslocmethod;
+ 	char *          e_fslocdata;
+ 	char *		e_uuid;
++	int		e_secinfo_order[SECFLAVOR_COUNT+1];
++	int		e_secinfo_flags[SECFLAVOR_COUNT];
+ };
+ 
+ struct rmtabent {
+@@ -96,6 +101,7 @@ struct rmtabent {
+  */
+ void			setexportent(char *fname, char *type);
+ struct exportent *	getexportent(int,int);
++void 			secinfo_show(FILE *fp, struct exportent *ep);
+ void			putexportent(struct exportent *xep);
+ void			endexportent(void);
+ struct exportent *	mkexportent(char *hname, char *path, char *opts);
+diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
+--- nfs-utils-1.0.11/utils/gssd/krb5_util.c~CITI_NFS4_ALL	2007-02-26 18:52:20.789535000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/krb5_util.c	2007-02-26 18:52:21.202491000 -0500
+@@ -97,6 +97,7 @@
+ #include "config.h"
+ #include <sys/param.h>
+ #include <rpc/rpc.h>
++#include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/socket.h>
+ #include <arpa/inet.h>
+@@ -105,6 +106,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <dirent.h>
++#include <fcntl.h>
+ #include <errno.h>
+ #include <time.h>
+ #include <gssapi/gssapi.h>
+@@ -123,6 +125,10 @@
+ /* Global list of principals/cache file names for machine credentials */
+ struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
+ 
++/* Encryption types supported by the kernel rpcsec_gss code */
++int num_krb5_enctypes = 0;
++krb5_enctype *krb5_enctypes = NULL;
++
+ /*==========================*/
+ /*===  Internal routines ===*/
+ /*==========================*/
+@@ -256,56 +262,6 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ }
+ 
+ 
+-#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+-/*
+- * this routine obtains a credentials handle via gss_acquire_cred()
+- * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
+- * types negotiated.
+- *
+- * XXX Should call some function to determine the enctypes supported
+- * by the kernel. (Only need to do that once!)
+- *
+- * Returns:
+- *	0 => all went well
+- *     -1 => there was an error
+- */
+-
+-int
+-limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
+-{
+-	u_int maj_stat, min_stat;
+-	gss_cred_id_t credh;
+-	gss_OID_set_desc  desired_mechs;
+-	krb5_enctype enctypes[] = { ENCTYPE_DES_CBC_CRC };
+-	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
+-
+-	/* We only care about getting a krb5 cred */
+-	desired_mechs.count = 1;
+-	desired_mechs.elements = &krb5oid;
+-
+-	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
+-				    &desired_mechs, GSS_C_INITIATE,
+-				    &credh, NULL, NULL);
+-
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_acquire_cred",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-
+-	maj_stat = gss_set_allowable_enctypes(&min_stat, credh, &krb5oid,
+-					     num_enctypes, &enctypes);
+-	if (maj_stat != GSS_S_COMPLETE) {
+-		pgsserr("gss_set_allowable_enctypes",
+-			maj_stat, min_stat, &krb5oid);
+-		return -1;
+-	}
+-	sec->cred = credh;
+-
+-	return 0;
+-}
+-#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
+-
+ /*
+  * Obtain credentials via a key in the keytab given
+  * a keytab handle and a gssd_k5_kt_princ structure.
+@@ -609,6 +565,56 @@ gssd_set_krb5_ccache_name(char *ccname)
+ #endif
+ }
+ 
++/*
++ * Parse the supported encryption type information
++ */
++static int
++parse_enctypes(char *enctypes)
++{
++	int n = 0;
++	char *curr, *comma;
++	int i;
++
++	/* Just in case this ever gets called more than once */
++	if (krb5_enctypes != NULL) {
++		free(krb5_enctypes);
++		krb5_enctypes = NULL;
++		num_krb5_enctypes = 0;
++	}
++
++	/* count the number of commas */
++	for (curr = enctypes; curr && *curr != '\0'; curr = ++comma) {
++		comma = strchr(curr, ',');
++		if (comma != NULL)
++			n++;
++		else
++			break;
++	}
++	/* If no more commas and we're not at the end, there's one more value */
++	if (*curr != '\0')
++		n++;
++
++	/* Empty string, return an error */
++	if (n == 0)
++		return ENOENT;
++
++	/* Allocate space for enctypes array */
++	if ((krb5_enctypes = (int *) calloc(n, sizeof(int))) == NULL) {
++		return ENOMEM;
++	}
++
++	/* Now parse each value into the array */
++	for (curr = enctypes, i = 0; curr && *curr != '\0'; curr = ++comma) {
++		krb5_enctypes[i++] = atoi(curr);
++		comma = strchr(curr, ',');
++		if (comma == NULL)
++			break;
++	}
++
++	num_krb5_enctypes = n;
++	return 0;
++}
++
+ /*==========================*/
+ /*===  External routines ===*/
+ /*==========================*/
+@@ -860,3 +866,125 @@ gssd_destroy_krb5_machine_creds(void)
+ 	krb5_free_context(context);
+ }
+ 
++#ifdef HAVE_SET_ALLOWABLE_ENCTYPES
++/*
++ * this routine obtains a credentials handle via gss_acquire_cred()
++ * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
++ * types negotiated.
++ *
++ * Returns:
++ *	0 => all went well
++ *     -1 => there was an error
++ */
++
++int
++limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid)
++{
++	u_int maj_stat, min_stat;
++	gss_cred_id_t credh;
++	gss_OID_set_desc  desired_mechs;
++	krb5_enctype enctypes[] = {ENCTYPE_DES_CBC_CRC};
++	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
++
++	/* We only care about getting a krb5 cred */
++	desired_mechs.count = 1;
++	desired_mechs.elements = &krb5oid;
++
++	maj_stat = gss_acquire_cred(&min_stat, NULL, 0,
++				    &desired_mechs, GSS_C_INITIATE,
++				    &credh, NULL, NULL);
++
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_acquire_cred",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++
++	/*
++	 * If we failed for any reason to produce global
++	 * list of supported enctypes, use local default here.
++	 */
++	if (krb5_enctypes == NULL)
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_enctypes, &enctypes);
++	else
++		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
++					&krb5oid, num_krb5_enctypes,
++					krb5_enctypes);
++	if (maj_stat != GSS_S_COMPLETE) {
++		pgsserr("gss_set_allowable_enctypes",
++			maj_stat, min_stat, &krb5oid);
++		return -1;
++	}
++	sec->cred = credh;
++
++	return 0;
++}
++#endif	/* HAVE_SET_ALLOWABLE_ENCTYPES */
++
++/*
++ * Obtain supported enctypes from kernel.
++ * Set defaults if info is not available.
++ */
++void
++gssd_obtain_kernel_krb5_info(void)
++{
++	char enctype_file_name[128];
++	char buf[1024];
++	char enctypes[128];
++	int nscanned;
++	int fd;
++	int use_default_enctypes = 0;
++	int nbytes, numfields;
++	char default_enctypes[] = "1,3,2";
++	int code;
++
++	snprintf(enctype_file_name, sizeof(enctype_file_name),
++		 "%s/%s", pipefs_dir, "krb5_info");
++
++	if ((fd = open(enctype_file_name, O_RDONLY)) == -1) {
++		printerr(1, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Unable to open '%s'. Unable to determine "
++			 "Kerberos encryption types supported by the "
++			 "kernel; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	memset(buf, 0, sizeof(buf));
++	if ((nbytes = read(fd, buf, sizeof(buf)-1)) == -1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "Error reading Kerberos encryption type "
++			 "information file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		close(fd);
++		goto do_the_parse;
++	}
++	close(fd);
++	numfields = sscanf(buf, "enctypes: %s\n%n", enctypes, &nscanned);
++	if (numfields < 1) {
++		printerr(0, "WARNING: gssd_obtain_kernel_krb5_info: "
++			 "error parsing Kerberos encryption type "
++			 "information from file '%s'; using defaults (%s).\n",
++			 enctype_file_name, default_enctypes);
++		use_default_enctypes = 1;
++		goto do_the_parse;
++	}
++	if (nbytes > nscanned) {
++		printerr(2, "gssd_obtain_kernel_krb5_info: "
++			 "Ignoring extra information, '%s', from '%s'\n",
++			 buf+nscanned, enctype_file_name);
++		goto do_the_parse;
++	}
++  do_the_parse:
++  	if (use_default_enctypes)
++		strcpy(enctypes, default_enctypes);
++
++	if ((code = parse_enctypes(enctypes)) != 0) {
++		printerr(0, "ERROR: gssd_obtain_kernel_krb5_info: "
++			 "parse_enctypes%s failed with code %d\n",
++			 use_default_enctypes ? " (with default enctypes)" : "",
++			 code);
++	}
++}
+diff -puN utils/gssd/krb5_util.h~CITI_NFS4_ALL utils/gssd/krb5_util.h
+--- nfs-utils-1.0.11/utils/gssd/krb5_util.h~CITI_NFS4_ALL	2007-02-26 18:52:21.065491000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/krb5_util.h	2007-02-26 18:52:21.305491000 -0500
+@@ -22,6 +22,8 @@ int  gssd_refresh_krb5_machine_creds(voi
+ void gssd_free_krb5_machine_cred_list(char **list);
+ void gssd_setup_krb5_machine_gss_ccache(char *servername);
+ void gssd_destroy_krb5_machine_creds(void);
++void gssd_obtain_kernel_krb5_info(void);
++
+ 
+ #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+ int limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid);
+diff -puN utils/gssd/context.h~CITI_NFS4_ALL utils/gssd/context.h
+--- nfs-utils-1.0.11/utils/gssd/context.h~CITI_NFS4_ALL	2007-02-26 18:52:21.831041000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/context.h	2007-02-26 18:52:22.471949000 -0500
+@@ -1,5 +1,5 @@
+ /*
+-  Copyright (c) 2004 The Regents of the University of Michigan.
++  Copyright (c) 2004-2006 The Regents of the University of Michigan.
+   All rights reserved.
+ 
+   Redistribution and use in source and binary forms, with or without
+@@ -36,6 +36,10 @@
+ /* Hopefully big enough to hold any serialized context */
+ #define MAX_CTX_LEN 4096
+ 
++/* New context format flag values */
++#define KRB5_CTX_FLAG_INITIATOR         0x00000001
++#define KRB5_CTX_FLAG_CFX               0x00000002
++#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY   0x00000004
+ 
+ int serialize_context_for_kernel(gss_ctx_id_t ctx, gss_buffer_desc *buf,
+ 				 gss_OID mech);
+diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
+--- nfs-utils-1.0.11/utils/gssd/context_lucid.c~CITI_NFS4_ALL	2007-02-26 18:52:22.123039000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/context_lucid.c	2007-02-26 18:52:22.513907000 -0500
+@@ -40,6 +40,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
++#include <errno.h>
+ #include "gss_util.h"
+ #include "gss_oids.h"
+ #include "err_util.h"
+@@ -113,15 +114,13 @@ prepare_krb5_rfc1964_buffer(gss_krb5_luc
+ 	 * Note that the rfc1964 version only supports DES enctypes.
+ 	 */
+ 	if (lctx->rfc1964_kd.ctx_key.type != 4) {
+-		printerr(1, "prepare_krb5_rfc1964_buffer: "
+-			    "overriding heimdal keytype (%d => %d)\n",
+-			    lctx->rfc1964_kd.ctx_key.type, 4);
++		printerr(2, "%s: overriding heimdal keytype (%d => %d)\n",
++			 __FUNCTION__, lctx->rfc1964_kd.ctx_key.type, 4);
+ 		lctx->rfc1964_kd.ctx_key.type = 4;
+ 	}
+ #endif
+-	printerr(2, "prepare_krb5_rfc1964_buffer: serializing keys with "
+-		 "enctype %d and length %d\n",
+-		 lctx->rfc1964_kd.ctx_key.type,
++	printerr(2, "%s: serializing keys with enctype %d and length %d\n",
++		 __FUNCTION__, lctx->rfc1964_kd.ctx_key.type,
+ 		 lctx->rfc1964_kd.ctx_key.length);
+ 
+ 	/* derive the encryption key and copy it into buffer */
+@@ -152,15 +151,361 @@ out_err:
+ 	return -1;
+ }
+ 
+-static int
+-prepare_krb5_rfc_cfx_buffer(gss_krb5_lucid_context_v1_t *lctx,
+-	gss_buffer_desc *buf)
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++
++/* for 3DES */
++#define KG_USAGE_SEAL 22
++#define KG_USAGE_SIGN 23
++#define KG_USAGE_SEQ  24
++
++/* for rfc???? */
++#define KG_USAGE_ACCEPTOR_SEAL  22
++#define KG_USAGE_ACCEPTOR_SIGN  23
++#define KG_USAGE_INITIATOR_SEAL 24
++#define KG_USAGE_INITIATOR_SIGN 25
++
++/* Lifted from mit src/lib/gssapi/krb5/gssapiP_krb5.h */
++enum seal_alg {
++  SEAL_ALG_NONE            = 0xffff,
++  SEAL_ALG_DES             = 0x0000,
++  SEAL_ALG_1               = 0x0001, /* not published */
++  SEAL_ALG_MICROSOFT_RC4   = 0x0010, /* microsoft w2k;  */
++  SEAL_ALG_DES3KD          = 0x0002
++};
++
++#define KEY_USAGE_SEED_ENCRYPTION	0xAA
++#define KEY_USAGE_SEED_INTEGRITY	0x55
++#define KEY_USAGE_SEED_CHECKSUM		0x99
++#define K5CLENGTH 5
++
++/* Flags for version 2 context flags */
++#define KRB5_CTX_FLAG_INITIATOR		0x00000001
++#define KRB5_CTX_FLAG_CFX		0x00000002
++#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
++
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/*
++ * We don't have "legal" access to these MIT-only
++ * structures located in libk5crypto
++ */
++extern void krb5int_enc_arcfour;
++extern void krb5int_enc_des3;
++extern void krb5int_enc_aes128;
++extern void krb5int_enc_aes256;
++extern int krb5_derive_key();
++
++static void
++key_lucid_to_krb5(const gss_krb5_lucid_key_t *lin, krb5_keyblock *kout)
+ {
+-	printerr(0, "ERROR: prepare_krb5_rfc_cfx_buffer: not implemented\n");
+-	return -1;
++	memset(kout, '\0', sizeof(kout));
++#ifdef HAVE_KRB5
++	kout->enctype = lin->type;
++	kout->length = lin->length;
++	kout->contents = lin->data;
++#else
++	kout->keytype = lin->type;
++	kout->keyvalue.length = lin->length;
++	kout->keyvalue.data = lin->data;
++#endif
+ }
+ 
++static void
++key_krb5_to_lucid(const krb5_keyblock *kin, gss_krb5_lucid_key_t *lout)
++{
++	memset(lout, '\0', sizeof(lout));
++#ifdef HAVE_KRB5
++	lout->type = kin->enctype;
++	lout->length = kin->length;
++	lout->data = kin->contents;
++#else
++	lout->type = kin->keytype;
++	lout->length = kin->keyvalue.length;
++	memcpy(lout->data, kin->keyvalue.data, kin->keyvalue.length);
++#endif
++}
+ 
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
++/*
++ * Function to derive a new key from a given key and given constant data.
++ */
++static krb5_error_code
++derive_key_lucid(const gss_krb5_lucid_key_t *in, gss_krb5_lucid_key_t *out,
++		 int usage, char extra)
++{
++	krb5_error_code code;
++	unsigned char constant_data[K5CLENGTH];
++	krb5_data datain;
++	int keylength;
++	void *enc;
++	krb5_keyblock kin, kout;  /* must send krb5_keyblock, not lucid! */
++#ifdef HAVE_HEIMDAL
++	krb5_context kcontext;
++	krb5_keyblock *outkey;
++#endif
++
++	/*
++	 * XXX Hack alert.  We don't have "legal" access to these
++	 * values and structures located in libk5crypto
++	 */
++	switch (in->type) {
++	case ENCTYPE_DES3_CBC_SHA1:
++#ifdef HAVE_KRB5
++	case ENCTYPE_DES3_CBC_RAW:
++#endif
++		keylength = 24;
++#ifdef HAVE_KRB5
++		enc = &krb5int_enc_des3;
++#endif
++		break;
++	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
++		keylength = 16;
++#ifdef HAVE_KRB5
++		enc = &krb5int_enc_aes128;
++#endif
++		break;
++	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
++		keylength = 32;
++#ifdef HAVE_KRB5
++		enc = &krb5int_enc_aes256;
++#endif
++		break;
++	default:
++		code = KRB5_BAD_ENCTYPE;
++		goto out;
++	}
++
++	/* allocate memory for output key */
++	if ((out->data = malloc(keylength)) == NULL) {
++		code = ENOMEM;
++		goto out;
++	}
++	out->length = keylength;
++	out->type = in->type;
++
++	/* Convert to correct format for call to krb5_derive_key */
++	key_lucid_to_krb5(in, &kin);
++	key_lucid_to_krb5(out, &kout);
++
++	datain.data = (char *) constant_data;
++	datain.length = K5CLENGTH;
++
++	((char *)(datain.data))[0] = (usage>>24)&0xff;
++	((char *)(datain.data))[1] = (usage>>16)&0xff;
++	((char *)(datain.data))[2] = (usage>>8)&0xff;
++	((char *)(datain.data))[3] = usage&0xff;
++
++	((char *)(datain.data))[4] = (char) extra;
++
++#ifdef HAVE_KRB5
++	code = krb5_derive_key(enc, &kin, &kout, &datain);
++#else
++	if ((code = krb5_init_context(&kcontext))) {
++	}
++	code = krb5_derive_key(kcontext, &kin, in->type, constant_data, K5CLENGTH, &outkey);
++#endif
++	if (code) {
++		free(out->data);
++		out->data = NULL;
++		goto out;
++	}
++#ifdef HAVE_KRB5
++	key_krb5_to_lucid(&kout, out);
++#else
++	key_krb5_to_lucid(outkey, out);
++	krb5_free_keyblock(kcontext, outkey);
++	krb5_free_context(kcontext);
++#endif
++
++  out:
++  	if (code)
++		printerr(0, "ERROR: %s: returning error %d (%s)\n",
++			 __FUNCTION__, code, error_message(code));
++	return (code);
++}
++
++
++/*
++ * Prepare a new-style buffer, as defined in rfc4121 (a.k.a. cfx),
++ * to send to the kernel for newer encryption types -- or for DES3.
++ *
++ * The new format is:
++ *
++ *	u32 initiate;			( whether we are the initiator or not )
++ *	s32 endtime;
++ *	u32 flags;
++ *	#define KRB5_CTX_FLAG_INITIATOR		0x00000001
++ *	#define KRB5_CTX_FLAG_CFX		0x00000002
++ *	#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
++ *	u64 seq_send;
++ *	u32  enctype;			( encrption type of keys )
++ *	u32  size_of_each_key;		( size of each key in bytes )
++ *	u32  number_of_keys;		( N -- should always be 3 for now )
++ *	keydata-1;                      ( Ke )
++ *	keydata-2;                      ( Ki )
++ *	keydata-3;                      ( Kc )
++ *
++ */
++static int
++prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
++			    gss_buffer_desc *buf)
++{
++	char *p, *end;
++	uint32_t v2_flags = 0;
++	gss_krb5_lucid_key_t enc_key;
++	gss_krb5_lucid_key_t derived_key;
++	gss_buffer_desc fakeoid;
++	uint32_t enctype;
++	uint32_t keysize;
++	uint32_t numkeys;
++
++	memset(&enc_key, 0, sizeof(enc_key));
++	memset(&fakeoid, 0, sizeof(fakeoid));
++
++	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
++		goto out_err;
++	p = buf->value;
++	end = buf->value + MAX_CTX_LEN;
++
++	/* Version 2 */
++	if (WRITE_BYTES(&p, end, lctx->initiate)) goto out_err;
++	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
++
++	if (lctx->initiate)
++		v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++	if (lctx->protocol != 0)
++		v2_flags |= KRB5_CTX_FLAG_CFX;
++	if (lctx->protocol != 0 && lctx->cfx_kd.have_acceptor_subkey == 1)
++		v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
++
++	if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
++
++	if (WRITE_BYTES(&p, end, lctx->send_seq)) goto out_err;
++
++	/* Protocol 0 here implies DES3 or RC4 */
++	printerr(2, "%s: protocol %d\n", __FUNCTION__, lctx->protocol);
++	if (lctx->protocol == 0) {
++		enctype = lctx->rfc1964_kd.ctx_key.type;
++#ifdef HAVE_HEIMDAL
++		/*
++		 * The kernel gss code expects ENCTYPE_DES3_CBC_RAW (6) for
++		 * 3des keys, but Heimdal key has ENCTYPE_DES3_CBC_SHA1 (16).
++		 * Force the Heimdal enctype to 6.
++		 */
++		if (enctype == ENCTYPE_DES3_CBC_SHA1) {
++			printerr(2, "%s: overriding heimdal keytype (%d => %d)\n",
++				 __FUNCTION__, enctype, 6);
++
++			enctype = 6;
++		}
++#endif
++		keysize = lctx->rfc1964_kd.ctx_key.length;
++		numkeys = 3;	/* XXX is always gonna be three? */
++	} else {
++		if (lctx->cfx_kd.have_acceptor_subkey) {
++			enctype = lctx->cfx_kd.acceptor_subkey.type;
++			keysize = lctx->cfx_kd.acceptor_subkey.length;
++		} else {
++			enctype = lctx->cfx_kd.ctx_key.type;
++			keysize = lctx->cfx_kd.ctx_key.length;
++		}
++		numkeys = 3;
++	}
++	printerr(2, "%s: serializing %d keys with enctype %d and size %d\n",
++		 __FUNCTION__, numkeys, enctype, keysize);
++	if (WRITE_BYTES(&p, end, enctype)) goto out_err;
++	if (WRITE_BYTES(&p, end, keysize)) goto out_err;
++	if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
++
++	if (lctx->protocol == 0) {
++		/* derive and send down: Ke, Ki, and Kc */
++		/* Ke */
++		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
++				lctx->rfc1964_kd.ctx_key.length))
++			goto out_err;
++
++		/* Ki */
++		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
++				lctx->rfc1964_kd.ctx_key.length))
++			goto out_err;
++
++		/* Kc */
++		if (derive_key_lucid(&lctx->rfc1964_kd.ctx_key,
++				&derived_key,
++				KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++	} else {
++		gss_krb5_lucid_key_t *keyptr;
++		uint32_t sign_usage, seal_usage;
++
++		if (lctx->cfx_kd.have_acceptor_subkey)
++			keyptr = &lctx->cfx_kd.acceptor_subkey;
++		else
++			keyptr = &lctx->cfx_kd.ctx_key;
++
++		if (lctx->initiate == 1) {
++			sign_usage = KG_USAGE_INITIATOR_SIGN;
++			seal_usage = KG_USAGE_INITIATOR_SEAL;
++		} else {
++			sign_usage = KG_USAGE_ACCEPTOR_SIGN;
++			seal_usage = KG_USAGE_ACCEPTOR_SEAL;
++		}
++
++		/* derive and send down: Ke, Ki, and Kc */
++
++		/* Ke */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       seal_usage, KEY_USAGE_SEED_ENCRYPTION))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++
++		/* Ki */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       seal_usage, KEY_USAGE_SEED_INTEGRITY))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++
++		/* Kc */
++		if (derive_key_lucid(keyptr, &derived_key,
++			       sign_usage, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.data,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.data);
++	}
++
++	buf->length = p - (char *)buf->value;
++	return 0;
++
++out_err:
++	printerr(0, "ERROR: %s: failed serializing krb5 context for kernel\n",
++		 __FUNCTION__);
++	if (buf->value) {
++		free(buf->value);
++		buf->value = NULL;
++	}
++	buf->length = 0;
++	if (enc_key.data) {
++		free(enc_key.data);
++		enc_key.data = NULL;
++	}
++	return -1;
++}
+ int
+ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf)
+ {
+@@ -170,7 +515,7 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ 	gss_krb5_lucid_context_v1_t *lctx = 0;
+ 	int retcode = 0;
+ 
+-	printerr(2, "DEBUG: serialize_krb5_ctx: lucid version!\n");
++	printerr(2, "DEBUG: %s: lucid version!\n", __FUNCTION__);
+ 	maj_stat = gss_export_lucid_sec_context(&min_stat, &ctx,
+ 						1, &return_ctx);
+ 	if (maj_stat != GSS_S_COMPLETE) {
+@@ -192,11 +537,20 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ 		break;
+ 	}
+ 
+-	/* Now lctx points to a lucid context that we can send down to kernel */
+-	if (lctx->protocol == 0)
++        /*
++	 * Now lctx points to a lucid context that we can send down to kernel
++	 *
++	 * Note: we send down different information to the kernel depending
++	 * on the protocol version and the enctyption type.
++	 * For protocol version 0 with all enctypes besides DES3, we use
++	 * the original format.  For protocol version != 0 or DES3, we
++	 * send down the new style information.
++	 */
++
++	if (lctx->protocol == 0 && lctx->rfc1964_kd.ctx_key.type <= 4)
+ 		retcode = prepare_krb5_rfc1964_buffer(lctx, buf);
+ 	else
+-		retcode = prepare_krb5_rfc_cfx_buffer(lctx, buf);
++		retcode = prepare_krb5_rfc4121_buffer(lctx, buf);
+ 
+ 	maj_stat = gss_free_lucid_sec_context(&min_stat, ctx, return_ctx);
+ 	if (maj_stat != GSS_S_COMPLETE) {
+@@ -206,8 +560,8 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ 	}
+ 
+ 	if (retcode) {
+-		printerr(1, "serialize_krb5_ctx: prepare_krb5_*_buffer "
+-			 "failed (retcode = %d)\n", retcode);
++		printerr(1, "%s: prepare_krb5_*_buffer failed (retcode = %d)\n",
++			 __FUNCTION__, retcode);
+ 		goto out_err;
+ 	}
+ 
+@@ -217,4 +571,7 @@ out_err:
+ 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
+ 	return -1;
+ }
++
++
++
+ #endif /* HAVE_LUCID_CONTEXT_SUPPORT */
+diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
+--- nfs-utils-1.0.11/utils/gssd/context_mit.c~CITI_NFS4_ALL	2007-02-26 18:52:22.399022000 -0500
++++ nfs-utils-1.0.11-kwc/utils/gssd/context_mit.c	2007-02-26 18:52:22.561859000 -0500
+@@ -1,5 +1,5 @@
+ /*
+-  Copyright (c) 2004 The Regents of the University of Michigan.
++  Copyright (c) 2004-2006 The Regents of the University of Michigan.
+   All rights reserved.
+ 
+   Redistribution and use in source and binary forms, with or without
+@@ -36,6 +36,7 @@
+ #include <stdio.h>
+ #include <syslog.h>
+ #include <string.h>
++#include <errno.h>
+ #include <gssapi.h>
+ #include <rpc/rpc.h>
+ #include <rpc/auth_gss.h>
+@@ -50,8 +51,7 @@
+ /* XXX argggg, there's gotta be a better way than just duplicating this
+  * whole struct.  Unfortunately, this is in a "private" header file,
+  * so this is our best choice at this point :-/
+- *
+- * XXX Does this match the Heimdal definition?  */
++ */
+ 
+ typedef struct _krb5_gss_ctx_id_rec {
+    unsigned int initiate : 1;   /* nonzero if initiating, zero if accepting */
+@@ -139,6 +139,124 @@ write_keyblock(char **p, char *end, stru
+ }
+ 
+ /*
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ *
++ * We shouldn't be using these definitions
++ *
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ */
++/* for 3DES */
++#define KG_USAGE_SEAL 22
++#define KG_USAGE_SIGN 23
++#define KG_USAGE_SEQ  24
++
++/* for rfc???? */
++#define KG_USAGE_ACCEPTOR_SEAL  22
++#define KG_USAGE_ACCEPTOR_SIGN  23
++#define KG_USAGE_INITIATOR_SEAL 24
++#define KG_USAGE_INITIATOR_SIGN 25
++
++/* Lifted from mit src/lib/gssapi/krb5/gssapiP_krb5.h */
++enum seal_alg {
++  SEAL_ALG_NONE            = 0xffff,
++  SEAL_ALG_DES             = 0x0000,
++  SEAL_ALG_1               = 0x0001, /* not published */
++  SEAL_ALG_MICROSOFT_RC4   = 0x0010, /* microsoft w2k;  */
++  SEAL_ALG_DES3KD          = 0x0002
++};
++
++#define KEY_USAGE_SEED_ENCRYPTION	0xAA
++#define KEY_USAGE_SEED_INTEGRITY	0x55
++#define KEY_USAGE_SEED_CHECKSUM		0x99
++#define K5CLENGTH 5
++
++extern void krb5_enc_des3;
++extern void krb5int_enc_des3;
++extern void krb5int_enc_arcfour;
++extern void krb5int_enc_aes128;
++extern void krb5int_enc_aes256;
++extern int krb5_derive_key();
++
++/*
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ *
++ * We should be passing down a single key to the kernel
++ * and it should be deriving the other keys.  We cannot
++ * depend on any of this stuff being accessible in the
++ * future.
++ *
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ * XXX Hack alert! XXX Do NOT submit upstream!
++ */
++/*
++ * Function to derive a new key from a given key and given constant data.
++ */
++static krb5_error_code
++derive_key(const krb5_keyblock *in, krb5_keyblock *out, int usage, char extra)
++{
++	krb5_error_code code;
++	unsigned char constant_data[K5CLENGTH];
++	krb5_data datain;
++	int keylength;
++	void *enc;
++
++	switch (in->enctype) {
++#ifdef ENCTYPE_DES3_CBC_RAW
++	case ENCTYPE_DES3_CBC_RAW:
++		keylength = 24;
++/* Extra hack, the structure was renamed as rc4 was added... */
++#if defined(ENCTYPE_ARCFOUR_HMAC)
++		enc = &krb5int_enc_des3;
++#else
++		enc = &krb5_enc_des3;
++#endif
++		break;
++#endif
++#ifdef ENCTYPE_ARCFOUR_HMAC
++	case ENCTYPE_ARCFOUR_HMAC:
++		keylength = 16;
++		enc = &krb5int_enc_arcfour;
++		break;
++#endif
++	default:
++		code = KRB5_BAD_ENCTYPE;
++		goto out;
++	}
++
++	/* allocate memory for output key */
++	if ((out->contents = malloc(keylength)) == NULL) {
++		code = ENOMEM;
++		goto out;
++	}
++	out->length = keylength;
++	out->enctype = in->enctype;
++
++	datain.data = (char *) constant_data;
++	datain.length = K5CLENGTH;
++
++	datain.data[0] = (usage>>24)&0xff;
++	datain.data[1] = (usage>>16)&0xff;
++	datain.data[2] = (usage>>8)&0xff;
++	datain.data[3] = usage&0xff;
++
++	datain.data[4] = (char) extra;
++
++	if ((code = krb5_derive_key(enc, in, out, &datain))) {
++		free(out->contents);
++		out->contents = NULL;
++	}
++
++  out:
++  	if (code)
++		printerr(0, "ERROR: derive_key returning error %d (%s)\n",
++			 code, error_message(code));
++	return (code);
++}
++
++/*
+  * We really shouldn't know about glue-layer context structure, but
+  * we need to get at the real krb5 context pointer.  This should be
+  * removed as soon as we say there is no support for MIT Kerberos
+@@ -154,48 +272,124 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+ {
+ 	krb5_gss_ctx_id_t kctx = ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
+ 	char *p, *end;
+-	static int constant_one = 1;
+ 	static int constant_zero = 0;
++	static int constant_one = 1;
++	static int constant_two = 2;
+ 	uint32_t word_seq_send;
++	u_int64_t seq_send_64bit;
++	uint32_t v2_flags = 0;
++	krb5_keyblock derived_key;
++	uint32_t numkeys;
+ 
+ 	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+ 		goto out_err;
+ 	p = buf->value;
+ 	end = buf->value + MAX_CTX_LEN;
+ 
+-	if (kctx->initiate) {
+-		if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
+-	}
+-	else {
+-		if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+-	}
+-	if (kctx->seed_init) {
+-		if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
+-	}
+-	else {
+-		if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+-	}
+-	if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
++	switch (kctx->sealalg) {
++	case SEAL_ALG_DES:
++		/* Old format of context to the kernel */
++		if (kctx->initiate) {
++			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
++		}
++		else {
++			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
++		}
++		if (kctx->seed_init) {
++			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
++		}
++		else {
++			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
++		}
++		if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
++			goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
++		word_seq_send = kctx->seq_send;
++		if (WRITE_BYTES(&p, end, word_seq_send)) goto out_err;
++		if (write_oid(&p, end, kctx->mech_used)) goto out_err;
++
++		printerr(2, "serialize_krb5_ctx: serializing keys with "
++			 "enctype %d and length %d\n",
++			 kctx->enc->enctype, kctx->enc->length);
++
++		if (write_keyblock(&p, end, kctx->enc)) goto out_err;
++		if (write_keyblock(&p, end, kctx->seq)) goto out_err;
++		break;
++	case SEAL_ALG_MICROSOFT_RC4:
++	case SEAL_ALG_DES3KD:
++		/* New format of context to the kernel */
++		/* s32 endtime;
++		 * u32 flags;
++		 * #define KRB5_CTX_FLAG_INITIATOR        0x00000001
++		 * #define KRB5_CTX_FLAG_CFX              0x00000002
++		 * #define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY  0x00000004
++		 * u64 seq_send;
++		 * u32  enctype;
++		 * u32  size_of_each_key;    (  size in bytes )
++		 * u32  number_of_keys;      (  N (assumed to be 3 for now) )
++		 * keydata-1;                (  Ke  (Kenc for DES3) )
++		 * keydata-2;                (  Ki  (Kseq for DES3) )
++		 * keydata-3;                (  Kc (derived checksum key) )
++		 */
++		if (kctx->initiate) {
++			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
++		}
++		else {
++			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
++		}
++		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
++
++		/* Only applicable flag for this is initiator */
++		if (kctx->initiate) v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++		if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
++
++		seq_send_64bit = kctx->seq_send;
++		if (WRITE_BYTES(&p, end, seq_send_64bit)) goto out_err;
++
++		if (WRITE_BYTES(&p, end, kctx->enc->enctype)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->enc->length)) goto out_err;
++		numkeys = 3;
++		if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
++		printerr(2, "serialize_krb5_ctx: serializing %d keys with "
++			 "enctype %d and size %d\n",
++			 numkeys, kctx->enc->enctype, kctx->enc->length);
++
++		/* Ke */
++		if (write_bytes(&p, end, kctx->enc->contents,
++				kctx->enc->length))
++			goto out_err;
++
++		/* Ki */
++		if (write_bytes(&p, end, kctx->enc->contents,
++				kctx->enc->length))
++			goto out_err;
++
++		/* Kc */
++		if (derive_key(kctx->seq, &derived_key,
++			       KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
++			goto out_err;
++		if (write_bytes(&p, end, derived_key.contents,
++				derived_key.length))
++			goto out_err;
++		free(derived_key.contents);
++		break;
++	default:
++		printerr(0, "ERROR: serialize_krb5_ctx: unsupported seal "
++			 "algorithm %d\n", kctx->sealalg);
+ 		goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
+-	if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
+-	word_seq_send = kctx->seq_send;
+-	if (WRITE_BYTES(&p, end, word_seq_send)) goto out_err;
+-	if (write_oid(&p, end, kctx->mech_used)) goto out_err;
+-
+-	printerr(2, "serialize_krb5_ctx: serializing keys with "
+-		 "enctype %d and length %d\n",
+-		 kctx->enc->enctype, kctx->enc->length);
+-
+-	if (write_keyblock(&p, end, kctx->enc)) goto out_err;
+-	if (write_keyblock(&p, end, kctx->seq)) goto out_err;
++	}
+ 
+ 	buf->length = p - (char *)buf->value;
+ 	return 0;
++
+ out_err:
+ 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
+-	if (buf->value) free(buf->value);
++	if (buf->value) {
++		free(buf->value);
++	}
++	buf->value = NULL;
+ 	buf->length = 0;
+ 	return -1;
+ }
