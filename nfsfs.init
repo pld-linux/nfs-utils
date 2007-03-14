@@ -49,9 +49,13 @@ start() {
 			if [ ! -f /var/lock/subsys/idmapd ]; then
 			    msg_starting "NFS idmapd"
 			    daemon rpc.idmapd $RPCIDMAPOPTIONS
+			    [ $? -eq 0 ] && touch /var/lock/subsys/idmapd
 			fi
-			msg_starting "NFS gssd"
-			daemon rpc.gssd -m $RPCGSSOPTIONS
+			if [ ! -f /var/lock/subsys/gssd ]; then
+			    msg_starting "NFS gssd"
+			    daemon rpc.gssd -m $RPCGSSOPTIONS
+			    [ $? -eq 0 ] && touch /var/lock/subsys/gssd
+			fi
 		    fi
 		fi
 	    run_cmd "Mounting NFS filesystems" mount -a -t nfs
@@ -83,8 +87,11 @@ stop() {
 	ok
 	if is_yes "$NFS4" ; then
 		if grep -q nfs4 /proc/filesystems; then
-		    msg_stopping "NFS gssd"
-		    killproc rpc.gssd
+		    if [ -f /var/lock/subsys/gssd ]; then
+			msg_stopping "NFS gssd"
+			killproc rpc.gssd
+			rm -f /var/lock/subsys/gssd
+		    fi
 		    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
 			msg_stopping "NFS idmapd"
 			killproc rpc.idmapd
