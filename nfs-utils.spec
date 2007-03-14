@@ -36,6 +36,7 @@ Patch4:		%{name}-CITI_NFS4.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
+BuildRequires:	cpp
 BuildRequires:	e2fsprogs-devel
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
