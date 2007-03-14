@@ -62,8 +62,11 @@ start() {
 			    daemon rpc.idmapd $RPCIDMAPOPTIONS
 			    [ $? = 0 ] && touch /var/lock/subsys/idmapd
 			fi
-			msg_starting "NFS svcgssd"
-			daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+			if [ ! -f /var/lock/subsys/svcgssd ]; then
+			    msg_starting "NFS svcgssd"
+			    daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+			    [ $? = 0 ] && touch /var/lock/subsys/svcgssd
+			fi
 		    fi
 		fi
 		msg_starting "NFS daemon"
@@ -83,8 +86,11 @@ stop() {
 		killproc nfsd -QUIT
 		if is_yes "$NFS4" ; then
 			if (grep -q rpc_pipefs /proc/filesystems); then
-			    msg_stopping "NFS svcgssd"
-			    killproc rpc.svcgssd
+			    if [ ! -f /var/lock/subsys/svcgssd ]; then
+				msg_stopping "NFS svcgssd"
+				killproc rpc.svcgssd
+				rm -f /var/lock/subsys/svcgssd
+			    fi
 			    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfsfs ]; then
 				msg_stopping "NFS idmapd"
 				killproc rpc.idmapd
