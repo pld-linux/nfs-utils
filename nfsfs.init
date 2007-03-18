@@ -24,7 +24,7 @@ fi
 . /etc/sysconfig/network
 
 # Get service config
-[ -f /etc/sysconfig/nfsclient ] && . /etc/sysconfig/nfsclient
+[ -f /etc/sysconfig/nfsfs ] && . /etc/sysconfig/nfsfs
 
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
