@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	5
+Release:	5.1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -245,11 +245,6 @@ touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-# these must be in /sbin, in case of /usr over NFSv4
-mv $RPM_BUILD_ROOT%{_sbindir}/rpc.gssd $RPM_BUILD_ROOT/sbin
-mv $RPM_BUILD_ROOT%{_sbindir}/gss_* $RPM_BUILD_ROOT/sbin
-mv $RPM_BUILD_ROOT%{_sbindir}/rpc.idmapd $RPM_BUILD_ROOT/sbin
-
 rm -rf html
 cp -a nfs html
 
@@ -353,7 +348,7 @@ fi
 %{_mandir}/man8/showmount.8*
 
 %if %{with nfs4}
-%attr(755,root,root) /sbin/rpc.gssd
+%attr(755,root,root) %{_sbindir}/rpc.gssd
 %{_mandir}/man8/rpc.gssd*
 %{_mandir}/man8/gssd*
 %endif
@@ -371,8 +366,8 @@ fi
 %attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
 %attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
 %if %{with nfs4}
-%attr(755,root,root) /sbin/gss_*
-%attr(755,root,root) /sbin/rpc.idmapd
+%attr(755,root,root) %{_sbindir}/gss_*
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %{_mandir}/man[58]/*idmap*
 %endif
