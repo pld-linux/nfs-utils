@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	3
+Release:	4
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -33,11 +33,12 @@ Patch3:		%{name}-heimdal-internals.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
 #Patch4:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
 Patch4:		%{name}-CITI_NFS4.patch
+Patch5:		%{name}-mountd-leak.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
-BuildRequires:	e2fsprogs-devel
+BuildRequires:	e2fsprogs-devel >= 1.39-5
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
 BuildRequires:	libevent-devel >= 1.2
@@ -176,6 +177,7 @@ Wspólne programy do obsługi NFS.
 # temporary hack
 rm -f utils/mountd/fsloc.[ch]
 %patch4 -p1
+%patch5 -p1
 
 %build
 %if "%{_lib}" == "lib64"
