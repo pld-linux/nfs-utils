@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# rpcsvcgssd    Start up and shut down RPCSEC GSS daemon
+#
+# Authors:	Chuck Lever <cel@netapp.com>
+#
+# chkconfig: - 14 81
+# description: Starts user-level daemon that manages RPCSEC GSS contexts \
+#	       for the NFSv4 server.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "RPC svcgssd daemon"
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
+	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
+fi
+
+# Get service config
+[ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
+
+is_yes "${SECURE_NFS}" || exit 0
+
+# List of kernel modules to load
+[ -z "${SECURE_NFS_MODS}" ] && SECURE_NFS_MODS="des rpcsec_gss_krb5"
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  start)
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/svcgssd ]; then
+		if ! grep -q rpc_pipefs /proc/mounts ; then
+			modprobe -s sunrpc >/dev/null 2>&1
+			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+		fi
+		# Load rpcsec modules
+		for i in ${SECURE_NFS_MODS} ; do 
+			_modprobe single die $i
+		done
+		msg_starting "RPC svcgssd"
+		daemon rpc.svcgssd $RPCSVCGSSOPTIONS
+		RETVAL=$?
+		[ $RETVAL = 0 ] && touch /var/lock/subsys/svcgssd
+	else
+		msg_already_running "RPC svcgssd"
+	fi
+	;;
+  stop)
+	if [ -f /var/lock/subsys/svcgssd ]; then
+		msg_stopping "RPC svcgssd"
+		killproc rpc.svcgssd
+		rm -f /var/lock/subsys/svcgssd
+	else
+		msg_not_running "RPC svcgssd"
+	fi
+	;;
+  status)
+	status rpc.svcgssd
+	RETVAL=$?
+	;;
+  restart|reload)
+	$0 stop
+	$0 start
+	RETVAL=$?
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

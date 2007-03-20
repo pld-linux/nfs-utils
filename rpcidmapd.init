@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# rpcidmapd     Start up and shut down RPC name to UID/GID mapper
+#
+# Authors:	Chuck Lever <cel@netapp.com>
+#
+# chkconfig: 345 13 82
+# description: Starts user-level daemon for NFSv4 that maps user \
+#              names to UID and GID numbers.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "RPC svcgssd daemon"
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
+	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
+fi
+
+# Get service config
+[ -f /etc/sysconfig/nfsfs ] && . /etc/sysconfig/nfsfs
+[ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
+
+# /usr may be on NFS, fail silently, nfsfs will start it
+[ -x /usr/sbin/rpc.idmapd ] || exit 0
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  start)
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/idmapd ]; then
+		if ! grep -q rpc_pipefs /proc/mounts ; then
+			modprobe -s sunrpc >/dev/null 2>&1
+			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+		fi
+
+		msg_starting "RPC idmapdd"
+		daemon rpc.idmapd $RPCIDMAPOPTIONS
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
+	else
+		msg_already_running "RPC idmapdd"
+	fi
+	;;
+  stop)
+	if [ -f /var/lock/subsys/idmapd ]; then
+		msg_stopping "RPC idmapd"
+		killproc rpc.idmapd
+		rm -f /var/lock/subsys/idmapd
+	else
+		msg_not_running "RPC idmapd"
+	fi
+	;;
+  status)
+	status rpc.idmapd
+	RETVAL=$?
+	;;
+  restart|reload)
+	$0 stop
+	$0 start
+	RETVAL=$?
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL
