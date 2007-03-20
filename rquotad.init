@@ -3,7 +3,7 @@
 # rquotad	This shell script takes care of starting and stopping
 #		the NFS quota service.
 #
-# chkconfig:	345 62 18
+# chkconfig:	345 59 21
 # description:	NFS is a popular protocol for file sharing across \
 #		TCP/IP networks. This service provides NFS file \
 #		locking functionality.
