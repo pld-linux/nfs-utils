@@ -1,8 +1,11 @@
-# Set it to "yes" if you plan to mount NFSv4 shares
-NFS4="no"
-
 # Options for NFSv4 ID <-> Name Mapper (idmapd)
 #RPCIDMAPOPTIONS=
+
+# Uncomment if you want to use secure NFSv4 exports
+#SECURE_NFS="yes"
+
+# List of kernel modules to use for secure NFS
+#SECURE_NFS_MODS="des rpcsec_gss_krb5"
 
 # Options for NFSv4 rpcsec_gss daemon
 #RPCGSSOPTIONS=
