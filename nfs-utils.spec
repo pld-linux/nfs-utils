@@ -3,6 +3,7 @@
 #
 # Conditional build:
 %bcond_without	nfs4		# without NFSv4 support
+%bcond_without	mount		# don't build mount.nfs program
 #
 Summary:	Kernel NFS server
 Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
@@ -11,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	5.1
+Release:	5.2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -21,11 +22,14 @@ Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source2:	nfs.init
 Source3:	nfslock.init
 Source4:	rquotad.init
-Source5:	nfs.sysconfig
-Source6:	nfslock.sysconfig
-Source7:	rquotad.sysconfig
-Source8:	nfsfs.init
-Source9:	nfsfs.sysconfig
+Source5:	nfsfs.init
+Source6:	rpcidmapd.init
+Source7:	rpcgssd.init
+Source8:	rpcsvcgssd.init
+Source9:	nfs.sysconfig
+Source10:	nfslock.sysconfig
+Source11:	rquotad.sysconfig
+Source12:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
 Patch2:		%{name}-heimdal.patch
@@ -34,6 +38,12 @@ Patch3:		%{name}-heimdal-internals.patch
 #Patch4:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
 Patch4:		%{name}-CITI_NFS4.patch
 Patch5:		%{name}-mountd-leak.patch
+Patch6:		%{name}-statdpath.patch
+Patch7:		%{name}-mount-fake.patch
+Patch8:		%{name}-mountd.patch
+Patch9:		%{name}-privports.patch
+Patch10:	%{name}-mount-man-nfs.patch
+Patch11:	%{name}-mount-fsc.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -125,6 +135,8 @@ Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Requires:	rc-scripts
+Provides:	group(rpcstatd)
+Provides:	user(rpcstatd)
 Provides:	nfslockd
 Obsoletes:	knfsd-lock
 Obsoletes:	nfslockd
@@ -178,6 +190,12 @@ Wspólne programy do obsługi NFS.
 rm -f utils/mountd/fsloc.[ch]
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
 
 %build
 %if "%{_lib}" == "lib64"
@@ -196,6 +214,7 @@ sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
 	--disable-gss \
 	--disable-nfsv4 \
 %endif
+	%{?with_mount:--enable-mount} \
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs \
@@ -207,22 +226,29 @@ sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig} \
-	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery}
+	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery,statd}
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-install tools/rpcdebug/rpcdebug $RPM_BUILD_ROOT/sbin
+%if %{with mount}
+mv $RPM_BUILD_ROOT%{_sbindir}/{mount,umount}.* $RPM_BUILD_ROOT/sbin
+%endif
+
+mv $RPM_BUILD_ROOT%{_sbindir}/rpcdebug $RPM_BUILD_ROOT/sbin
 install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
 
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
-install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
-install %{SOURCE5} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
-install %{SOURCE6} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
-install %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
+install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
+install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
+install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
+install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
+install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
+install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
+install %{SOURCE11} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
+install %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
@@ -271,6 +297,10 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del nfsfs
 fi
 
+%pre lock
+%groupadd -g 191 rpcstatd
+%useradd -u 191 -d /var/lib/nfs/statd -s /bin/false -c "RPC statd user" -g rpcstatd rpcstatd
+
 %post lock
 /sbin/chkconfig --add nfslock
 %service nfslock restart "nfslock daemon"
@@ -279,6 +309,12 @@ fi
 if [ "$1" = "0" ]; then
 	%service nfslock stop
 	/sbin/chkconfig --del nfslock
+fi
+
+%postun lock
+if [ "$1" = "0" ]; then
+	%userremove rpcstatd
+	%groupremove rpcstatd
 fi
 
 %post rquotad
@@ -291,11 +327,18 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del rquotad
 fi
 
+%triggerpostun -- %{name} <= 1.0.12-5
+/sbin/chkconfig nfs reset
+
+%triggerpostun lock -- %{name}-lock <= 1.0.12-5
+/sbin/chkconfig nfslock reset
+
 %triggerpostun clients -- %{name}-clients < 1.0.10-1.2
 if [ -f /etc/sysconfig/nfsclient.rpmsave ]; then
 	mv -f /etc/sysconfig/nfsfs{,.rpmnew}
 	mv -f /etc/sysconfig/nfsclient.rpmsave /etc/sysconfig/nfsfs
 fi
+/sbin/chkconfig nfsfs reset
 
 %files
 %defattr(644,root,root,755)
@@ -323,13 +366,16 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
+%{_mandir}/man8/rpcdebug.8*
 %if %{with nfs4}
+%attr(754,root,root) /etc/rc.d/init.d/svcgssd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %{_mandir}/man8/*svcgss*
 %endif
 
 %files lock
 %defattr(644,root,root,755)
+%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd
 %attr(755,root,root) %{_sbindir}/rpc.lockd
 %attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
@@ -346,11 +392,32 @@ fi
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man8/showmount.8*
-
+%if %{with mount}
+%attr(4755,root,root) /sbin/mount.nfs
+%attr(4755,root,root) /sbin/mount.nfs4
+%attr(4755,root,root) /sbin/umount.nfs
+%attr(4755,root,root) /sbin/umount.nfs4
+%{_mandir}/man8/*mount.nfs.8*
+%endif
 %if %{with nfs4}
+%attr(754,root,root) /etc/rc.d/init.d/gssd
 %attr(755,root,root) %{_sbindir}/rpc.gssd
 %{_mandir}/man8/rpc.gssd*
 %{_mandir}/man8/gssd*
+%endif
+
+%files common
+%defattr(644,root,root,755)
+%attr(755,root,root) %dir %{_var}/lib/nfs
+%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
+%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
+%{_mandir}/man5/nfs*
+%if %{with nfs4}
+%attr(754,root,root) /etc/rc.d/init.d/idmapd
+%attr(755,root,root) %{_sbindir}/gss_*
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%{_mandir}/man[58]/*idmap*
 %endif
 
 #%files rquotad
@@ -359,15 +426,3 @@ fi
 #%attr(754,root,root) /etc/rc.d/init.d/rquotad
 #%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
 #%%{_mandir}/man8/rpc.rquotad.8*
-
-%files common
-%defattr(644,root,root,755)
-%attr(755,root,root) %dir %{_var}/lib/nfs
-%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
-%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
-%if %{with nfs4}
-%attr(755,root,root) %{_sbindir}/gss_*
-%attr(755,root,root) %{_sbindir}/rpc.idmapd
-%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
-%{_mandir}/man[58]/*idmap*
-%endif
