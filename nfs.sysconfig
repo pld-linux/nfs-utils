@@ -1,16 +1,29 @@
-# Set nice level for rpc.mountd, rpc.nfsd or knfsd
+# Set nice level for rpc.mountd and rpc.nfsd
 SERVICE_RUN_NICE_LEVEL="+0"
 
-# Customized setings for knfsd
-RPCMOUNTOPTIONS=""
-
+# Number of NFSD servers to start
 RPCNFSDCOUNT=8
 
-# Set it to "yes" if you plan to run NFSv4 server
-NFS4="no"
+# NFS versions to use (default all-yes)
+NFSv1="yes"
+NFSv2="yes"
+NFSv3="yes"
+NFSv4="yes"
 
-# Options for NFSv4 ID <-> Name Mapper (idmapd)
-#RPCIDMAPOPTIONS=
+# Port mount should listen on (default is portmap assigned)
+#MOUNTD_PORT=
+
+# Options for NFS rpc.mountd
+#RPCMOUNTOPTIONS=""
+
+# Uncomment if you want to use secure NFSv4 exports
+#SECURE_NFS="yes"
+
+# List of kernel modules to use for secure NFS
+#SECURE_NFS_MODS="des rpcsec_gss_krb5"
 
 # Options for NFSv4 server-side rpcsec_gss daemon
 #RPCSVCGSSOPTIONS=
+
+# Options for NFSv4 ID <-> Name Mapper (idmapd)
+#RPCIDMAPOPTIONS=
