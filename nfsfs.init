@@ -6,7 +6,7 @@
 #
 # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
 #
-# chkconfig:	345 15 88
+# chkconfig:	345 15 83
 # description:	Mounts and unmounts all Network File System (NFS) \
 #		mount points.
 #
@@ -25,6 +25,7 @@ fi
 
 # Get service config
 [ -f /etc/sysconfig/nfsfs ] && . /etc/sysconfig/nfsfs
+[ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
@@ -36,31 +37,38 @@ else
 	exit 0
 fi
 
+if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
+	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
+fi
+
 start() {
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
-		run_cmd "Mounting NFS filesystems" mount -a -t nfs
-		if is_yes "$NFS4" ; then
-		    if grep -q nfs4 /proc/filesystems; then
-			modprobe -s nfs > /dev/null 2>&1
-			if [ "$(kernelverser)" -ge "002006" ]; then
-			    grep -q rpc_pipefs /proc/filesystems && \
-			    ! grep -q rpc_pipefs /proc/mounts && \
-			    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-			fi
-			if [ ! -f /var/lock/subsys/idmapd ]; then
-			    msg_starting "NFS idmapd"
-			    daemon rpc.idmapd $RPCIDMAPOPTIONS
-			    [ $? -eq 0 ] && touch /var/lock/subsys/idmapd
-			fi
-			if [ ! -f /var/lock/subsys/gssd ]; then
-			    msg_starting "NFS gssd"
-			    daemon rpc.gssd -m $RPCGSSOPTIONS
-			    [ $? -eq 0 ] && touch /var/lock/subsys/gssd
-			fi
-			run_cmd "Mounting NFSv4 filesystems" mount -a -t nfs4
-		    fi
+		if ! grep -q rpc_pipefs /proc/mounts ; then
+			modprobe -s sunrpc > /dev/null 2>&1
+			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 		fi
+
+		# Set the ports lockd should listen on
+		if [ -n "$LOCKD_TCPPORT" ]; then
+			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+		fi
+		if [ -n "$LOCKD_UDPPORT" ]; then
+			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+		fi
+
+		# Special case /usr first
+		if awk '{ if ($2 == "/usr" && $3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) exit 1}' /etc/fstab ; then
+			run_cmd "Mounting /usr filesystem" mount /usr
+			# In case of /usr over NFS idmapd, gssd and lockd may not start
+			# check if they're running and try to start them if not
+			/sbin/service idmapd status >/dev/null || /sbin/service idmapd start
+			/sbin/service gssd status >/dev/null || /sbin/service gssd start
+			/sbin/service nfslock status >/dev/null || /sbin/service nfslock start
+		fi
+		run_cmd "Mounting NFS filesystems" mount -a -t nfs,nfs4
 		touch /var/lock/subsys/nfsfs
+
 	else
 	    msg_already_running "NFSFS"
 	fi
@@ -73,43 +81,16 @@ stop() {
 		fsfile="/etc/mtab"
 	fi
 
-	if is_yes "$NFS4" ; then
-		if grep -q nfs4 /proc/filesystems; then
-		    show "Unmounting NFSv4 filesystems"
-		    busy
-		    retry=3
-		    remaining=$(awk '$3 == "nfs4" {print $2}' $fsfile)
-		    while [ -n "$remaining" -a $retry -gt 0 ]; do
-			fuser -msk -TERM `awk '$3 == "nfs4" {print $2}' < $fsfile`
-			sleep 2
-			fuser -msk -KILL `awk '$3 == "nfs4" {print $2}' < $fsfile`
-			umount -a -f -t nfs4
-			remaining=$(awk '$3 == "nfs4" {print $2}' $fsfile)
-			retry=$(($retry-1))
-		    done
-		    ok
-		    if [ -f /var/lock/subsys/gssd ]; then
-			msg_stopping "NFS gssd"
-			killproc rpc.gssd
-			rm -f /var/lock/subsys/gssd
-		    fi
-		    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfs ]; then
-			msg_stopping "NFS idmapd"
-			killproc rpc.idmapd
-			rm -f /var/lock/subsys/idmapd
-		    fi
-		fi
-	fi
 	show "Unmounting NFS filesystems"
 	busy
 	retry=3
-	remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
+	remaining=$(awk '$3 ~ /^nfs(4$|$)/ {print $2}' $fsfile)
 	while [ -n "$remaining" -a $retry -gt 0 ]; do
-		fuser -msk -TERM `awk '$3 == "nfs" {print $2}' < $fsfile`
+		fuser -msk -TERM `awk '$3 ~ /^nfs(4$|$)/ {print $2}' < $fsfile`
 		sleep 2
-		fuser -msk -KILL `awk '$3 == "nfs" {print $2}' < $fsfile`
-		umount -a -f -t nfs
-		remaining=$(awk '$3 == "nfs" {print $2}' $fsfile)
+		fuser -msk -KILL `awk '$3 ~ /^nfs(4$|$)/ {print $2}' < $fsfile`
+		umount -a -f -t nfs,nfs4
+		remaining=$(awk '$3 ~ /^nfs(4$|$)/ {print $2}' $fsfile)
 		retry=$(($retry-1))
 	done
 	ok
@@ -128,10 +109,10 @@ case "$1" in
 	if [ -f /proc/mounts ]; then
 		echo "Configured NFS mountpoints:"
 		grep -v '^#' /etc/fstab | \
-		  awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'
+		  awk '{ if ($3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) print $2}'
 		echo "Active NFS mountpoints:"
 		grep -v '^#' /proc/mounts | \
-		  awk '{ if ($3 ~ /^nfs$/ && $4 !~ /noauto/) print $2}'
+		  awk '{ if ($3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) print $2}'
 	else
 		echo "/proc filesystem unavailable"
 	fi
@@ -141,7 +122,7 @@ case "$1" in
 	start
 	;;
   reload|force-reload)
-	mount -a -t nfs
+	mount -a -t nfs,nfs4
 	;;
   *)
 	msg_usage "$0 {start|stop|restart|reload|force-reload|status}"
