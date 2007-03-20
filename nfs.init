@@ -15,8 +15,14 @@
 # Get network config
 . /etc/sysconfig/network
 
-# Get service config
+# Get service configs
+[ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
+
+[ -n "$NFSv1" ] || NFSv1="yes"
+[ -n "$NFSv2" ] || NFSv2="yes"
+[ -n "$NFSv3" ] || NFSv3="yes"
+[ -n "$NFSv4" ] || NFSv4="yes"
 
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
@@ -28,49 +34,38 @@ else
 	exit 0
 fi
 
+if [ -x /sbin/pidof ] && [ "$1" != "stop" ]; then
+	[ -z "`/sbin/pidof portmap`" ] && nls "Error: portmap isn't running" && exit 0
+fi
+
 start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/nfs ]; then
-		if [ -x /sbin/pidof ]; then
-			if [ -z "`/sbin/pidof portmap`" ]; then
-			   	nls "Error: portmap isn't running"
-			   	exit 0
-			fi
-		fi
-
-		if ! is_yes "$NFS4" ; then
-			RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version 4"
-		fi
-
-		# Start daemons.
-		modprobe -s nfsd > /dev/null 2>&1
-		if [ "$(kernelverser)" -ge "002006" ]; then
-		    grep -q nfsd /proc/filesystems && \
-		    ! grep -q nfsd /proc/mounts && \
+		if ! grep -q nfsd /proc/mounts ; then
+			modprobe -s nfsd > /dev/null 2>&1
 			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 		fi
+
+		# Set the ports lockd should listen on
+		if [ -n "$LOCKD_TCPPORT" ]; then
+			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+		fi
+		if [ -n "$LOCKD_UDPPORT" ]; then
+			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+		fi
+
+		for vers in 1 2 3 4 ; do
+			is_yes $(eval echo \$NFSv$vers) || \
+				RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
+		done
+
+		# Start daemons.
 		msg_starting "NFS exportfs"
 		daemon /usr/sbin/exportfs -r
-		msg_starting "NFS mountd"
-		daemon rpc.mountd $RPCMOUNTOPTIONS
-		if is_yes "$NFS4" ; then
-		    if (grep -q rpc_pipefs /proc/filesystems); then
-			! grep -q rpc_pipefs /proc/mounts && \
-			    run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-			if [ ! -f /var/lock/subsys/idmapd ]; then
-			    msg_starting "NFS idmapd"
-			    daemon rpc.idmapd $RPCIDMAPOPTIONS
-			    [ $? = 0 ] && touch /var/lock/subsys/idmapd
-			fi
-			if [ ! -f /var/lock/subsys/svcgssd ]; then
-			    msg_starting "NFS svcgssd"
-			    daemon rpc.svcgssd $RPCSVCGSSOPTIONS
-			    [ $? = 0 ] && touch /var/lock/subsys/svcgssd
-			fi
-		    fi
-		fi
 		msg_starting "NFS daemon"
 		daemon rpc.nfsd $RPCNFSDCOUNT
+		msg_starting "NFS mountd"
+		daemon rpc.mountd $RPCMOUNTOPTIONS
 		touch /var/lock/subsys/nfs
 	else
 		msg_already_running "NFS daemon"
@@ -84,20 +79,6 @@ stop() {
 		killproc rpc.mountd
 		msg_stopping "NFS daemon"
 		killproc nfsd -QUIT
-		if is_yes "$NFS4" ; then
-			if (grep -q rpc_pipefs /proc/filesystems); then
-			    if [ ! -f /var/lock/subsys/svcgssd ]; then
-				msg_stopping "NFS svcgssd"
-				killproc rpc.svcgssd
-				rm -f /var/lock/subsys/svcgssd
-			    fi
-			    if [ -f /var/lock/subsys/idmapd -a ! -f /var/lock/subsys/nfsfs ]; then
-				msg_stopping "NFS idmapd"
-				killproc rpc.idmapd
-				rm -f /var/lock/subsys/idmapd
-			    fi
-			fi
-		fi
 		msg_stopping "NFS"
 		daemon /usr/sbin/exportfs -au
 		rm -f /var/lock/subsys/nfs
@@ -123,7 +104,7 @@ case "$1" in
 	if [ -f /var/lock/subsys/nfs ]; then
 		msg_reloading "NFS"
 		busy
-		/usr/sbin/exportfs
+		/usr/sbin/exportfs -r
 		[ $? -ne 0 ] && RETVAL=7
 		[ $RETVAL -eq 0 ] && ok || died
 	else
@@ -148,6 +129,11 @@ case "$1" in
 	fi
 	;;
   status)
+	echo "Configured NFS exports:"
+	grep -v "^#" /etc/exports
+	echo "Active NFS exports:"
+	/usr/sbin/exportfs
+	echo
 	status rpc.mountd
 	RETVAL=$?
 	status nfsd
