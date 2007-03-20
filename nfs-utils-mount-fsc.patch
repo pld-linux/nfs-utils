@@ -1,0 +1,95 @@
+--- nfs-utils-1.0.9/utils/mount/nfs4mount.c.orig	2006-10-16 08:32:53.789617000 -0400
++++ nfs-utils-1.0.9/utils/mount/nfs4mount.c	2006-10-16 08:33:53.098133000 -0400
+@@ -201,7 +201,7 @@ int nfs4mount(const char *spec, const ch
+ 	char *s;
+ 	int val;
+ 	int bg, soft, intr;
+-	int nocto, noac;
++	int nocto, noac, fscache;
+ 	int retry;
+ 	int retval;
+ 	time_t timeout, t;
+@@ -252,6 +252,7 @@ int nfs4mount(const char *spec, const ch
+ 	intr = NFS4_MOUNT_INTR;
+ 	nocto = 0;
+ 	noac = 0;
++	fscache = 0;
+ 	retry = 10000;		/* 10000 minutes ~ 1 week */
+ 
+ 	/*
+@@ -332,6 +333,8 @@ int nfs4mount(const char *spec, const ch
+ 				soft = !val;
+ 			else if (!strcmp(opt, "intr"))
+ 				intr = val;
++			else if (!strcmp(opt, "fsc"))
++				fscache = val;
+ 			else if (!strcmp(opt, "cto"))
+ 				nocto = !val;
+ 			else if (!strcmp(opt, "ac"))
+@@ -347,7 +350,8 @@ int nfs4mount(const char *spec, const ch
+ 	data.flags = (soft ? NFS4_MOUNT_SOFT : 0)
+ 		| (intr ? NFS4_MOUNT_INTR : 0)
+ 		| (nocto ? NFS4_MOUNT_NOCTO : 0)
+-		| (noac ? NFS4_MOUNT_NOAC : 0);
++		| (noac ? NFS4_MOUNT_NOAC : 0)
++		| (fscache ? NFS4_MOUNT_FSCACHE : 0);
+ 
+ 	/*
+ 	 * Give a warning if the rpc.idmapd daemon is not running
+--- nfs-utils-1.0.9/utils/mount/nfs_mount.h.orig	2006-10-16 08:32:53.763643000 -0400
++++ nfs-utils-1.0.9/utils/mount/nfs_mount.h	2006-10-16 08:33:53.113133000 -0400
+@@ -63,6 +63,7 @@ struct nfs_mount_data {
+ #define NFS_MOUNT_BROKEN_SUID	0x0400	/* 4 */
+ #define NFS_MOUNT_NOACL     0x0800  /* 4 */
+ #define NFS_MOUNT_SECFLAVOUR	0x2000	/* 5 */
++#define NFS_MOUNT_FSCACHE	0x4000	/* 6 */
+ 
+ /* security pseudoflavors */
+ 
+--- nfs-utils-1.0.9/utils/mount/nfsmount.c.orig	2006-10-16 08:32:53.853553000 -0400
++++ nfs-utils-1.0.9/utils/mount/nfsmount.c	2006-10-16 08:33:53.128133000 -0400
+@@ -695,6 +695,10 @@ parse_options(char *old_opts, struct nfs
+ 				data->flags &= ~NFS_MOUNT_SOFT;
+ 				if (val)
+ 					data->flags |= NFS_MOUNT_SOFT;
++			} else if (!strcmp(opt, "fsc")) {
++				data->flags &= ~NFS_MOUNT_FSCACHE;
++				if (val)
++					data->flags |= NFS_MOUNT_FSCACHE;
+ 			} else if (!strcmp(opt, "hard")) {
+ 				data->flags &= ~NFS_MOUNT_SOFT;
+ 				if (!val)
+--- nfs-utils-1.0.9/utils/mount/nfs4_mount.h.orig	2006-07-07 20:04:32.000000000 -0400
++++ nfs-utils-1.0.9/utils/mount/nfs4_mount.h	2006-10-16 08:33:53.143133000 -0400
+@@ -65,6 +65,7 @@ struct nfs4_mount_data {
+ #define NFS4_MOUNT_NOCTO	0x0010	/* 1 */
+ #define NFS4_MOUNT_NOAC		0x0020	/* 1 */
+ #define NFS4_MOUNT_STRICTLOCK	0x1000	/* 1 */
++#define NFS4_MOUNT_FSCACHE	0x4000	/* 1 */
+ #define NFS4_MOUNT_FLAGMASK	0xFFFF
+ 
+ /* pseudoflavors: */
+--- nfs-utils-1.0.9/utils/mount/nfs.man.orig	2006-10-16 08:32:53.825581000 -0400
++++ nfs-utils-1.0.9/utils/mount/nfs.man	2006-10-16 08:36:39.503163000 -0400
+@@ -272,6 +272,10 @@ default UDP protocol.  Many NFS servers 
+ .I udp
+ Mount the NFS filesystem using the UDP protocol.  This
+ is the default.
++.TP 1.5i
++.I fsc
++Enable the use of persistent caching to the local disk using
++the FS-Cache facility for the given mount point.
+ .P
+ All of the non-value options have corresponding nooption forms.
+ For example, nointr means don't allow file operations to be
+@@ -428,6 +432,10 @@ This extracts a
+ server performance penalty but it allows two different NFS clients
+ to get reasonable good results when both clients are actively
+ writing to common filesystem on the server.
++.TP 1.5i
++.I fsc
++Enable the use of persistent caching to the local disk using
++the FS-Cache facility for the given mount point.
+ .P
+ All of the non-value options have corresponding nooption forms.
+ For example, nointr means don't allow file operations to be

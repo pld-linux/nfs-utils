@@ -1,0 +1,28 @@
+--- nfs-utils-1.0.8/utils/statd/statd.c.orig	2005-12-19 23:12:47.000000000 -0500
++++ nfs-utils-1.0.8/utils/statd/statd.c	2006-06-30 10:03:38.000000000 -0400
+@@ -231,7 +231,7 @@ int main (int argc, char **argv)
+ 	extern char *optarg;
+ 	int pid;
+ 	int arg;
+-	int port = 0, out_port = 0;
++	int port = 0, out_port = 0, doonce = 0;
+ 	struct rlimit rlim;
+ 
+ 	int pipefds[2] = { -1, -1};
+@@ -440,7 +440,6 @@ int main (int argc, char **argv)
+ 
+ 	create_pidfile();
+ 	atexit(truncate_pidfile);
+-	drop_privs();
+ 
+ 	for (;;) {
+ 		if (!(run_mode & MODE_NOTIFY_ONLY)) {
+@@ -469,6 +468,8 @@ int main (int argc, char **argv)
+ 		if (!(run_mode & MODE_NOTIFY_ONLY)) {
+ 			rpc_init("statd", SM_PROG, SM_VERS, sm_prog_1, port);
+ 		} 
++		if (doonce++ < 1)
++			drop_privs();
+ 
+ 		/*
+ 		 * Handle incoming requests:  SM_NOTIFY socket requests, as

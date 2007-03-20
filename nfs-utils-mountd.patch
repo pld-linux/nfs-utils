@@ -1,0 +1,31 @@
+#
+# Make sure check_new_cache() is looking in the right place
+#
+--- src/support/nfs/cacheio.c.org	2003-08-04 00:12:16.000000000 -0400
++++ src/support/nfs/cacheio.c	2004-03-22 18:12:55.163534208 -0500
+@@ -223,12 +223,23 @@ int readline(int fd, char **buf, int *le
+  * This succeeds iff the "nfsd" filesystem is mounted on
+  * /proc/fs/nfs
+  */
++static char *cachelist[] = {
++	{ "auth.unix.ip" }, { "nfsd.export" }, { "nfsd.fh" }, 
++	{ NULL, NULL }
++};
+ int
+ check_new_cache(void)
+ {
+ 	struct stat stb;
+-	return	(stat("/proc/fs/nfs/filehandle", &stb) == 0) ||
+-		(stat("/proc/fs/nfsd/filehandle", &stb) == 0);
++	char path[64];
++	int i;
++
++	for (i=0; cachelist[i]; i++ ){
++		sprintf(path, "/proc/net/rpc/%s/channel", cachelist[i]);
++		if (stat(path, &stb) < 0)
++			return 0;
++	}
++	return 1;
+ }	
+
+
