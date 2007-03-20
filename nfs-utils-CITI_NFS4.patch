@@ -754,38 +754,6 @@ diff -puN support/nfs/fstab.c~CITI_NFS4_ALL support/nfs/fstab.c
  /* Updating mtab ----------------------------------------------*/
  
  /* Flag for already existing lock file. */
-diff -puN utils/mount/Makefile.am~CITI_NFS4_ALL utils/mount/Makefile.am
---- nfs-utils-1.0.11/utils/mount/Makefile.am~CITI_NFS4_ALL	2007-02-26 18:52:10.207463000 -0500
-+++ nfs-utils-1.0.11-kwc/utils/mount/Makefile.am	2007-02-26 18:52:17.352299000 -0500
-@@ -1,5 +1,7 @@
- ## Process this file with automake to produce Makefile.in
- 
-+abs_sbindir = /sbin
-+
- man8_MANS	= mount.nfs.man umount.nfs.man
- 
- sbin_PROGRAMS	= mount.nfs
-@@ -13,13 +15,14 @@ mount_nfs_LDADD = ../../support/nfs/libn
- MAINTAINERCLEANFILES = Makefile.in
- 
- install-exec-hook:
--	(cd $(DESTDIR)$(sbindir) && \
--	  ln -sf $(sbin_PROGRAMS) mount.nfs4 && \
--	  ln -sf $(sbin_PROGRAMS) umount.nfs && \
--	  ln -sf $(sbin_PROGRAMS) umount.nfs4)
-+	(chmod +s $(sbin_PROGRAMS) && \
-+	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/mount.nfs && \
-+	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/umount.nfs && \
-+	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/mount.nfs4 && \
-+	  ln -fs $(DESTDIR)$(sbindir)/mount.nfs $(abs_sbindir)/umount.nfs4 )
- uninstall-hook:
--	(cd $(DESTDIR)$(sbindir) && \
--	    rm -f mount.nfs4 umount.nfs umount.nfs4)
-+	(cd $(abs_sbindir) && \
-+	    rm -f mount.nfs umount.nfs mount.nfs4 umount.nfs4)
- 
- 
- install-man-links:
 diff -puN utils/mount/mount.c~CITI_NFS4_ALL utils/mount/mount.c
 --- nfs-utils-1.0.11/utils/mount/mount.c~CITI_NFS4_ALL	2007-02-26 18:52:10.515323000 -0500
 +++ nfs-utils-1.0.11-kwc/utils/mount/mount.c	2007-02-26 18:52:16.671458000 -0500
