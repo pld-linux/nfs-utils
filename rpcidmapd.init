@@ -48,12 +48,12 @@ case "$1" in
 				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 		fi
 
-		msg_starting "RPC idmapdd"
+		msg_starting "RPC idmapd"
 		daemon rpc.idmapd $RPCIDMAPOPTIONS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
 	else
-		msg_already_running "RPC idmapdd"
+		msg_already_running "RPC idmapd"
 	fi
 	;;
   stop)
