@@ -42,6 +42,7 @@ Patch8:		%{name}-mountd.patch
 Patch9:		%{name}-privports.patch
 Patch10:	%{name}-mount-man-nfs.patch
 Patch11:	%{name}-mount-fsc.patch
+Patch12:	%{name}-idmapd.conf.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -174,6 +175,7 @@ rm -f utils/mountd/fsloc.[ch]
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 %build
 %if "%{_lib}" == "lib64"
