@@ -133,7 +133,7 @@ case "$1" in
 	grep -v "^#" /etc/exports
 	echo
 	echo "Active NFS exports:"
-	/usr/sbin/exportfs
+	/usr/sbin/exportfs -v
 	echo
 	status rpc.mountd
 	RETVAL=$?
