@@ -131,6 +131,7 @@ case "$1" in
   status)
 	echo "Configured NFS exports:"
 	grep -v "^#" /etc/exports
+	echo
 	echo "Active NFS exports:"
 	/usr/sbin/exportfs
 	echo
