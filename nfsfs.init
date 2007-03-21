@@ -58,7 +58,7 @@ start() {
 		fi
 
 		# Special case /usr first
-		if awk '{ if ($2 == "/usr" && $3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) exit 1}' /etc/fstab ; then
+		if awk '{ if ($2 == "/usr" && $3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) exit 0}' /etc/fstab ; then
 			run_cmd "Mounting /usr filesystem" mount /usr
 			# In case of /usr over NFS idmapd, gssd and lockd may not start
 			# check if they're running and try to start them if not
