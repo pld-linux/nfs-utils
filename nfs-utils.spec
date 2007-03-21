@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	5.2
+Release:	5.4
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -21,15 +21,13 @@ Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
 Source3:	nfslock.init
-Source4:	rquotad.init
-Source5:	nfsfs.init
-Source6:	rpcidmapd.init
-Source7:	rpcgssd.init
-Source8:	rpcsvcgssd.init
-Source9:	nfs.sysconfig
-Source10:	nfslock.sysconfig
-Source11:	rquotad.sysconfig
-Source12:	nfsfs.sysconfig
+Source4:	nfsfs.init
+Source5:	rpcidmapd.init
+Source6:	rpcgssd.init
+Source7:	rpcsvcgssd.init
+Source8:	nfs.sysconfig
+Source9:	nfslock.sysconfig
+Source10:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
 Patch2:		%{name}-heimdal.patch
@@ -149,26 +147,6 @@ Install nfs-lock if you want to use file lock over NFS.
 Ten pakiet zawiera programy umożliwiające wykonywanie blokowania
 plików (file locking) poprzez NFS.
 
-%package rquotad
-Summary:	Remote quota server
-Summary(pl.UTF-8):	Zdalny serwer quota
-Group:		Networking/Daemons
-Requires(post,preun):	/sbin/chkconfig
-Requires:	rc-scripts
-Obsoletes:	quota-rquotad
-
-%description rquotad
-rquotad is an rpc(3N) server which returns quotas for a user of a
-local file system which is mounted by a remote machine over the NFS.
-The results are used by quota(1) to display user quotas for remote
-file systems.
-
-%description rquotad -l pl.UTF-8
-rquotad jest serverem rpc(3N), który zwraca quoty użytkownika
-lokalnego systemu plików, który jest zamountowany przez zdalną maszynę
-poprzez NFS. Rezultaty są używane przez quota(1), aby wyświetlić quotę
-dla zdalnego systemu plików.
-
 %package common
 Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
@@ -215,6 +193,7 @@ sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
 	--disable-nfsv4 \
 %endif
 	%{?with_mount:--enable-mount} \
+	--disable-rquotad \
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs \
@@ -240,15 +219,13 @@ install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
 
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
-install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/rquotad
-install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
-install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
-install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
-install %{SOURCE8} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
-install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
-install %{SOURCE11} $RPM_BUILD_ROOT/etc/sysconfig/rquotad
-install %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
+install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
+install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
+install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
+install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
+install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
+install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
+install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
@@ -258,7 +235,6 @@ rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
-echo ".so rquotad.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.rquotad.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 %if %{with nfs4}
 echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
@@ -300,7 +276,7 @@ fi
 %service nfsfs restart
 %if %{with nfs4}
 /sbin/chkconfig --add gssd
-%service svcgssd restart "RPC gssd daemon"
+%service gssd restart "RPC gssd daemon"
 %endif
 
 %preun clients
@@ -336,7 +312,7 @@ fi
 %if %{with nfs4}
 %post common
 /sbin/chkconfig --add idmapd
-%service svcgssd restart "RPC idmapd daemon"
+%service idmapd restart "RPC idmapd daemon"
 
 %preun common
 if [ "$1" = "0" ]; then
@@ -344,16 +320,6 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del idmapd
 fi
 %endif
-
-%post rquotad
-/sbin/chkconfig --add rquotad
-%service rquotad restart "NFS quota daemon"
-
-%preun rquotad
-if [ "$1" = "0" ]; then
-	%service rquotad stop
-	/sbin/chkconfig --del rquotad
-fi
 
 %triggerpostun -- %{name} <= 1.0.12-5
 /sbin/chkconfig nfs reset
@@ -447,10 +413,3 @@ fi
 %attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %{_mandir}/man[58]/*idmap*
 %endif
-
-#%files rquotad
-#%defattr(644,root,root,755)
-#%attr(755,root,root) %{_sbindir}/rpc.rquotad
-#%attr(754,root,root) /etc/rc.d/init.d/rquotad
-#%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/rquotad
-#%%{_mandir}/man8/rpc.rquotad.8*
