@@ -280,21 +280,37 @@ rm -rf $RPM_BUILD_ROOT
 %post
 /sbin/chkconfig --add nfs
 %service nfs restart "NFS daemon"
+%if %{with nfs4}
+/sbin/chkconfig --add svcgssd
+%service svcgssd restart "RPC svcgssd daemon"
+%endif
 
 %preun
 if [ "$1" = "0" ]; then
 	%service nfs stop
 	/sbin/chkconfig --del nfs
+%if %{with nfs4}
+	%service svcgssd stop
+	/sbin/chkconfig --del svcgssd
+%endif
 fi
 
 %post clients
 /sbin/chkconfig --add nfsfs
 %service nfsfs restart
+%if %{with nfs4}
+/sbin/chkconfig --add gssd
+%service svcgssd restart "RPC gssd daemon"
+%endif
 
 %preun clients
 if [ "$1" = "0" ]; then
 	%service nfsfs stop
 	/sbin/chkconfig --del nfsfs
+%if %{with nfs4}
+	%service gssd stop
+	/sbin/chkconfig --del gssd
+%endif
 fi
 
 %pre lock
@@ -316,6 +332,18 @@ if [ "$1" = "0" ]; then
 	%userremove rpcstatd
 	%groupremove rpcstatd
 fi
+
+%if %{with nfs4}
+%post common
+/sbin/chkconfig --add idmapd
+%service svcgssd restart "RPC idmapd daemon"
+
+%preun common
+if [ "$1" = "0" ]; then
+	%service idmapd stop
+	/sbin/chkconfig --del idmapd
+fi
+%endif
 
 %post rquotad
 /sbin/chkconfig --add rquotad
