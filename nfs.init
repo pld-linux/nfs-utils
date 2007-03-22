@@ -59,6 +59,8 @@ start() {
 				RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
 		done
 
+		[ -n "$MOUNTD_PORT" ] && RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS -p $MOUNTD_PORT"
+
 		# Start daemons.
 		msg_starting "NFS exportfs"
 		daemon /usr/sbin/exportfs -r
