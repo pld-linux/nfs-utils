@@ -2,7 +2,10 @@
 SERVICE_RUN_NICE_LEVEL="+0"
 
 # Allow remote quota setting
-REMOTE_QUOTA_SETTING=no
+#REMOTE_QUOTA_SETTING="no"
 
-# Options for rquotad
-RQUOTADOPTIONS=""
+# Do not ignore autofs mountpoints
+#AUTOFS="yes"
+
+# Port rquotad should listen on (default is portmap assigned)
+#RQUOTAD_PORT=

@@ -33,20 +33,21 @@ if [ -x /sbin/pidof ] && [ "$1" != "stop" ] && [ -z "`/sbin/pidof portmap`" ]; t
 	exit 0
 fi
 
-# Sanity checks
-
-if is_yes "$REMOTE_QUOTA_SETTING"; then
-    RQUOTADOPTIONS="$RQUOTADOPTIONS --setquota"
-else
-    RQUOTADOPTIONS="$RQUOTADOPTIONS --no-setquota"
-fi
-
 start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/rquotad ]; then
+		# RQUOTADOPTIONS will be removed in the future
+		OPTIONS="$RQUOTADOPTIONS"
+		[ -n "$RQUOTAD_PORT" ] && OPTIONS="$OPTIONS -p $RQUOTAD_PORT"
+		is_yes "$AUTOFS" && OPTIONS="$OPTIONS --autofs"
+		if is_yes "$REMOTE_QUOTA_SETTING"; then
+		    OPTIONS="$OPTIONS --setquota"
+		else
+		    OPTIONS="$OPTIONS --no-setquota"
+		fi
 		# Start daemons.
 		msg_starting "NFS quotas"
-		daemon rpc.rquotad $RQUOTADOPTIONS
+		daemon rpc.rquotad $OPTIONS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rquotad
 	else
