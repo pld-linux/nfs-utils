@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	7
+Release:	8
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -323,7 +323,7 @@ if [ "$1" = "0" ]; then
 fi
 %endif
 
-%triggerpostun -- %{name} <= 1.0.12-5
+%triggerpostun -- %{name} <= 1.0.12-7
 /sbin/chkconfig nfs reset
 
 %triggerpostun lock -- %{name}-lock <= 1.0.12-5
