@@ -323,7 +323,7 @@ if [ "$1" = "0" ]; then
 fi
 %endif
 
-%triggerpostun -- %{name} < 1.0.12-7
+%triggerpostun -- %{name} <= 1.0.12-7
 /sbin/chkconfig nfs reset
 
 %triggerpostun lock -- %{name}-lock <= 1.0.12-5
