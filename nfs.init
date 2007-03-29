@@ -64,10 +64,10 @@ start() {
 		# Start daemons.
 		msg_starting "NFS exportfs"
 		daemon /usr/sbin/exportfs -r
-		msg_starting "NFS daemon"
-		daemon rpc.nfsd $RPCNFSDCOUNT
 		msg_starting "NFS mountd"
 		daemon rpc.mountd $RPCMOUNTOPTIONS
+		msg_starting "NFS daemon"
+		daemon rpc.nfsd $RPCNFSDCOUNT
 		touch /var/lock/subsys/nfs
 	else
 		msg_already_running "NFS daemon"
@@ -77,10 +77,10 @@ start() {
 stop() {
 	if [ -f /var/lock/subsys/nfs ]; then
 		# Stop daemons.
-		msg_stopping "NFS mountd"
-		killproc rpc.mountd
 		msg_stopping "NFS daemon"
 		killproc nfsd -QUIT
+		msg_stopping "NFS mountd"
+		killproc rpc.mountd
 		msg_stopping "NFS"
 		daemon /usr/sbin/exportfs -au
 		rm -f /var/lock/subsys/nfs
@@ -102,6 +102,7 @@ case "$1" in
 	stop
 	start
 	/sbin/service idmapd status >/dev/null && /sbin/service idmapd restart
+	/sbin/service svcgssd status >/dev/null && /sbin/service svcgssd restart
 	;;
   reload|force-reload)
 	if [ -f /var/lock/subsys/nfs ]; then
@@ -109,8 +110,13 @@ case "$1" in
 		busy
 		/usr/sbin/exportfs -r
 		[ $? -ne 0 ] && RETVAL=7
-		[ $RETVAL -eq 0 ] && ok || died
-		/sbin/service idmapd status >/dev/null && /sbin/service idmapd restart
+		if [ $RETVAL -eq 0 ]; then
+			ok
+			/sbin/service idmapd status >/dev/null && /sbin/service idmapd restart
+			/sbin/service svcgssd status >/dev/null && /sbin/service svcgssd restart
+		else
+			died
+		fi
 	else
 		msg_not_running "NFS"
 		exit 7
