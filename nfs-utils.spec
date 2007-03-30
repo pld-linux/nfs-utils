@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.12
-Release:	8
+Release:	8.1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -30,26 +30,24 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
-Patch2:		%{name}-heimdal.patch
-Patch3:		%{name}-heimdal-internals.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
-#Patch4:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
-Patch4:		%{name}-CITI_NFS4.patch
-Patch5:		%{name}-mountd-leak.patch
-Patch6:		%{name}-statdpath.patch
-Patch7:		%{name}-mount-fake.patch
-Patch8:		%{name}-mountd.patch
-Patch9:		%{name}-privports.patch
-Patch10:	%{name}-mount-man-nfs.patch
-Patch11:	%{name}-mount-fsc.patch
-Patch12:	%{name}-idmapd.conf.patch
+#Patch2:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
+Patch2:		%{name}-CITI_NFS4.patch
+Patch3:		%{name}-mountd-leak.patch
+Patch4:		%{name}-statdpath.patch
+Patch5:		%{name}-mount-fake.patch
+Patch6:		%{name}-mountd.patch
+Patch7:		%{name}-privports.patch
+Patch8:		%{name}-mount-man-nfs.patch
+Patch9:		%{name}-mount-fsc.patch
+Patch10:	%{name}-idmapd.conf.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
 BuildRequires:	e2fsprogs-devel >= 1.39-5
 %if %{with nfs4}
-BuildRequires:	heimdal-devel >= 0.7
+BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
@@ -163,10 +161,10 @@ Wspólne programy do obsługi NFS.
 %setup -q -a1
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
-%patch3 -p1
 # temporary hack
 rm -f utils/mountd/fsloc.[ch]
+%patch2 -p1
+%patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
@@ -174,8 +172,6 @@ rm -f utils/mountd/fsloc.[ch]
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-%patch11 -p1
-%patch12 -p1
 
 %build
 %if "%{_lib}" == "lib64"
