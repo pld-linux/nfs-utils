@@ -45,7 +45,7 @@ RETVAL=0
 case "$1" in
   start)
 	# Check if the service is already running?
-	if [ ! -f /var/lock/subsys/rpcgssd ]; then
+	if [ ! -f /var/lock/subsys/gssd ]; then
 		if ! grep -q rpc_pipefs /proc/mounts ; then
 			modprobe -s sunrpc >/dev/null 2>&1
 			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
@@ -58,16 +58,16 @@ case "$1" in
 		msg_starting "RPC gssd"
 		daemon rpc.gssd $RPCGSSOPTIONS
 		RETVAL=$?
-		[ $RETVAL = 0 ] && touch /var/lock/subsys/rpcgssd
+		[ $RETVAL = 0 ] && touch /var/lock/subsys/gssd
 	else
 		msg_already_running "RPC gssd"
 	fi
 	;;
   stop)
-	if [ -f /var/lock/subsys/rpcgssd ]; then
+	if [ -f /var/lock/subsys/gssd ]; then
 		msg_stopping "RPC gssd"
 		killproc rpc.gssd
-		rm -f /var/lock/subsys/rpcgssd
+		rm -f /var/lock/subsys/gssd
 	else
 		msg_not_running "RPC gssd"
 	fi
