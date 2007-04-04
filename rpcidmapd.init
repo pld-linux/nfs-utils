@@ -35,6 +35,9 @@ fi
 # /usr may be on NFS, fail silently, nfsfs will start it
 [ -x /usr/sbin/rpc.idmapd ] || exit 0
 
+# Find out what the current runlevel dir is
+RUNLEVELDIR=$(cat /var/run/runlevel.dir)
+
 RETVAL=0
 
 # See how we were called.
@@ -42,6 +45,14 @@ case "$1" in
   start)
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/idmapd ]; then
+		# This is whacko, but we need /proc/fs/nfsd mounted before
+		# starting idmapd on NFS server
+		if [ -e "$RUNLEVELDIR/S*nfs" ]; then
+			if ! grep -q nfsd /proc/mounts ; then
+				modprobe -s nfsd > /dev/null 2>&1
+				run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
+			fi
+		fi
 		if ! grep -q rpc_pipefs /proc/mounts ; then
 			modprobe -s sunrpc >/dev/null 2>&1
 			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
