@@ -1,5 +1,6 @@
 # TODO
 # - should unmount /proc/fs/nfsd at package uninstall (or in service nfs stop)
+# - CITI and fake patches need updating
 #
 # Conditional build:
 %bcond_without	nfs4		# without NFSv4 support
@@ -11,12 +12,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.12
-Release:	8.4
+Version:	1.1.0
+%define	_pre	rc1
+Release:	0.%{_pre}.1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	acf3656cec3872deb597aa7ac13f3c3a
+Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}-%{_pre}.tar.gz
+# Source0-md5:	924dd05dc3958d4da585d74808bb84c4
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -33,16 +35,12 @@ Patch1:		%{name}-install.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
 #Patch2:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
 Patch2:		%{name}-CITI_NFS4.patch
-Patch3:		%{name}-mountd-leak.patch
-Patch4:		%{name}-statdpath.patch
-Patch5:		%{name}-mount-fake.patch
-Patch6:		%{name}-mountd.patch
-Patch7:		%{name}-privports.patch
-Patch8:		%{name}-mount-man-nfs.patch
-Patch9:		%{name}-mount-fsc.patch
-Patch10:	%{name}-idmapd.conf.patch
-Patch11:	%{name}-keytab-path.patch
-Patch12:	%{name}-subsys.patch
+Patch3:		%{name}-statdpath.patch
+Patch4:		%{name}-mount-fake.patch
+Patch5:		%{name}-mountd.patch
+Patch6:		%{name}-idmapd.conf.patch
+Patch7:		%{name}-keytab-path.patch
+Patch8:		%{name}-subsys.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -160,31 +158,20 @@ Common programs for NFS.
 Wspólne programy do obsługi NFS.
 
 %prep
-%setup -q -a1
+%setup -q -a1 -n %{name}-%{version}-%{_pre}
 %patch0 -p1
 %patch1 -p1
 # temporary hack
-rm -f utils/mountd/fsloc.[ch]
-%patch2 -p1
+#rm -f utils/mountd/fsloc.[ch]
+#%patch2 -p1
 %patch3 -p1
-%patch4 -p1
+#%patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
 
 %build
-%if "%{_lib}" == "lib64"
-sed -i -e 's#/lib/#/%{_lib}/#g' aclocal/kerberos5.m4
-%endif
-sed -i -e 's#libroken.a#libroken.so#g' aclocal/kerberos5.m4
-%{__aclocal} -I aclocal
-%{__autoconf}
-%{__automake}
 %configure \
 %if %{with nfs4}
 	--enable-gss \
@@ -212,10 +199,6 @@ install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%if %{with mount}
-mv $RPM_BUILD_ROOT%{_sbindir}/{mount,umount}.* $RPM_BUILD_ROOT/sbin
-%endif
-
 mv $RPM_BUILD_ROOT%{_sbindir}/rpcdebug $RPM_BUILD_ROOT/sbin
 install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
 
@@ -232,9 +215,7 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,lockd,svcgssd,gssd,idmapd}.8
-rm -f $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
-echo ".so lockd.8"   > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.lockd.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,svcgssd,gssd,idmapd}.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
@@ -242,7 +223,6 @@ echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
 echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
-echo ".so idmapd.conf.5" > $RPM_BUILD_ROOT%{_mandir}/man5/rpc.idmapd.conf.5
 %endif
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
@@ -372,14 +352,13 @@ fi
 %files lock
 %defattr(644,root,root,755)
 %attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd
-%attr(755,root,root) %{_sbindir}/rpc.lockd
 %attr(755,root,root) %{_sbindir}/rpc.statd
+%attr(755,root,root) %{_sbindir}/sm-notify
+%attr(755,root,root) %{_sbindir}/start-statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
-%{_mandir}/man8/rpc.lockd.8*
-%{_mandir}/man8/lockd.8*
-%{_mandir}/man8/rpc.statd.8*
-%{_mandir}/man8/statd.8*
+%{_mandir}/man8/*statd.8*
+%{_mandir}/man8/sm-notify.8*
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/state
 
 %files clients
