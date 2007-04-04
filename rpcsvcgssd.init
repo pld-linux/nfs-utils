@@ -48,11 +48,6 @@ case "$1" in
 			modprobe -s nfsd > /dev/null 2>&1
 			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 		fi
-		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe -s sunrpc >/dev/null 2>&1
-			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
-				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-		fi
 		# Load rpcsec modules
 		for i in ${SECURE_NFS_MODS} ; do 
 			_modprobe single die $i
