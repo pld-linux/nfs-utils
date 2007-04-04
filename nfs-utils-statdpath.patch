@@ -22,15 +22,24 @@
  creates a file in
 -.BR /var/lib/nfs/sm .
 +.BR /var/lib/nfs/statd/sm .
- When starting, it iterates through these files and notifies the
- peer
- .B rpc.statd
+ When starting, it normally runs
+ .B sm-notify
+ to iterate through these files and notify the
+@@ -95,7 +95,7 @@ and
+ .BI "\-P," "" " \-\-state\-directory\-path "  directory
+ specify a directory in which to place statd state information.
+ If this option is not specified the default of 
+-.BR /var/lib/nfs
++.BR /var/lib/nfs/statd
+ is used.
+ .TP
+ .B -N
 @@ -136,11 +136,11 @@ and
  manual pages.
  
  .SH FILES
 -.BR /var/lib/nfs/state
-+.BR /var/lib/nfs/statd/sm/state
++.BR /var/lib/nfs/statd/state
  .br
 -.BR /var/lib/nfs/sm/*
 +.BR /var/lib/nfs/statd/sm/*
