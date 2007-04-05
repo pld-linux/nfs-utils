@@ -1,12 +1,14 @@
 #!/bin/sh
 #
 # nfslock	This shell script takes care of starting and stopping
-#		the NFS file locking service.
+#		the NSM status monitor - rpc.statd
 #
 # chkconfig:	345 14 82
-# description:	NFS is a popular protocol for file sharing across \
-#		TCP/IP networks. This service provides NFS file \
-#		locking functionality.
+# description:	The rpc.statd server implements the NSM \
+#		(Network  Status  Monitor) RPC protocol. \
+#		It is used by the NFS file locking service, lockd \
+#		to implement lock recovery when the NFS server \
+#		machine crashes and reboots.
 # probe:	true
 
 # Source function library.
@@ -21,7 +23,7 @@
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
-		msg_network_down "NFS statd"
+		msg_network_down "RPC statd"
 		exit 1
 	fi
 else
@@ -51,12 +53,12 @@ start() {
 
 		# Start daemons.
 		# Don't put sm-notify here, statd will run it when started
-		msg_starting "NFS statd"
+		msg_starting "RPC statd"
 		daemon rpc.statd $STATDOPTS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
 	else
-		msg_already_running "NFS statd"
+		msg_already_running "RPC statd"
 	fi
 }
 
@@ -70,11 +72,11 @@ stop() {
 			/sbin/sysctl -w fs.nfs.nlm_udpport=0 >/dev/null 2>&1
 		fi
 		# Stop daemons.
-		msg_stopping "NFS statd"
+		msg_stopping "RPC statd"
 		killproc rpc.statd
 		rm -f /var/lock/subsys/nfslock
 	else
-		msg_not_running "NFS statd"
+		msg_not_running "RPC statd"
 	fi
 }
 
