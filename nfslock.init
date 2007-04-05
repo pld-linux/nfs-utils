@@ -21,7 +21,7 @@
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
-		msg_network_down "NFS lockd"
+		msg_network_down "NFS statd"
 		exit 1
 	fi
 else
@@ -50,14 +50,10 @@ start() {
 		[ -n "$STATD_OUTPORT" ] && STATDOPTS="$STATDOPTS -o $STATD_OUTPORT"
 
 		# Start daemons.
-		if is_yes "$NFSv2" || is_yes "$NFSv3" ; then
-			msg_starting "NFS statd"
-			daemon rpc.statd $STATDOPTS
-			RETVAL=$?
-			[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
-		else
-			touch /var/lock/subsys/nfslock
-		fi
+		msg_starting "NFS statd"
+		daemon rpc.statd $STATDOPTS
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
 	else
 		msg_already_running "NFS statd"
 	fi
@@ -73,10 +69,8 @@ stop() {
 			/sbin/sysctl -w fs.nfs.nlm_udpport=0 >/dev/null 2>&1
 		fi
 		# Stop daemons.
-		if is_yes "$NFSv2" || is_yes "$NFSv3" ; then
-			msg_stopping "NFS statd"
-			killproc rpc.statd
-		fi
+		msg_stopping "NFS statd"
+		killproc rpc.statd
 		rm -f /var/lock/subsys/nfslock
 	else
 		msg_not_running "NFS statd"
@@ -93,13 +87,8 @@ case "$1" in
   	stop
 	;;
   status)
-	if is_yes "$NFSv2" || is_yes "$NFSv3" ; then
-		status rpc.statd
-		exit $?
-	else
-		echo "NFSv2 and NFSv3 disabled"
-		exit 0
-	fi
+	status rpc.statd
+	exit $?
 	;;
   restart|force-reload)
 	stop
@@ -110,13 +99,9 @@ case "$1" in
 		echo start
 		exit 0
 	fi
-	if is_yes "$NFSv2" || is_yes "$NFSv3" ; then
-		/sbin/pidof rpc.statd >/dev/null 2>&1; STATD="$?"
-		if [ $STATD = 1 ]; then
-			echo restart
-			exit 0
-		fi
-	else
+	/sbin/pidof rpc.statd >/dev/null 2>&1; STATD="$?"
+	if [ $STATD = 1 ]; then
+		echo restart
 		exit 0
 	fi
 	;;
