@@ -2,15 +2,9 @@
 #
 # nfsfs		Mount NFS filesystems.
 #
-# Version:	@(#) /etc/init.d/skeleton 1.01 26-Oct-1993
-#
-# Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
-#
 # chkconfig:	345 16 80
 # description:	Mounts and unmounts all Network File System (NFS) \
 #		mount points.
-#
-# $Id$
 
 # Source networking configuration.
 if [ ! -f /etc/sysconfig/network ]; then
