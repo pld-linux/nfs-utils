@@ -43,12 +43,6 @@ fi
 
 start() {
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
-		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe -s sunrpc > /dev/null 2>&1
-			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
-				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-		fi
-
 		# Set the ports lockd should listen on
 		if [ -n "$LOCKD_TCPPORT" ]; then
 			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
