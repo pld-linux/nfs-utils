@@ -4,7 +4,7 @@
 #
 # Authors:	Chuck Lever <cel@netapp.com>
 #
-# chkconfig: - 14 81
+# chkconfig: - 12 81
 # description: Starts user-level daemon that manages RPCSEC GSS contexts \
 #	       for the NFSv4 server.
 
