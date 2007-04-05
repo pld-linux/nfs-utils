@@ -50,6 +50,7 @@ start() {
 		[ -n "$STATD_OUTPORT" ] && STATDOPTS="$STATDOPTS -o $STATD_OUTPORT"
 
 		# Start daemons.
+		# Don't put sm-notify here, statd will run it when started
 		msg_starting "NFS statd"
 		daemon rpc.statd $STATDOPTS
 		RETVAL=$?
