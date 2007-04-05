@@ -4,7 +4,7 @@
 #
 # Authors:	Chuck Lever <cel@netapp.com>
 #
-# chkconfig: 345 12 82
+# chkconfig: 345 12 83
 # description: Starts user-level daemon for NFSv4 that maps user \
 #              names to UID and GID numbers.
 

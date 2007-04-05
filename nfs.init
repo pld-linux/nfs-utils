@@ -3,7 +3,7 @@
 # nfs		This shell script takes care of starting and stopping
 #		the NFS services.
 #
-# chkconfig:	345 13 84
+# chkconfig:	345 13 81
 # description:	NFS is a popular protocol for file sharing across TCP/IP \
 #		networks. This service provides NFS server functionality, \
 #		which is configured via the /etc/exports file.

@@ -6,7 +6,7 @@
 #
 # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
 #
-# chkconfig:	345 16 83
+# chkconfig:	345 16 80
 # description:	Mounts and unmounts all Network File System (NFS) \
 #		mount points.
 #
