@@ -101,7 +101,7 @@ case "$1" in
   restart)
 	stop
 	start
-	/sbin/service idmapd status >/dev/null && /sbin/service idmapd restart
+	/sbin/service idmapd status >/dev/null && /sbin/service idmapd reload
 	/sbin/service svcgssd status >/dev/null && /sbin/service svcgssd restart
 	;;
   reload|force-reload)
@@ -112,7 +112,7 @@ case "$1" in
 		[ $? -ne 0 ] && RETVAL=7
 		if [ $RETVAL -eq 0 ]; then
 			ok
-			/sbin/service idmapd status >/dev/null && /sbin/service idmapd restart
+			/sbin/service idmapd status >/dev/null && /sbin/service idmapd reload
 			/sbin/service svcgssd status >/dev/null && /sbin/service svcgssd restart
 		else
 			died
