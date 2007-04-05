@@ -1,12 +1,13 @@
 #!/bin/sh
 #
 # rquotad	This shell script takes care of starting and stopping
-#		the NFS quota service.
+#		the RPC rquotad service.
 #
 # chkconfig:	345 12 82
-# description:	NFS is a popular protocol for file sharing across \
-#		TCP/IP networks. This service provides NFS file \
-#		locking functionality.
+# description:	rquotad is an RPC server which returns quotas for \
+#		a user of a local filesystem which is mounted by \
+#		a remote machine over the NFS.  It also allows \
+#		setting  of quotas on NFS mounted filesystem
 # probe: true
 
 # Source function library.
@@ -21,7 +22,7 @@
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
-		msg_network_down "NFS rquotad"
+		msg_network_down "RPC rquotad"
 		exit 1
 	fi
 else
@@ -46,23 +47,23 @@ start() {
 		    OPTIONS="$OPTIONS --no-setquota"
 		fi
 		# Start daemons.
-		msg_starting "NFS quotas"
+		msg_starting "RPC rquotad"
 		daemon rpc.rquotad $OPTIONS
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rquotad
 	else
-		msg_already_running "NFS quota daemon"
+		msg_already_running "RPC rquotad"
 	fi
 }
 
 stop() {
 	if [ -f /var/lock/subsys/rquotad ]; then
 		# Stop daemons.
-		msg_stopping "NFS quotas"
+		msg_stopping "RPC rquotad"
 		killproc rpc.rquotad
 		rm -f /var/lock/subsys/rquotad
 	else
-		msg_not_running "NFS quota daemon"
+		msg_not_running "RPC rquotad"
 	fi
 }
 
