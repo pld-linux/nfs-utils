@@ -43,7 +43,7 @@ start() {
 	if [ ! -f /var/lock/subsys/idmapd ]; then
 		# This is whacko, but we need /proc/fs/nfsd mounted before
 		# starting idmapd on NFS server
-		if [ -e "$RUNLEVELDIR/S*nfs" ]; then
+		if [ -e "$RUNLEVELDIR"/S*nfs ]; then
 			if ! grep -q nfsd /proc/mounts ; then
 				modprobe -s nfsd > /dev/null 2>&1
 				run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
