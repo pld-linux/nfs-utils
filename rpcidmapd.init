@@ -38,11 +38,7 @@ fi
 # Find out what the current runlevel dir is
 RUNLEVELDIR=$(cat /var/run/runlevel.dir)
 
-RETVAL=0
-
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/idmapd ]; then
 		# This is whacko, but we need /proc/fs/nfsd mounted before
@@ -66,8 +62,9 @@ case "$1" in
 	else
 		msg_already_running "RPC idmapd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /var/lock/subsys/idmapd ]; then
 		msg_stopping "RPC idmapd"
 		killproc rpc.idmapd
@@ -75,15 +72,24 @@ case "$1" in
 	else
 		msg_not_running "RPC idmapd"
 	fi
+}
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	status rpc.idmapd
 	RETVAL=$?
 	;;
   restart)
-	$0 stop
-	$0 start
-	RETVAL=$?
+	stop
+	start
 	;;
   reload)
 	if [ -f /var/lock/subsys/idmapd ]; then
