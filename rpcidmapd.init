@@ -1,12 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 #
-# rpcidmapd     Start up and shut down RPC name to UID/GID mapper
+# idmapd	Start up and shut down RPC name to UID/GID mapper
 #
-# Authors:	Chuck Lever <cel@netapp.com>
-#
-# chkconfig: 345 12 83
-# description: Starts user-level daemon for NFSv4 that maps user \
-#              names to UID and GID numbers.
+# chkconfig:	345 12 83
+# description:	Starts user-level daemon for NFSv4 that maps user \
+#		names to UID and GID numbers.
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -17,7 +15,7 @@
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
-		msg_network_down "RPC svcgssd"
+		msg_network_down "RPC idmapd"
 		exit 1
 	fi
 else

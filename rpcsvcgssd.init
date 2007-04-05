@@ -1,12 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 #
-# rpcsvcgssd    Start up and shut down RPCSEC GSS daemon
+# svcgssd	Start up and shut down RPCSEC GSS daemon
 #
-# Authors:	Chuck Lever <cel@netapp.com>
-#
-# chkconfig: - 12 82
-# description: Starts user-level daemon that manages RPCSEC GSS contexts \
-#	       for the NFSv4 server.
+# chkconfig:	345 12 82
+# description:	Starts user-level daemon that manages RPCSEC GSS contexts \
+#		for the NFSv4 server.
 
 # Source function library.
 . /etc/rc.d/init.d/functions
