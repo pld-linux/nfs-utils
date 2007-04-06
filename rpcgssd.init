@@ -37,11 +37,7 @@ is_yes "${SECURE_NFS}" || exit 0
 # /usr may be on NFS, fail silently, nfsfs will start it
 [ -x /usr/sbin/rpc.gssd ] || exit 0
 
-RETVAL=0
-
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/gssd ]; then
 		if ! grep -q rpc_pipefs /proc/mounts ; then
@@ -60,8 +56,9 @@ case "$1" in
 	else
 		msg_already_running "RPC gssd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /var/lock/subsys/gssd ]; then
 		msg_stopping "RPC gssd"
 		killproc rpc.gssd
@@ -69,15 +66,24 @@ case "$1" in
 	else
 		msg_not_running "RPC gssd"
 	fi
+}
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	status rpc.gssd
 	RETVAL=$?
 	;;
   restart|reload)
-	$0 stop
-	$0 start
-	RETVAL=$?
+	stop
+	start
 	;;
   *)
 	msg_usage "$0 {start|stop|restart|status}"

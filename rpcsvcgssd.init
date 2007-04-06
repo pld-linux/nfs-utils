@@ -34,11 +34,7 @@ is_yes "${SECURE_NFS}" || exit 0
 # List of kernel modules to load
 [ -z "${SECURE_NFS_MODS}" ] && SECURE_NFS_MODS="des rpcsec_gss_krb5"
 
-RETVAL=0
-
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/svcgssd ]; then
 		# We need /proc/fs/nfsd mounted before starting svcgssd
@@ -57,8 +53,9 @@ case "$1" in
 	else
 		msg_already_running "RPC svcgssd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	if [ -f /var/lock/subsys/svcgssd ]; then
 		msg_stopping "RPC svcgssd"
 		killproc rpc.svcgssd
@@ -66,15 +63,24 @@ case "$1" in
 	else
 		msg_not_running "RPC svcgssd"
 	fi
+}
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	status rpc.svcgssd
 	RETVAL=$?
 	;;
   restart|reload)
-	$0 stop
-	$0 start
-	RETVAL=$?
+	stop
+	start
 	;;
   *)
 	msg_usage "$0 {start|stop|restart|status}"
