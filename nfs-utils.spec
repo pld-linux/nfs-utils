@@ -284,7 +284,7 @@ fi
 
 %post lock
 /sbin/chkconfig --add nfslock
-%service nfslock restart "NFS statd"
+%service nfslock restart "RPC statd"
 
 %preun lock
 if [ "$1" = "0" ]; then
