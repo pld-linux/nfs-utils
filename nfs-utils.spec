@@ -1,6 +1,6 @@
 # TODO
-# - should unmount /proc/fs/nfsd at package uninstall (or in service nfs stop)
-# - CITI and fake patches need updating
+# - should unmount /proc/fs/nfsd and /var/lib/nfs/rpc_pipefs at package
+#	uninstall (or in service nfs stop)
 #
 # Conditional build:
 %bcond_without	nfs4		# without NFSv4 support
@@ -129,7 +129,6 @@ Summary:	Programs for NFS file locking
 Summary(pl.UTF-8):	Programy do obsługi blokowania plików poprzez NFS (lock)
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
-#Requires:	kernel >= 2.2.5
 Requires:	portmap >= 4.0
 Requires:	rc-scripts
 Provides:	group(rpcstatd)
@@ -161,11 +160,9 @@ Wspólne programy do obsługi NFS.
 %setup -q -a1 -n %{name}-%{version}-%{_pre}
 %patch0 -p1
 %patch1 -p1
-# temporary hack
-#rm -f utils/mountd/fsloc.[ch]
-#%patch2 -p1
+%patch2 -p1
 %patch3 -p1
-#%patch4 -p1
+%patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
@@ -199,6 +196,16 @@ install -d $RPM_BUILD_ROOT{/sbin,%{_sbindir},%{_mandir}/man{5,8}} \
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
+cat >$RPM_BUILD_ROOT%{_sbindir}/start-statd <<EOF
+#!/bin/sh
+# mount.nfs calls this script when mounting a filesystem with locking
+# enabled, but when statd does not seem to be running (based on
+# /var/run/rpc.statd.pid).
+exec /sbin/service nfslock start
+EOF
+
+sed -e "s|#!/bin/bash|#!/bin/sh|" utils/gssd/gss_destroy_creds > $RPM_BUILD_ROOT%{_sbindir}/gss_destroy_creds
+
 mv $RPM_BUILD_ROOT%{_sbindir}/rpcdebug $RPM_BUILD_ROOT/sbin
 install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
 
@@ -215,10 +222,11 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,svcgssd,gssd,idmapd}.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,svcgssd,gssd,idmapd,sm-notify}.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
+echo ".so sm-notify.8" > $RPM_BUILD_ROOT%{_mandir}/man8/rpc.sm-notify.8
 %if %{with nfs4}
 echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
@@ -229,7 +237,6 @@ touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
-rm -rf html
 cp -a nfs html
 
 %clean
@@ -240,7 +247,7 @@ rm -rf $RPM_BUILD_ROOT
 %service nfs restart "NFS daemon"
 %if %{with nfs4}
 /sbin/chkconfig --add svcgssd
-%service svcgssd restart "RPC svcgssd daemon"
+%service svcgssd restart "RPC svcgssd"
 %endif
 
 %preun
@@ -258,7 +265,7 @@ fi
 %service nfsfs restart
 %if %{with nfs4}
 /sbin/chkconfig --add gssd
-%service gssd restart "RPC gssd daemon"
+%service gssd restart "RPC gssd"
 %endif
 
 %preun clients
@@ -277,7 +284,7 @@ fi
 
 %post lock
 /sbin/chkconfig --add nfslock
-%service nfslock restart "nfslock daemon"
+%service nfslock restart "NFS statd"
 
 %preun lock
 if [ "$1" = "0" ]; then
@@ -294,7 +301,7 @@ fi
 %if %{with nfs4}
 %post common
 /sbin/chkconfig --add idmapd
-%service idmapd restart "RPC idmapd daemon"
+%service idmapd restart "RPC idmapd"
 
 %preun common
 if [ "$1" = "0" ]; then
@@ -303,18 +310,29 @@ if [ "$1" = "0" ]; then
 fi
 %endif
 
-%triggerpostun -- %{name} <= 1.0.12-7
+%triggerpostun -- %{name} <= 1.1.0-0.rc1.1
 /sbin/chkconfig nfs reset
+%if %{with nfs4}
+/sbin/chkconfig svcgssd reset
+%endif
 
-%triggerpostun lock -- %{name}-lock <= 1.0.12-5
+%triggerpostun lock -- %{name}-lock <= 1.1.0-0.rc1.1
 /sbin/chkconfig nfslock reset
 
-%triggerpostun clients -- %{name}-clients < 1.0.10-1.2
+%triggerpostun clients -- %{name}-clients < 1.1.0-0.rc1.1
 if [ -f /etc/sysconfig/nfsclient.rpmsave ]; then
 	mv -f /etc/sysconfig/nfsfs{,.rpmnew}
 	mv -f /etc/sysconfig/nfsclient.rpmsave /etc/sysconfig/nfsfs
 fi
 /sbin/chkconfig nfsfs reset
+%if %{with nfs4}
+/sbin/chkconfig gssd reset
+%endif
+
+%if %{with nfs4}
+%triggerpostun common -- %{name}-common <= 1.1.0-0.rc1.1
+/sbin/chkconfig idmapd reset
+%endif
 
 %files
 %defattr(644,root,root,755)
@@ -358,7 +376,7 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
 %{_mandir}/man8/*statd.8*
-%{_mandir}/man8/sm-notify.8*
+%{_mandir}/man8/*sm-notify.8*
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/state
 
 %files clients
