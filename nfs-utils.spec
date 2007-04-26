@@ -61,7 +61,7 @@ Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	portmap >= 4.0
-Requires:	rc-scripts >= 0.4.0
+Requires:	rc-scripts >= 0.4.1.5
 Requires:	setup >= 2.4.6-7
 Provides:	nfsdaemon
 Obsoletes:	knfsd
