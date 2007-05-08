@@ -13,13 +13,14 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.0
-%define	_pre	rc1
+%define	_pre	rc2
 Release:	0.%{_pre}.1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}-%{_pre}.tar.gz
-# Source0-md5:	924dd05dc3958d4da585d74808bb84c4
-Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
+Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}-%{_pre}.tar.gz
+# Source0-md5:	79125d8c058122611d1ef267c6498c4b
+#Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
+Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
 Source3:	nfslock.init
@@ -160,7 +161,8 @@ Wspólne programy do obsługi NFS.
 %setup -q -a1 -n %{name}-%{version}-%{_pre}
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
+# severly out of date
+#%patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
