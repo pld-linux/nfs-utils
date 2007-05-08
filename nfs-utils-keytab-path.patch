@@ -17,9 +17,9 @@
  to obtain "machine credentials".
 -The default value is "/etc/krb5.keytab".
 +The default value is "/var/lib/kerberos/krb5.keytab".
+ .IP
  Previous versions of
  .B rpc.gssd
- used only "nfs/*" keys found within the keytab.
 --- nfs-utils-1.0.12/utils/gssd/svcgssd.c~	2007-02-27 05:55:40.000000000 +0100
 +++ nfs-utils-1.0.12/utils/gssd/svcgssd.c	2007-03-31 01:44:28.936896066 +0200
 @@ -232,7 +232,7 @@
