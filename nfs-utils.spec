@@ -13,12 +13,11 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.0
-%define	_pre	rc2
-Release:	0.%{_pre}.1
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}-%{_pre}.tar.gz
-# Source0-md5:	79125d8c058122611d1ef267c6498c4b
+Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
+# Source0-md5:	df88c6fe88a26f9797e74cb2d3291a2a
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -42,6 +41,7 @@ Patch5:		%{name}-mountd.patch
 Patch6:		%{name}-idmapd.conf.patch
 Patch7:		%{name}-keytab-path.patch
 Patch8:		%{name}-subsys.patch
+Patch9:		%{name}-mountd-leak.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -158,7 +158,7 @@ Common programs for NFS.
 Wspólne programy do obsługi NFS.
 
 %prep
-%setup -q -a1 -n %{name}-%{version}-%{_pre}
+%setup -q -a1
 %patch0 -p1
 %patch1 -p1
 # severly out of date
@@ -169,6 +169,7 @@ Wspólne programy do obsługi NFS.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 %build
 %configure \
