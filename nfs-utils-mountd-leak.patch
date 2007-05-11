@@ -1,0 +1,26 @@
+commit 1cb4a250fb9f0a8ba34befa47d951430e444a58e
+Author: Steinar H. Gunderson <sesse@debian.org>
+Date:   Fri May 11 21:02:09 2007 +1000
+
+    Memory leak in mountd
+    
+    In client_compose(), free() the hostent structure returned before
+    exiting. Normally, gethostbyaddr() returns a pointer to a static
+    struct, but this hostent comes from either get_reliable_hostbyaddr() or
+    get_hostent(), both which return a pointer they privately xmalloc()ed,
+    which thus can and should be free()d.
+    
+    Signed-Off-By: Steinar H. Gunderson <sesse@debian.org>
+
+diff --git a/support/export/client.c b/support/export/client.c
+index 686c744..19b53aa 100644
+--- a/support/export/client.c
++++ b/support/export/client.c
+@@ -262,6 +262,7 @@ client_compose(struct in_addr addr)
+ 			name = add_name(name, clp->m_hostname);
+ 		}
+ 	}
++	free(he);
+ 	return name;
+ }
+ 
