@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.0
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
@@ -32,8 +32,7 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
-# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
-#Patch2:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
+# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.1.0-1/nfs-utils-1.1.0-CITI_NFS4_ALL-1.dif
 Patch2:		%{name}-CITI_NFS4.patch
 Patch3:		%{name}-statdpath.patch
 Patch4:		%{name}-mount-fake.patch
@@ -161,8 +160,7 @@ Wspólne programy do obsługi NFS.
 %setup -q -a1
 %patch0 -p1
 %patch1 -p1
-# severly out of date
-#%patch2 -p1
+%patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
