@@ -223,12 +223,13 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,svcgssd,gssd,idmapd,sm-notify}.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,sm-notify}.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 echo ".so sm-notify.8" > $RPM_BUILD_ROOT%{_mandir}/man8/rpc.sm-notify.8
 %if %{with nfs4}
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{svcgssd,gssd,idmapd.8
 echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
 echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
