@@ -229,7 +229,7 @@ echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 echo ".so sm-notify.8" > $RPM_BUILD_ROOT%{_mandir}/man8/rpc.sm-notify.8
 %if %{with nfs4}
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{svcgssd,gssd,idmapd.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{svcgssd,gssd,idmapd}.8
 echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
 echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
