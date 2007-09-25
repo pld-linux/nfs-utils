@@ -43,12 +43,12 @@ start() {
 		# starting idmapd on NFS server
 		if [ -e "$RUNLEVELDIR"/S*nfs ]; then
 			if ! grep -q nfsd /proc/mounts ; then
-				modprobe -s nfsd > /dev/null 2>&1
+				modprobe nfsd > /dev/null 2>&1
 				run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 			fi
 		fi
 		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe -s sunrpc >/dev/null 2>&1
+			modprobe sunrpc >/dev/null 2>&1
 			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
 				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 		fi

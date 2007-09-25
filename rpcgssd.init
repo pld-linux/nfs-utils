@@ -41,7 +41,7 @@ start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/gssd ]; then
 		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe -s sunrpc >/dev/null 2>&1
+			modprobe sunrpc >/dev/null 2>&1
 			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
 				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 		fi

@@ -39,7 +39,7 @@ start() {
 	if [ ! -f /var/lock/subsys/svcgssd ]; then
 		# We need /proc/fs/nfsd mounted before starting svcgssd
 		if ! grep -q nfsd /proc/mounts ; then
-			modprobe -s nfsd > /dev/null 2>&1
+			modprobe nfsd > /dev/null 2>&1
 			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
 		fi
 		# Load rpcsec modules
