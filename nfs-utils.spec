@@ -52,7 +52,7 @@ BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libgssglue-devel >= 0.1
 BuildRequires:	libnfsidmap-devel
-BuildRequires:	librpcsecgss-devel >= 0.11-3
+BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
@@ -173,6 +173,7 @@ Wspólne programy do obsługi NFS.
 %patch10 -p1
 
 %build
+%{__autoconf}
 %configure \
 %if %{with nfs4}
 	--enable-gss \
