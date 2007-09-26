@@ -1,0 +1,155 @@
+commit e916e9e47a6a932872641d0da1f7bd4927b63fee
+Author: Steve Dickson <steved@redhat.com>
+Date:   Mon Aug 13 11:04:02 2007 -0400
+
+    Adds support for the 'nosharecache' mount option to nfs-utils.
+    
+    Signed-off-by: Steve Dickson <steved@redhat.com>
+
+diff --git a/utils/mount/nfs.man b/utils/mount/nfs.man
+index 673556c..e66daba 100644
+--- a/utils/mount/nfs.man
++++ b/utils/mount/nfs.man
+@@ -288,6 +288,23 @@ Mount the NFS filesystem using the UDP protocol.
+ Disables NFSv3 READDIRPLUS RPCs. Use this option when
+ mounting servers that don't support or have broken
+ READDIRPLUS implementations.
++.TP 1.5i
++.I nosharecache
++As of kernel 2.6.18, it is no longer possible to mount the same
++same filesystem with different mount options to a new mountpoint.
++It was deemed unsafe to do so, since cached data cannot be shared
++between the two mountpoints. In consequence, files or directories
++that were common to both mountpoint subtrees could often be seen to
++be out of sync following an update.
++.br
++This option allows administrators to select the pre-2.6.18 behaviour,
++permitting the same filesystem to be mounted with different mount
++options.
++.br
++.B Beware:
++Use of this option is not recommended unless you are certain that there
++are no hard links or subtrees of this mountpoint that are mounted
++elsewhere.
+ .P
+ All of the non-value options have corresponding nooption forms.
+ For example, nointr means don't allow file operations to be
+@@ -444,6 +461,23 @@ This extracts a
+ server performance penalty but it allows two different NFS clients
+ to get reasonable good results when both clients are actively
+ writing to common filesystem on the server.
++.TP 1.5i
++.I nosharecache
++As of kernel 2.6.18, it is no longer possible to mount the same
++same filesystem with different mount options to a new mountpoint.
++It was deemed unsafe to do so, since cached data cannot be shared
++between the two mountpoints. In consequence, files or directories
++that were common to both mountpoint subtrees could often be seen to
++be out of sync following an update.
++.br
++This option allows administrators to select the pre-2.6.18 behaviour,
++permitting the same filesystem to be mounted with different mount
++options.
++.br
++.B Beware:
++Use of this option is not recommended unless you are certain that there
++are no hard links or subtrees of this mountpoint that are mounted
++elsewhere.
+ .P
+ All of the non-value options have corresponding nooption forms.
+ For example, nointr means don't allow file operations to be
+diff --git a/utils/mount/nfs4_mount.h b/utils/mount/nfs4_mount.h
+index 74c9b95..2fcca6d 100644
+--- a/utils/mount/nfs4_mount.h
++++ b/utils/mount/nfs4_mount.h
+@@ -65,6 +65,7 @@ struct nfs4_mount_data {
+ #define NFS4_MOUNT_NOCTO	0x0010	/* 1 */
+ #define NFS4_MOUNT_NOAC		0x0020	/* 1 */
+ #define NFS4_MOUNT_STRICTLOCK	0x1000	/* 1 */
++#define NFS4_MOUNT_UNSHARED	0x8000	/* 5 */
+ #define NFS4_MOUNT_FLAGMASK	0xFFFF
+ 
+ /* pseudoflavors: */
+diff --git a/utils/mount/nfs4mount.c b/utils/mount/nfs4mount.c
+index 2a58d0a..0376f32 100644
+--- a/utils/mount/nfs4mount.c
++++ b/utils/mount/nfs4mount.c
+@@ -201,7 +201,7 @@ int nfs4mount(const char *spec, const char *node, int *flags,
+ 	char *s;
+ 	int val;
+ 	int bg, soft, intr;
+-	int nocto, noac;
++	int nocto, noac, unshared;
+ 	int retry;
+ 	int retval;
+ 	time_t timeout, t;
+@@ -252,6 +252,7 @@ int nfs4mount(const char *spec, const char *node, int *flags,
+ 	intr = NFS4_MOUNT_INTR;
+ 	nocto = 0;
+ 	noac = 0;
++	unshared = 0;
+ 	retry = 10000;		/* 10000 minutes ~ 1 week */
+ 
+ 	/*
+@@ -336,6 +337,8 @@ int nfs4mount(const char *spec, const char *node, int *flags,
+ 				nocto = !val;
+ 			else if (!strcmp(opt, "ac"))
+ 				noac = !val;
++			else if (!strcmp(opt, "sharecache"))
++				unshared = !val;
+ 			else if (!sloppy) {
+ 				printf(_("unknown nfs mount option: "
+ 					 "%s%s\n"), val ? "" : "no", opt);
+@@ -347,7 +350,8 @@ int nfs4mount(const char *spec, const char *node, int *flags,
+ 	data.flags = (soft ? NFS4_MOUNT_SOFT : 0)
+ 		| (intr ? NFS4_MOUNT_INTR : 0)
+ 		| (nocto ? NFS4_MOUNT_NOCTO : 0)
+-		| (noac ? NFS4_MOUNT_NOAC : 0);
++		| (noac ? NFS4_MOUNT_NOAC : 0)
++		| (unshared ? NFS4_MOUNT_UNSHARED : 0);
+ 
+ 	/*
+ 	 * Give a warning if the rpc.idmapd daemon is not running
+@@ -388,11 +392,13 @@ int nfs4mount(const char *spec, const char *node, int *flags,
+ 	       data.acregmin, data.acregmax, data.acdirmin, data.acdirmax);
+ 	printf("port = %d, bg = %d, retry = %d, flags = %.8x\n",
+ 	       ntohs(server_addr.sin_port), bg, retry, data.flags);
+-	printf("soft = %d, intr = %d, nocto = %d, noac = %d\n",
++	printf("soft = %d, intr = %d, nocto = %d, noac = %d, "
++	       "nosharecache = %d\n",
+ 	       (data.flags & NFS4_MOUNT_SOFT) != 0,
+ 	       (data.flags & NFS4_MOUNT_INTR) != 0,
+ 	       (data.flags & NFS4_MOUNT_NOCTO) != 0,
+-	       (data.flags & NFS4_MOUNT_NOAC) != 0);
++	       (data.flags & NFS4_MOUNT_NOAC) != 0,
++	       (data.flags & NFS4_MOUNT_UNSHARED) != 0);
+ 
+ 	if (num_flavour > 0) {
+ 		int pf_cnt, i;
+diff --git a/utils/mount/nfs_mount.h b/utils/mount/nfs_mount.h
+index 4a061d8..50ce2a8 100644
+--- a/utils/mount/nfs_mount.h
++++ b/utils/mount/nfs_mount.h
+@@ -64,6 +64,7 @@ struct nfs_mount_data {
+ #define NFS_MOUNT_NOACL     0x0800  /* 4 */
+ #define NFS_MOUNT_SECFLAVOUR	0x2000	/* 5 */
+ #define NFS_MOUNT_NORDIRPLUS	0x4000	/* 5 */
++#define NFS_MOUNT_UNSHARED	0x8000	/* 5 */
+ 
+ /* security pseudoflavors */
+ 
+diff --git a/utils/mount/nfsmount.c b/utils/mount/nfsmount.c
+index 815064a..f21aaff 100644
+--- a/utils/mount/nfsmount.c
++++ b/utils/mount/nfsmount.c
+@@ -804,6 +804,10 @@ parse_options(char *old_opts, struct nfs_mount_data *data,
+ 				data->flags &= ~NFS_MOUNT_NORDIRPLUS;
+ 				if (!val)
+ 					data->flags |= NFS_MOUNT_NORDIRPLUS;
++			} else if (!strcmp(opt, "sharecache")) {
++				data->flags &= ~NFS_MOUNT_UNSHARED;
++				if (!val)
++					data->flags |= NFS_MOUNT_UNSHARED;
+ #endif
+ 			} else {
+ 			bad_option:
