@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.0
-Release:	5
+Release:	6
 License:	GPL
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
@@ -42,6 +42,7 @@ Patch7:		%{name}-keytab-path.patch
 Patch8:		%{name}-subsys.patch
 Patch9:		%{name}-mountd-leak.patch
 Patch10:	%{name}-libgssglue.patch
+Patch11:	%{name}-mount-nosharecache.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -171,6 +172,7 @@ Wspólne programy do obsługi NFS.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %build
 %{__autoconf}
