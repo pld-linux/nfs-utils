@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.1.0
-Release:	6
+Version:	1.1.1
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	df88c6fe88a26f9797e74cb2d3291a2a
+# Source0-md5:	407785488241f9db67b1874e3f36370e
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -32,17 +32,13 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
-# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.1.0-1/nfs-utils-1.1.0-CITI_NFS4_ALL-1.dif
+# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.1.1-1/nfs-utils-1.1.1-CITI_NFS4_ALL-1.dif
 Patch2:		%{name}-CITI_NFS4.patch
 Patch3:		%{name}-statdpath.patch
-Patch4:		%{name}-mount-fake.patch
-Patch5:		%{name}-mountd.patch
-Patch6:		%{name}-idmapd.conf.patch
-Patch7:		%{name}-keytab-path.patch
-Patch8:		%{name}-subsys.patch
-Patch9:		%{name}-mountd-leak.patch
-Patch10:	%{name}-libgssglue.patch
-Patch11:	%{name}-mount-nosharecache.patch
+Patch4:		%{name}-mountd.patch
+Patch5:		%{name}-idmapd.conf.patch
+Patch6:		%{name}-keytab-path.patch
+Patch7:		%{name}-subsys.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -169,10 +165,6 @@ Wspólne programy do obsługi NFS.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
 
 %build
 %{__autoconf}
@@ -186,7 +178,6 @@ Wspólne programy do obsługi NFS.
 	--disable-nfsv4 \
 %endif
 	%{?with_mount:--enable-mount} \
-	--disable-rquotad \
 	--enable-nfsv3 \
 	--enable-secure-statd \
 	--with-statedir=/var/lib/nfs \
