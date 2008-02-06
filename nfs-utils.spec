@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.1
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
@@ -309,13 +309,13 @@ if [ "$1" = "0" ]; then
 fi
 %endif
 
-%triggerpostun -- %{name} <= 1.1.0-0.rc1.1
+%triggerpostun -- %{name} < 1.1.0-0.rc1.1
 /sbin/chkconfig nfs reset
 %if %{with nfs4}
 /sbin/chkconfig svcgssd reset
 %endif
 
-%triggerpostun lock -- %{name}-lock <= 1.1.0-0.rc1.1
+%triggerpostun lock -- %{name}-lock < 1.1.0-0.rc1.1
 /sbin/chkconfig nfslock reset
 
 %triggerpostun clients -- %{name}-clients < 1.1.0-0.rc1.1
@@ -329,7 +329,7 @@ fi
 %endif
 
 %if %{with nfs4}
-%triggerpostun common -- %{name}-common <= 1.1.0-0.rc1.1
+%triggerpostun common -- %{name}-common < 1.1.0-0.rc1.1
 /sbin/chkconfig idmapd reset
 %endif
 
