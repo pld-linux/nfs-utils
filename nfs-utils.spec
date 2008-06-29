@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.1.1
-Release:	3
+Release:	4
 License:	GPL
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
@@ -167,7 +167,11 @@ Wspólne programy do obsługi NFS.
 %patch7 -p1
 
 %build
+%{__libtoolize}
+%{__aclocal} -I aclocal
 %{__autoconf}
+%{__autoheader}
+%{__automake}
 %configure \
 %if %{with nfs4}
 	--enable-gss \
