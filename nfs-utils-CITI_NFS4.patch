@@ -2,278 +2,72 @@
 
 The complete set of CITI nfs-utils patches rolled into one patch.
 
-Changes since 1.1.0-CITI_NFS4_ALL-2:
+Changes since 1.1.1-CITI_NFS4_ALL-1:
 
- * Update to nfs-utils-1.1.1
+ * Update to nfs-utils-1.1.2
 
- * Patch from Steve Langasek <vorlon@debian.org> and
-   Steinar H. Gunderson <sesse@debian.org> fixing segfault problem on
-   64-bit platforms introduced by the xlog cleanup (re-using va_list).
+ * Patch from Olga Kornievskaia to read port number from the info
+   file to support non-standard ports.
 
+ * Patch to include the "other" DES encryption types when negotiating
+   a context.
 
+ * Patch originally from Vince Busam <vbusam@google.com> to support looking
+   in multiple directories for credential caches to use when creating
+   a context.
 
+ * A TEMPORARY patch to read a krb5_info file to determine which
+   encryption types the kernel gss_krb5 code supports.
+
+ * A patch to send down a new context format for encryption types
+   other than DES.
 
 ---
 
--nfs-utils-1.1.1-kwc/aclocal.m4                  |  569 +++--------
--nfs-utils-1.1.1-kwc/config.guess                |   34 
--nfs-utils-1.1.1-kwc/config.sub                  |   24 
--nfs-utils-1.1.1-kwc/configure                   | 1195 ++++++++++--------------
--nfs-utils-1.1.1-kwc/ltmain.sh                   |  147 +-
- nfs-utils-1.1.1-kwc/support/nfs/xlog.c          |    8 
- nfs-utils-1.1.1-kwc/utils/gssd/context.h        |    6 
- nfs-utils-1.1.1-kwc/utils/gssd/context_lucid.c  |  391 +++++++
- nfs-utils-1.1.1-kwc/utils/gssd/context_mit.c    |  256 ++++-
- nfs-utils-1.1.1-kwc/utils/gssd/gssd.c           |    8 
- nfs-utils-1.1.1-kwc/utils/gssd/gssd.h           |    3 
- nfs-utils-1.1.1-kwc/utils/gssd/gssd_main_loop.c |   20 
- nfs-utils-1.1.1-kwc/utils/gssd/gssd_proc.c      |  119 +-
- nfs-utils-1.1.1-kwc/utils/gssd/krb5_util.c      |  231 +++-
- nfs-utils-1.1.1-kwc/utils/gssd/krb5_util.h      |    2 
- nfs-utils-1.1.1-kwc/utils/gssd/svcgssd_proc.c   |   84 +
- 16 files changed, 1786 insertions(+), 1311 deletions(-)
+ utils/gssd/context.h       |    6 -
+ utils/gssd/context_lucid.c |  132 +++++++++++++++++++---
+ utils/gssd/context_mit.c   |  134 +++++++++++++++++-----
+ utils/gssd/err_util.c      |    5 
+ utils/gssd/err_util.h      |    1 
+ utils/gssd/gssd.c          |   13 ++
+ utils/gssd/gssd.h          |    4 
+ utils/gssd/gssd.man        |    6 -
+ utils/gssd/gssd_proc.c     |   25 +++-
+ utils/gssd/krb5_util.c     |  263 ++++++++++++++++++++++++++++++++++-----------
+ utils/gssd/krb5_util.h     |    5 
+ 11 files changed, 473 insertions(+), 121 deletions(-)
 
-diff -puN support/nfs/xlog.c~CITI_NFS4_ALL support/nfs/xlog.c
---- nfs-utils-1.1.1/support/nfs/xlog.c~CITI_NFS4_ALL	2007-10-23 14:17:18.316202000 -0400
-+++ nfs-utils-1.1.1-kwc/support/nfs/xlog.c	2007-10-23 14:17:18.385133000 -0400
-@@ -133,9 +133,13 @@ xlog_enabled(int fac)
- void
- xlog_backend(int kind, const char *fmt, va_list args)
- {
-+	va_list args2;
-+
- 	if (!(kind & (L_ALL)) && !(logging && (kind & logmask)))
- 		return;
+diff -puN utils/gssd/gssd.h~CITI_NFS4_ALL utils/gssd/gssd.h
+--- nfs-utils-1.1.2/utils/gssd/gssd.h~CITI_NFS4_ALL	2008-04-30 14:49:15.862200000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/gssd.h	2008-04-30 14:49:17.073538000 -0400
+@@ -50,6 +50,7 @@
+ #define GSSD_DEFAULT_KEYTAB_FILE		"/etc/krb5.keytab"
+ #define GSSD_SERVICE_NAME			"nfs"
+ #define GSSD_SERVICE_NAME_LEN			3
++#define GSSD_MAX_CCACHE_SEARCH			16
  
-+	va_copy(args2, args);
-+
- 	if (log_syslog) {
- 		switch (kind) {
- 		case L_FATAL:
-@@ -172,10 +176,12 @@ xlog_backend(int kind, const char *fmt, 
- 		fprintf(stderr, "%s: ", log_name);
- #endif
+ /*
+  * The gss mechanisms that we can handle
+@@ -61,7 +62,7 @@ enum {AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUT
+ extern char			pipefs_dir[PATH_MAX];
+ extern char			pipefs_nfsdir[PATH_MAX];
+ extern char			keytabfile[PATH_MAX];
+-extern char			ccachedir[PATH_MAX];
++extern char			*ccachesearch[];
+ extern int			use_memcache;
+ extern int			root_uses_machine_creds;
  
--		vfprintf(stderr, fmt, args);
-+		vfprintf(stderr, fmt, args2);
- 		fprintf(stderr, "\n");
- 	}
- 
-+	va_end(args2);
-+
- 	if (kind == L_FATAL)
- 		exit(1);
- }
-diff -puN utils/gssd/svcgssd_proc.c~CITI_NFS4_ALL utils/gssd/svcgssd_proc.c
---- nfs-utils-1.1.1/utils/gssd/svcgssd_proc.c~CITI_NFS4_ALL	2007-10-23 14:17:18.488030000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/svcgssd_proc.c	2007-10-23 14:17:18.505013000 -0400
-@@ -51,6 +51,7 @@
- #include "gss_util.h"
- #include "err_util.h"
- #include "context.h"
-+#include "gss_oids.h"
- 
- extern char * mech2file(gss_OID mech);
- #define SVCGSSD_CONTEXT_CHANNEL "/proc/net/rpc/auth.rpcsec.context/channel"
-@@ -66,8 +67,30 @@ struct svc_cred {
+@@ -80,6 +81,7 @@ struct clnt_info {
+ 	int			krb5_poll_index;
+ 	int			spkm3_fd;
+ 	int			spkm3_poll_index;
++	int			port;
  };
  
- static int
-+get_krb5_hostbased_name (gss_buffer_desc name, char **hostbased_name)
-+{
-+	char *p, *sname = NULL;
-+	if (strchr(name.value, '@') && strchr(name.value, '/')) {
-+		if (!(sname = calloc(name.length, 1))) {
-+			printerr(0, "ERROR: get_krb5_hostbased_name failed "
-+				 "to allocate %d bytes\n", name.length);
-+			goto out_err;
-+		}
-+		/* read in name and instance and replace '/' with '@' */
-+		sscanf(name.value, "%[^@]", sname);
-+		p = strchr(sname, '/');
-+		p[0] = '@';
-+	}
-+	*hostbased_name = sname;
-+	return 0;
-+out_err:
-+	return -1;
-+}
-+
-+static int
- do_svc_downcall(gss_buffer_desc *out_handle, struct svc_cred *cred,
--		gss_OID mech, gss_buffer_desc *context_token)
-+		gss_OID mech, gss_buffer_desc *context_token,
-+		char *client_name)
- {
- 	FILE *f;
- 	int i;
-@@ -91,8 +114,9 @@ do_svc_downcall(gss_buffer_desc *out_han
- 	qword_printint(f, cred->cr_gid);
- 	qword_printint(f, cred->cr_ngroups);
- 	printerr(2, "mech: %s, hndl len: %d, ctx len %d, timeout: %d, "
--		 "uid: %d, gid: %d, num aux grps: %d:\n",
-+		 "clnt: %s, uid: %d, gid: %d, num aux grps: %d:\n",
- 		 fname, out_handle->length, context_token->length, 0x7fffffff,
-+		 client_name ? client_name : "<null>",
- 		 cred->cr_uid, cred->cr_gid, cred->cr_ngroups);
- 	for (i=0; i < cred->cr_ngroups; i++) {
- 		qword_printint(f, cred->cr_groups[i]);
-@@ -100,6 +124,8 @@ do_svc_downcall(gss_buffer_desc *out_han
- 	}
- 	qword_print(f, fname);
- 	qword_printhex(f, context_token->value, context_token->length);
-+	if (client_name)
-+		qword_print(f, client_name);
- 	err = qword_eol(f);
- 	fclose(f);
- 	return err;
-@@ -294,6 +320,45 @@ print_hexl(const char *description, unsi
- }
- #endif
- 
-+static int
-+get_hostbased_client_name(gss_name_t client_name, gss_OID mech,
-+			  char **hostbased_name)
-+{
-+	u_int32_t	maj_stat, min_stat;
-+	gss_buffer_desc	name;
-+	gss_OID		name_type = GSS_C_NO_OID;
-+	char		*cname;
-+	int		res = -1;
-+
-+	/* get the client name and for service principals only
-+	 * add it after the context (service name used for
-+	 * authenticating callbacks) */
-+	maj_stat = gss_display_name(&min_stat, client_name, &name, &name_type);
-+	if (maj_stat != GSS_S_COMPLETE) {
-+		pgsserr("get_hostbased_client_name: gss_display_name",
-+			maj_stat, min_stat, mech);
-+		goto out_err;
-+	}
-+	if (name.length >= 0xffff) { /* be certain name.length+1 doesn't overflow */
-+		printerr(0, "ERROR: get_hostbased_client_name: "
-+			 "received gss_name is too long (%d bytes)\n",
-+			 name.length);
-+		goto out_rel_buf;
-+	}
-+	/* For Kerberos, transform the NT_KRB5_PRINCIPAL to
-+	 * NT_HOSTBASED_SERVICE */
-+	if (g_OID_equal(&krb5oid, mech)) {
-+		if (!get_krb5_hostbased_name(name, &cname))
-+			*hostbased_name = cname;
-+	}
-+	/* For SPKM3, do ??? */
-+	res = 0;
-+out_rel_buf:
-+	gss_release_buffer(&min_stat, &name);
-+out_err:
-+	return res;
-+}
-+
- void
- handle_nullreq(FILE *f) {
- 	/* XXX initialize to a random integer to reduce chances of unnecessary
-@@ -320,6 +385,7 @@ handle_nullreq(FILE *f) {
- 	static char		*lbuf = NULL;
- 	static int		lbuflen = 0;
- 	static char		*cp;
-+	char			*hostbased_name = NULL;
- 
- 	printerr(1, "handling null request\n");
- 
-@@ -385,8 +451,12 @@ handle_nullreq(FILE *f) {
- 		gss_release_name(&ignore_min_stat, &client_name);
- 		goto out_err;
- 	}
--	gss_release_name(&ignore_min_stat, &client_name);
--
-+	if (get_hostbased_client_name(client_name, mech, &hostbased_name)) {
-+		/* get_hostbased_client_name() prints error msg */
-+		maj_stat = GSS_S_BAD_NAME; /* XXX ? */
-+		gss_release_name(&ignore_min_stat, &client_name);
-+		goto out_err;
-+	}
- 
- 	/* Context complete. Pass handle_seq in out_handle to use
- 	 * for context lookup in the kernel. */
-@@ -400,12 +470,14 @@ handle_nullreq(FILE *f) {
- 		printerr(0, "WARNING: handle_nullreq: "
- 			    "serialize_context_for_kernel failed\n");
- 		maj_stat = GSS_S_FAILURE;
-+		gss_release_name(&ignore_min_stat, &client_name);
- 		goto out_err;
- 	}
- 	/* We no longer need the gss context */
- 	gss_delete_sec_context(&ignore_min_stat, &ctx, &ignore_out_tok);
- 
--	do_svc_downcall(&out_handle, &cred, mech, &ctx_token);
-+	do_svc_downcall(&out_handle, &cred, mech, &ctx_token, hostbased_name);
-+	gss_release_name(&ignore_min_stat, &client_name);
- continue_needed:
- 	send_response(f, &in_handle, &in_tok, maj_stat, min_stat,
- 			&out_handle, &out_tok);
-@@ -414,6 +486,8 @@ out:
- 		free(ctx_token.value);
- 	if (out_tok.value != NULL)
- 		gss_release_buffer(&ignore_min_stat, &out_tok);
-+	if (hostbased_name)
-+		free(hostbased_name);
- 	printerr(1, "finished handling null request\n");
- 	return;
- 
-diff -puN utils/gssd/gssd_main_loop.c~CITI_NFS4_ALL utils/gssd/gssd_main_loop.c
---- nfs-utils-1.1.1/utils/gssd/gssd_main_loop.c~CITI_NFS4_ALL	2007-10-23 14:17:18.606911000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/gssd_main_loop.c	2007-10-23 14:17:18.878793000 -0400
-@@ -98,7 +98,7 @@ gssd_run()
- {
- 	int			ret;
- 	struct sigaction	dn_act;
--	int			fd;
-+	int			fd, fd_cb;
- 
- 	/* Taken from linux/Documentation/dnotify.txt: */
- 	dn_act.sa_sigaction = dir_notify_handler;
-@@ -114,6 +114,19 @@ gssd_run()
- 	fcntl(fd, F_SETSIG, DNOTIFY_SIGNAL);
- 	fcntl(fd, F_NOTIFY, DN_CREATE|DN_DELETE|DN_MODIFY|DN_MULTISHOT);
- 
-+	if ((fd_cb = open(pipefs_nfscbdir, O_RDONLY)) == -1) {
-+		/* could be an older kernel or a newer one doing NFS 4.1 */
-+		if (errno != ENOENT)
-+			printerr(0, "WARNING: failed to open %s: %s\n",
-+				 pipefs_nfscbdir, strerror(errno));
-+		/* ignore processing callback directory */
-+		memset(pipefs_nfscbdir, '\0', sizeof(pipefs_nfscbdir));
-+	} else {
-+		fcntl(fd_cb, F_SETSIG, DNOTIFY_SIGNAL);
-+		fcntl(fd_cb, F_NOTIFY,
-+			DN_CREATE|DN_DELETE|DN_MODIFY|DN_MULTISHOT);
-+	}
-+
- 	init_client_list();
- 
- 	printerr(1, "beginning poll\n");
-@@ -121,8 +134,7 @@ gssd_run()
- 		while (dir_changed) {
- 			dir_changed = 0;
- 			if (update_client_list()) {
--				printerr(0, "ERROR: couldn't update "
--					 "client list\n");
-+				/* Error msg is already printed */
- 				exit(1);
- 			}
- 		}
-@@ -141,5 +153,7 @@ gssd_run()
- 		}
- 	}
- 	close(fd);
-+	if (fd_cb != -1)
-+		close(fd_cb);
- 	return;
- }
+ void init_client_list(void);
 diff -puN utils/gssd/gssd_proc.c~CITI_NFS4_ALL utils/gssd/gssd_proc.c
---- nfs-utils-1.1.1/utils/gssd/gssd_proc.c~CITI_NFS4_ALL	2007-10-23 14:17:18.662855000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/gssd_proc.c	2007-10-23 14:17:19.021793000 -0400
+--- nfs-utils-1.1.2/utils/gssd/gssd_proc.c~CITI_NFS4_ALL	2008-04-30 14:49:15.986076000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/gssd_proc.c	2008-04-30 14:49:17.167444000 -0400
 @@ -102,7 +102,7 @@ int pollsize;  /* the size of pollaray (
  /* XXX buffer problems: */
  static int
@@ -283,90 +77,36 @@ diff -puN utils/gssd/gssd_proc.c~CITI_NFS4_ALL utils/gssd/gssd_proc.c
  #define INFOBUFLEN 256
  	char		buf[INFOBUFLEN];
  	static char	dummy[128];
-@@ -112,6 +112,9 @@ read_service_info(char *info_file_name, 
+@@ -112,6 +112,8 @@ read_service_info(char *info_file_name, 
  	char		program[16];
  	char		version[16];
  	char		protoname[16];
-+	char		princname[128];
 +	char		cb_port[128];
 +	char		*p;
  	in_addr_t	inaddr;
  	int		fd = -1;
  	struct hostent	*ent = NULL;
-@@ -136,19 +139,33 @@ read_service_info(char *info_file_name, 
- 		   service, program, version,
- 		   address,
- 		   protoname);
--
- 	if (numfields == 5) {
- 		strcpy(protoname, "tcp");
- 	} else if (numfields != 6) {
+@@ -143,6 +145,10 @@ read_service_info(char *info_file_name, 
  		goto fail;
  	}
  
-+	princname[0] = '\0';
-+	if ((p = strstr(buf, "principal name:")) != NULL)
-+		sscanf(p, "principal name: %127s\n", princname);
 +	cb_port[0] = '\0';
 +	if ((p = strstr(buf, "port")) != NULL)
 +		sscanf(p, "port: %127s\n", cb_port);
 +
  	/* check service, program, and version */
--	if(memcmp(service, "nfs", 3)) return -1;
-+	if (memcmp(service, "nfs", 3))
-+		return -1;
+ 	if(memcmp(service, "nfs", 3)) return -1;
  	*prog = atoi(program + 1); /* skip open paren */
- 	*vers = atoi(version);
--	if((*prog != 100003) || ((*vers != 2) && (*vers != 3) && (*vers != 4)))
--		goto fail;
-+
-+	if (strlen(service) == 3 && !memcmp(service, "nfs", 3)) {
-+		if ((*prog != 100003) || ((*vers != 2) && (*vers != 3) &&
-+		    (*vers != 4)))
-+			goto fail;
-+	} else if (!memcmp(service, "nfs4_cb", 7)) {
-+		if (*vers != 1)
-+			goto fail;
-+	}
- 
- 	/* create service name */
- 	inaddr = inet_addr(address);
-@@ -159,7 +176,12 @@ read_service_info(char *info_file_name, 
- 	if (!(*servername = calloc(strlen(ent->h_name) + 1, 1)))
- 		goto fail;
- 	memcpy(*servername, ent->h_name, strlen(ent->h_name));
--	snprintf(buf, INFOBUFLEN, "%s@%s", service, ent->h_name);
-+	if (princname[0] != '\0')
-+		printerr(2, "info file contains princname=%s\n", princname);
-+
-+	snprintf(buf, INFOBUFLEN, "nfs@%s", ent->h_name);
-+	if (cb_port[0] != '\0')
-+		*port = atoi(cb_port);
+@@ -163,6 +169,8 @@ read_service_info(char *info_file_name, 
  	if (!(*servicename = calloc(strlen(buf) + 1, 1)))
  		goto fail;
  	memcpy(*servicename, buf, strlen(buf));
-@@ -219,9 +241,9 @@ out:
- static int
- process_clnt_dir_files(struct clnt_info * clp)
- {
--	char	kname[32];
--	char	sname[32];
--	char	info_file_name[32];
-+	char	kname[PATH_MAX];
-+	char	sname[PATH_MAX];
-+	char	info_file_name[PATH_MAX];
++	if (cb_port[0] != '\0')
++		*port = atoi(cb_port);
  
- 	if (clp->krb5_fd == -1) {
- 		snprintf(kname, sizeof(kname), "%s/krb5", clp->dirname);
-@@ -231,14 +253,14 @@ process_clnt_dir_files(struct clnt_info 
- 		snprintf(sname, sizeof(sname), "%s/spkm3", clp->dirname);
- 		clp->spkm3_fd = open(sname, O_RDWR);
- 	}
--	if((clp->krb5_fd == -1) && (clp->spkm3_fd == -1))
-+	if ((clp->krb5_fd == -1) && (clp->spkm3_fd == -1))
- 		return -1;
- 	snprintf(info_file_name, sizeof(info_file_name), "%s/info",
- 			clp->dirname);
+ 	if (!(*protocol = strdup(protoname)))
+ 		goto fail;
+@@ -238,7 +246,7 @@ process_clnt_dir_files(struct clnt_info 
  	if ((clp->servicename == NULL) &&
  	     read_service_info(info_file_name, &clp->servicename,
  				&clp->servername, &clp->prog, &clp->vers,
@@ -375,141 +115,7 @@ diff -puN utils/gssd/gssd_proc.c~CITI_NFS4_ALL utils/gssd/gssd_proc.c
  		return -1;
  	return 0;
  }
-@@ -288,17 +310,17 @@ insert_clnt_poll(struct clnt_info *clp)
- }
- 
- static void
--process_clnt_dir(char *dir)
-+process_clnt_dir(char *dir, char *pdir)
- {
- 	struct clnt_info *	clp;
- 
- 	if (!(clp = insert_new_clnt()))
- 		goto fail_destroy_client;
- 
--	if (!(clp->dirname = calloc(strlen(dir) + 1, 1))) {
-+	if (!(clp->dirname = calloc(strlen(dir) + strlen(pdir) + 1, 1))) {
- 		goto fail_destroy_client;
- 	}
--	memcpy(clp->dirname, dir, strlen(dir));
-+	sprintf(clp->dirname, "%s/%s", pdir, dir);
- 	if ((clp->dir_fd = open(clp->dirname, O_RDONLY)) == -1) {
- 		printerr(0, "ERROR: can't open %s: %s\n",
- 			 clp->dirname, strerror(errno));
-@@ -342,16 +364,24 @@ init_client_list(void)
-  * directories, since the DNOTIFY could have been in there.
-  */
- static void
--update_old_clients(struct dirent **namelist, int size)
-+update_old_clients(struct dirent **namelist, int size, char *pdir)
- {
- 	struct clnt_info *clp;
- 	void *saveprev;
- 	int i, stillhere;
-+	char fname[PATH_MAX];
- 
- 	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
-+		/* only compare entries in the global list that are from the
-+		 * same pipefs parent directory as "pdir"
-+		 */
-+		if (strncmp(clp->dirname, pdir, strlen(pdir)) != 0) break;
-+
- 		stillhere = 0;
- 		for (i=0; i < size; i++) {
--			if (!strcmp(clp->dirname, namelist[i]->d_name)) {
-+			snprintf(fname, sizeof(fname), "%s/%s",
-+				 pdir, namelist[i]->d_name);
-+			if (strcmp(clp->dirname, fname) == 0) {
- 				stillhere = 1;
- 				break;
- 			}
-@@ -372,47 +402,72 @@ update_old_clients(struct dirent **namel
- 
- /* Search for a client by directory name, return 1 if found, 0 otherwise */
- static int
--find_client(char *dirname)
-+find_client(char *dirname, char *pdir)
- {
- 	struct clnt_info	*clp;
-+	char fname[PATH_MAX];
- 
--	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next)
--		if (!strcmp(clp->dirname, dirname))
-+	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
-+		snprintf(fname, sizeof(fname), "%s/%s", pdir, dirname);
-+		if (strcmp(clp->dirname, fname) == 0)
- 			return 1;
-+	}
- 	return 0;
- }
- 
--/* Used to read (and re-read) list of clients, set up poll array. */
--int
--update_client_list(void)
-+static int
-+process_pipedir(char *pipe_name)
- {
- 	struct dirent **namelist;
- 	int i, j;
- 
--	if (chdir(pipefs_nfsdir) < 0) {
-+	if (chdir(pipe_name) < 0) {
- 		printerr(0, "ERROR: can't chdir to %s: %s\n",
--			 pipefs_nfsdir, strerror(errno));
-+			 pipe_name, strerror(errno));
- 		return -1;
- 	}
- 
--	j = scandir(pipefs_nfsdir, &namelist, NULL, alphasort);
-+	j = scandir(pipe_name, &namelist, NULL, alphasort);
- 	if (j < 0) {
- 		printerr(0, "ERROR: can't scandir %s: %s\n",
--			 pipefs_nfsdir, strerror(errno));
-+			 pipe_name, strerror(errno));
- 		return -1;
- 	}
--	update_old_clients(namelist, j);
-+
-+	update_old_clients(namelist, j, pipe_name);
- 	for (i=0; i < j; i++) {
- 		if (i < FD_ALLOC_BLOCK
- 				&& !strncmp(namelist[i]->d_name, "clnt", 4)
--				&& !find_client(namelist[i]->d_name))
--			process_clnt_dir(namelist[i]->d_name);
-+				&& !find_client(namelist[i]->d_name, pipe_name))
-+			process_clnt_dir(namelist[i]->d_name, pipe_name);
- 		free(namelist[i]);
- 	}
- 
- 	free(namelist);
-+
- 	return 0;
- }
-+/* Used to read (and re-read) list of clients, set up poll array. */
-+int
-+update_client_list(void)
-+{
-+	int retval = -1;
-+
-+	retval = process_pipedir(pipefs_nfsdir);
-+	if (retval)
-+		printerr(0, "ERROR: processing %s\n", pipefs_nfsdir);
-+
-+	/* if we successfully processed nfsdir and callback directory exists
-+	 * process any events in the callback directory
-+	 */
-+	if (retval == 0 && pipefs_nfscbdir[0] != '\0') {
-+		retval = process_pipedir(pipefs_nfscbdir);
-+		if (retval)
-+			printerr(0, "ERROR: processing %s\n", pipefs_nfscbdir);
-+	}
-+
-+	return retval;
-+}
- 
- static int
- do_downcall(int k5_fd, uid_t uid, struct authgss_private_data *pd,
-@@ -587,6 +642,8 @@ int create_auth_rpc_client(struct clnt_i
+@@ -587,6 +595,8 @@ int create_auth_rpc_client(struct clnt_i
  			 clp->servername, uid);
  		goto out_fail;
  	}
@@ -518,86 +124,35 @@ diff -puN utils/gssd/gssd_proc.c~CITI_NFS4_ALL utils/gssd/gssd_proc.c
  	if (a->ai_protocol == IPPROTO_TCP) {
  		if ((rpc_clnt = clnttcp_create(
  					(struct sockaddr_in *) a->ai_addr,
-@@ -677,7 +734,7 @@ handle_krb5_upcall(struct clnt_info *clp
+@@ -675,6 +685,7 @@ handle_krb5_upcall(struct clnt_info *clp
+ 	gss_buffer_desc		token;
+ 	char			**credlist = NULL;
  	char			**ccname;
++	char			**dirname;
  	int			create_resp = -1;
  
--	printerr(1, "handling krb5 upcall\n");
-+	printerr(1, "handling krb5 upcall (%s)\n", clp->dirname);
+ 	printerr(1, "handling krb5 upcall\n");
+@@ -691,10 +702,14 @@ handle_krb5_upcall(struct clnt_info *clp
  
- 	token.length = 0;
- 	token.value = NULL;
-@@ -787,7 +844,7 @@ handle_spkm3_upcall(struct clnt_info *cl
- 	struct authgss_private_data pd;
- 	gss_buffer_desc		token;
+ 	if (uid != 0 || (uid == 0 && root_uses_machine_creds == 0)) {
+ 		/* Tell krb5 gss which credentials cache to use */
+-		gssd_setup_krb5_user_gss_ccache(uid, clp->servername);
++		for (dirname = ccachesearch; *dirname != NULL; dirname++) {
++			gssd_setup_krb5_user_gss_ccache(uid, clp->servername, *dirname);
  
--	printerr(2, "handling spkm3 upcall\n");
-+	printerr(2, "handling spkm3 upcall (%s)\n", clp->dirname);
- 
- 	token.length = 0;
- 	token.value = NULL;
-diff -puN utils/gssd/gssd.c~CITI_NFS4_ALL utils/gssd/gssd.c
---- nfs-utils-1.1.1/utils/gssd/gssd.c~CITI_NFS4_ALL	2007-10-23 14:17:18.789793000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/gssd.c	2007-10-23 14:17:19.183793000 -0400
-@@ -55,6 +55,7 @@
- 
- char pipefs_dir[PATH_MAX] = GSSD_PIPEFS_DIR;
- char pipefs_nfsdir[PATH_MAX] = GSSD_PIPEFS_DIR;
-+char pipefs_nfscbdir[PATH_MAX] = GSSD_PIPEFS_DIR;
- char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
- char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
- int  use_memcache = 0;
-@@ -140,6 +141,10 @@ main(int argc, char *argv[])
- 		 pipefs_dir, GSSD_SERVICE_NAME);
- 	if (pipefs_nfsdir[sizeof(pipefs_nfsdir)-1] != '\0')
- 		errx(1, "pipefs_nfsdir path name too long");
-+	snprintf(pipefs_nfscbdir, sizeof(pipefs_nfscbdir), "%s/%s",
-+		 pipefs_dir, GSSD_NFSCB_NAME);
-+	if (pipefs_nfscbdir[sizeof(pipefs_nfscbdir)-1] != '\0')
-+		errx(1, "pipefs_nfscbdir path name too long");
- 
- 	if ((progname = strrchr(argv[0], '/')))
- 		progname++;
-@@ -165,6 +170,9 @@ main(int argc, char *argv[])
- 	signal(SIGTERM, sig_die);
- 	signal(SIGHUP, sig_hup);
- 
-+	/* Determine Kerberos information from the kernel */
-+	gssd_obtain_kernel_krb5_info();
-+
- 	gssd_run();
- 	printerr(0, "gssd_run returned!\n");
- 	abort();
-diff -puN utils/gssd/gssd.h~CITI_NFS4_ALL utils/gssd/gssd.h
---- nfs-utils-1.1.1/utils/gssd/gssd.h~CITI_NFS4_ALL	2007-10-23 14:17:18.846794000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/gssd.h	2007-10-23 14:17:18.957793000 -0400
-@@ -49,6 +49,7 @@
- #define GSSD_DEFAULT_MACHINE_CRED_SUFFIX	"machine"
- #define GSSD_DEFAULT_KEYTAB_FILE		"/etc/krb5.keytab"
- #define GSSD_SERVICE_NAME			"nfs"
-+#define GSSD_NFSCB_NAME				"nfsd4_cb"
- #define GSSD_SERVICE_NAME_LEN			3
- 
- /*
-@@ -60,6 +61,7 @@ enum {AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUT
- 
- extern char			pipefs_dir[PATH_MAX];
- extern char			pipefs_nfsdir[PATH_MAX];
-+extern char			pipefs_nfscbdir[PATH_MAX];
- extern char			keytabfile[PATH_MAX];
- extern char			ccachedir[PATH_MAX];
- extern int			use_memcache;
-@@ -80,6 +82,7 @@ struct clnt_info {
- 	int			krb5_poll_index;
- 	int			spkm3_fd;
- 	int			spkm3_poll_index;
-+	int			port;
- };
- 
- void init_client_list(void);
+-		create_resp = create_auth_rpc_client(clp, &rpc_clnt, &auth, uid,
+-						     AUTHTYPE_KRB5);
++			create_resp = create_auth_rpc_client(clp, &rpc_clnt, &auth, uid,
++							     AUTHTYPE_KRB5);
++			if (create_resp == 0)
++				break;
++		}
+ 	}
+ 	if (create_resp != 0) {
+ 		if (uid == 0 && root_uses_machine_creds == 1) {
 diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
---- nfs-utils-1.1.1/utils/gssd/krb5_util.c~CITI_NFS4_ALL	2007-10-23 14:17:19.109793000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/krb5_util.c	2007-10-23 14:17:19.198793000 -0400
+--- nfs-utils-1.1.2/utils/gssd/krb5_util.c~CITI_NFS4_ALL	2008-04-30 14:49:16.274848000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/krb5_util.c	2008-04-30 14:49:17.571397000 -0400
 @@ -97,6 +97,7 @@
  #include "config.h"
  #include <sys/param.h>
@@ -614,7 +169,7 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
  #include <errno.h>
  #include <time.h>
  #include <gssapi/gssapi.h>
-@@ -126,6 +128,10 @@
+@@ -126,12 +128,17 @@
  /* Global list of principals/cache file names for machine credentials */
  struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
  
@@ -625,7 +180,55 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
  /*==========================*/
  /*===  Internal routines ===*/
  /*==========================*/
-@@ -256,58 +262,6 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ 
+ static int select_krb5_ccache(const struct dirent *d);
+-static int gssd_find_existing_krb5_ccache(uid_t uid, struct dirent **d);
++static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
++		struct dirent **d);
+ static int gssd_get_single_krb5_cred(krb5_context context,
+ 		krb5_keytab kt, struct gssd_k5_kt_princ *ple);
+ 
+@@ -159,7 +166,7 @@ select_krb5_ccache(const struct dirent *
+ }
+ 
+ /*
+- * Look in the ccachedir for files that look like they
++ * Look in directory "dirname" for files that look like they
+  * are Kerberos Credential Cache files for a given UID.  Return
+  * non-zero and the dirent pointer for the entry most likely to be
+  * what we want. Otherwise, return zero and no dirent pointer.
+@@ -170,7 +177,7 @@ select_krb5_ccache(const struct dirent *
+  *	1 => found an existing entry
+  */
+ static int
+-gssd_find_existing_krb5_ccache(uid_t uid, struct dirent **d)
++gssd_find_existing_krb5_ccache(uid_t uid, char *dirname, struct dirent **d)
+ {
+ 	struct dirent **namelist;
+ 	int n;
+@@ -181,9 +188,10 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ 
+ 	memset(&best_match_stat, 0, sizeof(best_match_stat));
+ 	*d = NULL;
+-	n = scandir(ccachedir, &namelist, select_krb5_ccache, 0);
++	n = scandir(dirname, &namelist, select_krb5_ccache, 0);
+ 	if (n < 0) {
+-		perror("scandir looking for krb5 credentials caches");
++		printerr(1, "Error doing scandir on directory '%s': %s\n",
++			dirname, strerror(errno));
+ 	}
+ 	else if (n > 0) {
+ 		char statname[1024];
+@@ -191,7 +199,7 @@ gssd_find_existing_krb5_ccache(uid_t uid
+ 			printerr(3, "CC file '%s' being considered\n",
+ 				 namelist[i]->d_name);
+ 			snprintf(statname, sizeof(statname),
+-				 "%s/%s", ccachedir, namelist[i]->d_name);
++				 "%s/%s", dirname, namelist[i]->d_name);
+ 			if (lstat(statname, &tmp_stat)) {
+ 				printerr(0, "Error doing stat on file '%s'\n",
+ 					 statname);
+@@ -256,58 +264,6 @@ gssd_find_existing_krb5_ccache(uid_t uid
  	return found;
  }
  
@@ -684,7 +287,16 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
  /*
   * Obtain credentials via a key in the keytab given
   * a keytab handle and a gssd_k5_kt_princ structure.
-@@ -879,6 +833,56 @@ out:
+@@ -404,7 +360,7 @@ gssd_get_single_krb5_cred(krb5_context c
+ 	    cache_type = "FILE";
+ 	snprintf(cc_name, sizeof(cc_name), "%s:%s/%s%s_%s",
+ 		cache_type,
+-		ccachedir, GSSD_DEFAULT_CRED_PREFIX,
++		ccachesearch[0], GSSD_DEFAULT_CRED_PREFIX,
+ 		GSSD_DEFAULT_MACHINE_CRED_SUFFIX, ple->realm);
+ 	ple->endtime = my_creds.times.endtime;
+ 	if (ple->ccname != NULL)
+@@ -879,6 +835,56 @@ out:
  	return retval;
  }
  
@@ -741,7 +353,34 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
  /*==========================*/
  /*===  External routines ===*/
  /*==========================*/
-@@ -1129,3 +1133,126 @@ gssd_k5_err_msg(krb5_context context, kr
+@@ -892,7 +898,7 @@ out:
+  *	void
+  */
+ void
+-gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername)
++gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername, char *dirname)
+ {
+ 	char			buf[MAX_NETOBJ_SZ];
+ 	struct dirent		*d;
+@@ -900,14 +906,13 @@ gssd_setup_krb5_user_gss_ccache(uid_t ui
+ 	printerr(2, "getting credentials for client with uid %u for "
+ 		    "server %s\n", uid, servername);
+ 	memset(buf, 0, sizeof(buf));
+-	if (gssd_find_existing_krb5_ccache(uid, &d)) {
+-		snprintf(buf, sizeof(buf), "FILE:%s/%s",
+-			ccachedir, d->d_name);
++	if (gssd_find_existing_krb5_ccache(uid, dirname, &d)) {
++		snprintf(buf, sizeof(buf), "FILE:%s/%s", dirname, d->d_name);
+ 		free(d);
+ 	}
+ 	else
+ 		snprintf(buf, sizeof(buf), "FILE:%s/%s%u",
+-			ccachedir, GSSD_DEFAULT_CRED_PREFIX, uid);
++			dirname, GSSD_DEFAULT_CRED_PREFIX, uid);
+ 	printerr(2, "using %s as credentials cache for client with "
+ 		    "uid %u for server %s\n", buf, uid, servername);
+ 	gssd_set_krb5_ccache_name(buf);
+@@ -1129,3 +1134,133 @@ gssd_k5_err_msg(krb5_context context, kr
  		return error_message(code);
  #endif
  }
@@ -751,6 +390,9 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 + * this routine obtains a credentials handle via gss_acquire_cred()
 + * then calls gss_krb5_set_allowable_enctypes() to limit the encryption
 + * types negotiated.
++ *
++ * XXX Should call some function to determine the enctypes supported
++ * by the kernel. (Only need to do that once!)
 + *
 + * Returns:
 + *	0 => all went well
@@ -763,7 +405,9 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 +	u_int maj_stat, min_stat;
 +	gss_cred_id_t credh;
 +	gss_OID_set_desc  desired_mechs;
-+	krb5_enctype enctypes[] = {ENCTYPE_DES_CBC_CRC};
++	krb5_enctype enctypes[] = { ENCTYPE_DES_CBC_CRC,
++				    ENCTYPE_DES_CBC_MD5,
++				    ENCTYPE_DES_CBC_MD4 };
 +	int num_enctypes = sizeof(enctypes) / sizeof(enctypes[0]);
 +
 +	/* We only care about getting a krb5 cred */
@@ -775,8 +419,9 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 +				    &credh, NULL, NULL);
 +
 +	if (maj_stat != GSS_S_COMPLETE) {
-+		pgsserr("gss_acquire_cred",
-+			maj_stat, min_stat, &krb5oid);
++		if (get_verbosity() > 0)
++			pgsserr("gss_acquire_cred",
++				maj_stat, min_stat, &krb5oid);
 +		return -1;
 +	}
 +
@@ -794,6 +439,7 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 +	if (maj_stat != GSS_S_COMPLETE) {
 +		pgsserr("gss_set_allowable_enctypes",
 +			maj_stat, min_stat, &krb5oid);
++		gss_release_cred(&min_stat, &credh);
 +		return -1;
 +	}
 +	sec->cred = credh;
@@ -858,7 +504,7 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 +		goto do_the_parse;
 +	}
 +  do_the_parse:
-+  	if (use_default_enctypes)
++	if (use_default_enctypes)
 +		strcpy(enctypes, default_enctypes);
 +
 +	if ((code = parse_enctypes(enctypes)) != 0) {
@@ -868,10 +514,105 @@ diff -puN utils/gssd/krb5_util.c~CITI_NFS4_ALL utils/gssd/krb5_util.c
 +			 code);
 +	}
 +}
+diff -puN utils/gssd/err_util.c~CITI_NFS4_ALL utils/gssd/err_util.c
+--- nfs-utils-1.1.2/utils/gssd/err_util.c~CITI_NFS4_ALL	2008-04-30 14:49:16.478848000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/err_util.c	2008-04-30 14:49:16.616849000 -0400
+@@ -60,3 +60,8 @@ void printerr(int priority, char *format
+ 		xlog_backend(L_ERROR, format, args);
+ 	va_end(args);
+ }
++
++int get_verbosity(void)
++{
++	return verbosity;
++}
+diff -puN utils/gssd/err_util.h~CITI_NFS4_ALL utils/gssd/err_util.h
+--- nfs-utils-1.1.2/utils/gssd/err_util.h~CITI_NFS4_ALL	2008-04-30 14:49:16.574848000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/err_util.h	2008-04-30 14:49:16.633848000 -0400
+@@ -33,5 +33,6 @@
+ 
+ void initerr(char *progname, int verbosity, int fg);
+ void printerr(int priority, char *format, ...);
++int get_verbosity(void);
+ 
+ #endif /* _ERR_UTIL_H_ */
+diff -puN utils/gssd/gssd.c~CITI_NFS4_ALL utils/gssd/gssd.c
+--- nfs-utils-1.1.2/utils/gssd/gssd.c~CITI_NFS4_ALL	2008-04-30 14:49:16.799812000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/gssd.c	2008-04-30 14:49:17.507397000 -0400
+@@ -57,6 +57,7 @@ char pipefs_dir[PATH_MAX] = GSSD_PIPEFS_
+ char pipefs_nfsdir[PATH_MAX] = GSSD_PIPEFS_DIR;
+ char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
+ char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
++char *ccachesearch[GSSD_MAX_CCACHE_SEARCH + 1];
+ int  use_memcache = 0;
+ int  root_uses_machine_creds = 1;
+ 
+@@ -93,9 +94,11 @@ main(int argc, char *argv[])
+ 	int verbosity = 0;
+ 	int rpc_verbosity = 0;
+ 	int opt;
++	int i;
+ 	extern char *optarg;
+ 	char *progname;
+ 
++	memset(ccachesearch, 0, sizeof(ccachesearch));
+ 	while ((opt = getopt(argc, argv, "fvrmnMp:k:d:")) != -1) {
+ 		switch (opt) {
+ 			case 'f':
+@@ -136,6 +139,13 @@ main(int argc, char *argv[])
+ 				break;
+ 		}
+ 	}
++
++	i = 0;
++	ccachesearch[i++] = strtok(ccachedir, ":");
++	do {
++		ccachesearch[i++] = strtok(NULL, ":");
++	} while (ccachesearch[i-1] != NULL && i < GSSD_MAX_CCACHE_SEARCH);
++
+ 	snprintf(pipefs_nfsdir, sizeof(pipefs_nfsdir), "%s/%s",
+ 		 pipefs_dir, GSSD_SERVICE_NAME);
+ 	if (pipefs_nfsdir[sizeof(pipefs_nfsdir)-1] != '\0')
+@@ -165,6 +175,9 @@ main(int argc, char *argv[])
+ 	signal(SIGTERM, sig_die);
+ 	signal(SIGHUP, sig_hup);
+ 
++	/* Determine Kerberos information from the kernel */
++	gssd_obtain_kernel_krb5_info();
++
+ 	gssd_run();
+ 	printerr(0, "gssd_run returned!\n");
+ 	abort();
+diff -puN utils/gssd/gssd.man~CITI_NFS4_ALL utils/gssd/gssd.man
+--- nfs-utils-1.1.2/utils/gssd/gssd.man~CITI_NFS4_ALL	2008-04-30 14:49:16.899712000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/gssd.man	2008-04-30 14:49:17.121490000 -0400
+@@ -74,7 +74,11 @@ where to look for the rpc_pipefs filesys
+ .B -d directory
+ Tells
+ .B rpc.gssd
+-where to look for kerberos credential files.  The default value is "/tmp".
++where to look for Kerberos credential files.  The default value is "/tmp".
++This can also be a colon separated list of directories to be searched
++for Kerberos credential files.  Note that if machine credentials are being
++stored in files, then the first directory on this list is where the
++machine credentials are stored.
+ .TP
+ .B -v
+ Increases the verbosity of the output (can be specified multiple times).
 diff -puN utils/gssd/krb5_util.h~CITI_NFS4_ALL utils/gssd/krb5_util.h
---- nfs-utils-1.1.1/utils/gssd/krb5_util.h~CITI_NFS4_ALL	2007-10-23 14:17:19.166793000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/krb5_util.h	2007-10-23 14:17:19.206793000 -0400
-@@ -26,6 +26,8 @@ int  gssd_refresh_krb5_machine_credentia
+--- nfs-utils-1.1.2/utils/gssd/krb5_util.h~CITI_NFS4_ALL	2008-04-30 14:49:17.008603000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/krb5_util.h	2008-04-30 14:49:17.589397000 -0400
+@@ -17,7 +17,8 @@ struct gssd_k5_kt_princ {
+ };
+ 
+ 
+-void gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername);
++void gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername,
++				     char *dirname);
+ int  gssd_get_krb5_machine_cred_list(char ***list);
+ void gssd_free_krb5_machine_cred_list(char **list);
+ void gssd_setup_krb5_machine_gss_ccache(char *servername);
+@@ -26,6 +27,8 @@ int  gssd_refresh_krb5_machine_credentia
  					  struct gssd_k5_kt_princ *ple);
  const char *
  gssd_k5_err_msg(krb5_context context, krb5_error_code code);
@@ -881,12 +622,12 @@ diff -puN utils/gssd/krb5_util.h~CITI_NFS4_ALL utils/gssd/krb5_util.h
  #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
  int limit_krb5_enctypes(struct rpc_gss_sec *sec, uid_t uid);
 diff -puN utils/gssd/context.h~CITI_NFS4_ALL utils/gssd/context.h
---- nfs-utils-1.1.1/utils/gssd/context.h~CITI_NFS4_ALL	2007-10-23 14:17:19.330737000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/context.h	2007-10-23 14:17:19.458609000 -0400
+--- nfs-utils-1.1.2/utils/gssd/context.h~CITI_NFS4_ALL	2008-04-30 14:49:17.768393000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/context.h	2008-04-30 14:49:18.056105000 -0400
 @@ -1,5 +1,5 @@
  /*
 -  Copyright (c) 2004 The Regents of the University of Michigan.
-+  Copyright (c) 2004-2006 The Regents of the University of Michigan.
++  Copyright (c) 2004,2008 The Regents of the University of Michigan.
    All rights reserved.
  
    Redistribution and use in source and binary forms, with or without
@@ -902,8 +643,8 @@ diff -puN utils/gssd/context.h~CITI_NFS4_ALL utils/gssd/context.h
  int serialize_context_for_kernel(gss_ctx_id_t ctx, gss_buffer_desc *buf,
  				 gss_OID mech);
 diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
---- nfs-utils-1.1.1/utils/gssd/context_lucid.c~CITI_NFS4_ALL	2007-10-23 14:17:19.386681000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/context_lucid.c	2007-10-23 14:17:19.465602000 -0400
+--- nfs-utils-1.1.2/utils/gssd/context_lucid.c~CITI_NFS4_ALL	2008-04-30 14:49:17.907254000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/context_lucid.c	2008-04-30 14:49:18.075086000 -0400
 @@ -40,6 +40,7 @@
  #include <stdio.h>
  #include <syslog.h>
@@ -932,192 +673,14 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
  		 lctx->rfc1964_kd.ctx_key.length);
  
  	/* derive the encryption key and copy it into buffer */
-@@ -152,15 +151,361 @@ out_err:
+@@ -152,15 +151,102 @@ out_err:
  	return -1;
  }
  
--static int
--prepare_krb5_rfc_cfx_buffer(gss_krb5_lucid_context_v1_t *lctx,
--	gss_buffer_desc *buf)
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+
-+/* for 3DES */
-+#define KG_USAGE_SEAL 22
-+#define KG_USAGE_SIGN 23
-+#define KG_USAGE_SEQ  24
-+
-+/* for rfc???? */
-+#define KG_USAGE_ACCEPTOR_SEAL  22
-+#define KG_USAGE_ACCEPTOR_SIGN  23
-+#define KG_USAGE_INITIATOR_SEAL 24
-+#define KG_USAGE_INITIATOR_SIGN 25
-+
-+/* Lifted from mit src/lib/gssapi/krb5/gssapiP_krb5.h */
-+enum seal_alg {
-+  SEAL_ALG_NONE            = 0xffff,
-+  SEAL_ALG_DES             = 0x0000,
-+  SEAL_ALG_1               = 0x0001, /* not published */
-+  SEAL_ALG_MICROSOFT_RC4   = 0x0010, /* microsoft w2k;  */
-+  SEAL_ALG_DES3KD          = 0x0002
-+};
-+
-+#define KEY_USAGE_SEED_ENCRYPTION	0xAA
-+#define KEY_USAGE_SEED_INTEGRITY	0x55
-+#define KEY_USAGE_SEED_CHECKSUM		0x99
-+#define K5CLENGTH 5
-+
 +/* Flags for version 2 context flags */
 +#define KRB5_CTX_FLAG_INITIATOR		0x00000001
 +#define KRB5_CTX_FLAG_CFX		0x00000002
 +#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
-+
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/*
-+ * We don't have "legal" access to these MIT-only
-+ * structures located in libk5crypto
-+ */
-+extern void krb5int_enc_arcfour;
-+extern void krb5int_enc_des3;
-+extern void krb5int_enc_aes128;
-+extern void krb5int_enc_aes256;
-+extern int krb5_derive_key();
-+
-+static void
-+key_lucid_to_krb5(const gss_krb5_lucid_key_t *lin, krb5_keyblock *kout)
- {
--	printerr(0, "ERROR: prepare_krb5_rfc_cfx_buffer: not implemented\n");
--	return -1;
-+	memset(kout, '\0', sizeof(kout));
-+#ifdef HAVE_KRB5
-+	kout->enctype = lin->type;
-+	kout->length = lin->length;
-+	kout->contents = lin->data;
-+#else
-+	kout->keytype = lin->type;
-+	kout->keyvalue.length = lin->length;
-+	kout->keyvalue.data = lin->data;
-+#endif
- }
- 
-+static void
-+key_krb5_to_lucid(const krb5_keyblock *kin, gss_krb5_lucid_key_t *lout)
-+{
-+	memset(lout, '\0', sizeof(lout));
-+#ifdef HAVE_KRB5
-+	lout->type = kin->enctype;
-+	lout->length = kin->length;
-+	lout->data = kin->contents;
-+#else
-+	lout->type = kin->keytype;
-+	lout->length = kin->keyvalue.length;
-+	memcpy(lout->data, kin->keyvalue.data, kin->keyvalue.length);
-+#endif
-+}
- 
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/* XXX Hack alert! XXX  Do NOT submit upstream! XXX */
-+/*
-+ * Function to derive a new key from a given key and given constant data.
-+ */
-+static krb5_error_code
-+derive_key_lucid(const gss_krb5_lucid_key_t *in, gss_krb5_lucid_key_t *out,
-+		 int usage, char extra)
-+{
-+	krb5_error_code code;
-+	unsigned char constant_data[K5CLENGTH];
-+	krb5_data datain;
-+	int keylength;
-+	void *enc;
-+	krb5_keyblock kin, kout;  /* must send krb5_keyblock, not lucid! */
-+#ifdef HAVE_HEIMDAL
-+	krb5_context kcontext;
-+	krb5_keyblock *outkey;
-+#endif
-+
-+	/*
-+	 * XXX Hack alert.  We don't have "legal" access to these
-+	 * values and structures located in libk5crypto
-+	 */
-+	switch (in->type) {
-+	case ENCTYPE_DES3_CBC_SHA1:
-+#ifdef HAVE_KRB5
-+	case ENCTYPE_DES3_CBC_RAW:
-+#endif
-+		keylength = 24;
-+#ifdef HAVE_KRB5
-+		enc = &krb5int_enc_des3;
-+#endif
-+		break;
-+	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-+		keylength = 16;
-+#ifdef HAVE_KRB5
-+		enc = &krb5int_enc_aes128;
-+#endif
-+		break;
-+	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
-+		keylength = 32;
-+#ifdef HAVE_KRB5
-+		enc = &krb5int_enc_aes256;
-+#endif
-+		break;
-+	default:
-+		code = KRB5_BAD_ENCTYPE;
-+		goto out;
-+	}
-+
-+	/* allocate memory for output key */
-+	if ((out->data = malloc(keylength)) == NULL) {
-+		code = ENOMEM;
-+		goto out;
-+	}
-+	out->length = keylength;
-+	out->type = in->type;
-+
-+	/* Convert to correct format for call to krb5_derive_key */
-+	key_lucid_to_krb5(in, &kin);
-+	key_lucid_to_krb5(out, &kout);
-+
-+	datain.data = (char *) constant_data;
-+	datain.length = K5CLENGTH;
-+
-+	((char *)(datain.data))[0] = (usage>>24)&0xff;
-+	((char *)(datain.data))[1] = (usage>>16)&0xff;
-+	((char *)(datain.data))[2] = (usage>>8)&0xff;
-+	((char *)(datain.data))[3] = usage&0xff;
-+
-+	((char *)(datain.data))[4] = (char) extra;
-+
-+#ifdef HAVE_KRB5
-+	code = krb5_derive_key(enc, &kin, &kout, &datain);
-+#else
-+	if ((code = krb5_init_context(&kcontext))) {
-+	}
-+	code = krb5_derive_key(kcontext, &kin, in->type, constant_data, K5CLENGTH, &outkey);
-+#endif
-+	if (code) {
-+		free(out->data);
-+		out->data = NULL;
-+		goto out;
-+	}
-+#ifdef HAVE_KRB5
-+	key_krb5_to_lucid(&kout, out);
-+#else
-+	key_krb5_to_lucid(outkey, out);
-+	krb5_free_keyblock(kcontext, outkey);
-+	krb5_free_context(kcontext);
-+#endif
-+
-+  out:
-+  	if (code)
-+		printerr(0, "ERROR: %s: returning error %d (%s)\n",
-+			 __FUNCTION__, code, error_message(code));
-+	return (code);
-+}
-+
 +
 +/*
 + * Prepare a new-style buffer, as defined in rfc4121 (a.k.a. cfx),
@@ -1125,46 +688,36 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
 + *
 + * The new format is:
 + *
-+ *	u32 initiate;			( whether we are the initiator or not )
-+ *	s32 endtime;
 + *	u32 flags;
 + *	#define KRB5_CTX_FLAG_INITIATOR		0x00000001
 + *	#define KRB5_CTX_FLAG_CFX		0x00000002
 + *	#define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY	0x00000004
++ *	s32 endtime;
 + *	u64 seq_send;
-+ *	u32  enctype;			( encrption type of keys )
-+ *	u32  size_of_each_key;		( size of each key in bytes )
-+ *	u32  number_of_keys;		( N -- should always be 3 for now )
-+ *	keydata-1;                      ( Ke )
-+ *	keydata-2;                      ( Ki )
-+ *	keydata-3;                      ( Kc )
++ *	u32  enctype;			( encrption type of key )
++ *	raw key;			( raw key bytes (kernel will derive))
 + *
 + */
-+static int
+ static int
+-prepare_krb5_rfc_cfx_buffer(gss_krb5_lucid_context_v1_t *lctx,
+-	gss_buffer_desc *buf)
 +prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
 +			    gss_buffer_desc *buf)
-+{
+ {
+-	printerr(0, "ERROR: prepare_krb5_rfc_cfx_buffer: not implemented\n");
+-	return -1;
+-}
 +	char *p, *end;
 +	uint32_t v2_flags = 0;
-+	gss_krb5_lucid_key_t enc_key;
-+	gss_krb5_lucid_key_t derived_key;
-+	gss_buffer_desc fakeoid;
 +	uint32_t enctype;
 +	uint32_t keysize;
-+	uint32_t numkeys;
-+
-+	memset(&enc_key, 0, sizeof(enc_key));
-+	memset(&fakeoid, 0, sizeof(fakeoid));
-+
+ 
 +	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
 +		goto out_err;
 +	p = buf->value;
 +	end = buf->value + MAX_CTX_LEN;
-+
+ 
 +	/* Version 2 */
-+	if (WRITE_BYTES(&p, end, lctx->initiate)) goto out_err;
-+	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
-+
 +	if (lctx->initiate)
 +		v2_flags |= KRB5_CTX_FLAG_INITIATOR;
 +	if (lctx->protocol != 0)
@@ -1173,28 +726,14 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
 +		v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
 +
 +	if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
-+
++	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
 +	if (WRITE_BYTES(&p, end, lctx->send_seq)) goto out_err;
 +
 +	/* Protocol 0 here implies DES3 or RC4 */
 +	printerr(2, "%s: protocol %d\n", __FUNCTION__, lctx->protocol);
 +	if (lctx->protocol == 0) {
 +		enctype = lctx->rfc1964_kd.ctx_key.type;
-+#ifdef HAVE_HEIMDAL
-+		/*
-+		 * The kernel gss code expects ENCTYPE_DES3_CBC_RAW (6) for
-+		 * 3des keys, but Heimdal key has ENCTYPE_DES3_CBC_SHA1 (16).
-+		 * Force the Heimdal enctype to 6.
-+		 */
-+		if (enctype == ENCTYPE_DES3_CBC_SHA1) {
-+			printerr(2, "%s: overriding heimdal keytype (%d => %d)\n",
-+				 __FUNCTION__, enctype, 6);
-+
-+			enctype = 6;
-+		}
-+#endif
 +		keysize = lctx->rfc1964_kd.ctx_key.length;
-+		numkeys = 3;	/* XXX is always gonna be three? */
 +	} else {
 +		if (lctx->cfx_kd.have_acceptor_subkey) {
 +			enctype = lctx->cfx_kd.acceptor_subkey.type;
@@ -1203,80 +742,27 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
 +			enctype = lctx->cfx_kd.ctx_key.type;
 +			keysize = lctx->cfx_kd.ctx_key.length;
 +		}
-+		numkeys = 3;
 +	}
-+	printerr(2, "%s: serializing %d keys with enctype %d and size %d\n",
-+		 __FUNCTION__, numkeys, enctype, keysize);
++	printerr(2, "%s: serializing key with enctype %d and size %d\n",
++		 __FUNCTION__, enctype, keysize);
++
 +	if (WRITE_BYTES(&p, end, enctype)) goto out_err;
-+	if (WRITE_BYTES(&p, end, keysize)) goto out_err;
-+	if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
 +
 +	if (lctx->protocol == 0) {
-+		/* derive and send down: Ke, Ki, and Kc */
-+		/* Ke */
 +		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
 +				lctx->rfc1964_kd.ctx_key.length))
 +			goto out_err;
-+
-+		/* Ki */
-+		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
-+				lctx->rfc1964_kd.ctx_key.length))
-+			goto out_err;
-+
-+		/* Kc */
-+		if (derive_key_lucid(&lctx->rfc1964_kd.ctx_key,
-+				&derived_key,
-+				KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
-+			goto out_err;
-+		if (write_bytes(&p, end, derived_key.data,
-+				derived_key.length))
-+			goto out_err;
-+		free(derived_key.data);
 +	} else {
-+		gss_krb5_lucid_key_t *keyptr;
-+		uint32_t sign_usage, seal_usage;
-+
-+		if (lctx->cfx_kd.have_acceptor_subkey)
-+			keyptr = &lctx->cfx_kd.acceptor_subkey;
-+		else
-+			keyptr = &lctx->cfx_kd.ctx_key;
-+
-+		if (lctx->initiate == 1) {
-+			sign_usage = KG_USAGE_INITIATOR_SIGN;
-+			seal_usage = KG_USAGE_INITIATOR_SEAL;
++		if (lctx->cfx_kd.have_acceptor_subkey) {
++			if (write_bytes(&p, end,
++					lctx->cfx_kd.acceptor_subkey.data,
++					lctx->cfx_kd.acceptor_subkey.length))
++				goto out_err;
 +		} else {
-+			sign_usage = KG_USAGE_ACCEPTOR_SIGN;
-+			seal_usage = KG_USAGE_ACCEPTOR_SEAL;
++			if (write_bytes(&p, end, lctx->cfx_kd.ctx_key.data,
++					lctx->cfx_kd.ctx_key.length))
++				goto out_err;
 +		}
-+
-+		/* derive and send down: Ke, Ki, and Kc */
-+
-+		/* Ke */
-+		if (derive_key_lucid(keyptr, &derived_key,
-+			       seal_usage, KEY_USAGE_SEED_ENCRYPTION))
-+			goto out_err;
-+		if (write_bytes(&p, end, derived_key.data,
-+				derived_key.length))
-+			goto out_err;
-+		free(derived_key.data);
-+
-+		/* Ki */
-+		if (derive_key_lucid(keyptr, &derived_key,
-+			       seal_usage, KEY_USAGE_SEED_INTEGRITY))
-+			goto out_err;
-+		if (write_bytes(&p, end, derived_key.data,
-+				derived_key.length))
-+			goto out_err;
-+		free(derived_key.data);
-+
-+		/* Kc */
-+		if (derive_key_lucid(keyptr, &derived_key,
-+			       sign_usage, KEY_USAGE_SEED_CHECKSUM))
-+			goto out_err;
-+		if (write_bytes(&p, end, derived_key.data,
-+				derived_key.length))
-+			goto out_err;
-+		free(derived_key.data);
 +	}
 +
 +	buf->length = p - (char *)buf->value;
@@ -1290,16 +776,12 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
 +		buf->value = NULL;
 +	}
 +	buf->length = 0;
-+	if (enc_key.data) {
-+		free(enc_key.data);
-+		enc_key.data = NULL;
-+	}
 +	return -1;
 +}
  int
  serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf)
  {
-@@ -170,7 +515,7 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+@@ -170,7 +256,7 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
  	gss_krb5_lucid_context_v1_t *lctx = 0;
  	int retcode = 0;
  
@@ -1308,7 +790,7 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
  	maj_stat = gss_export_lucid_sec_context(&min_stat, &ctx,
  						1, &return_ctx);
  	if (maj_stat != GSS_S_COMPLETE) {
-@@ -192,11 +537,20 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+@@ -192,11 +278,20 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
  		break;
  	}
  
@@ -1332,7 +814,7 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
  
  	maj_stat = gss_free_lucid_sec_context(&min_stat, ctx, return_ctx);
  	if (maj_stat != GSS_S_COMPLETE) {
-@@ -206,8 +560,8 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+@@ -206,8 +301,8 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
  	}
  
  	if (retcode) {
@@ -1343,7 +825,7 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
  		goto out_err;
  	}
  
-@@ -217,4 +571,7 @@ out_err:
+@@ -217,4 +312,7 @@ out_err:
  	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
  	return -1;
  }
@@ -1352,8 +834,8 @@ diff -puN utils/gssd/context_lucid.c~CITI_NFS4_ALL utils/gssd/context_lucid.c
 +
  #endif /* HAVE_LUCID_CONTEXT_SUPPORT */
 diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
---- nfs-utils-1.1.1/utils/gssd/context_mit.c~CITI_NFS4_ALL	2007-10-23 14:17:19.441626000 -0400
-+++ nfs-utils-1.1.1-kwc/utils/gssd/context_mit.c	2007-10-23 14:17:19.473594000 -0400
+--- nfs-utils-1.1.2/utils/gssd/context_mit.c~CITI_NFS4_ALL	2008-04-30 14:49:18.021140000 -0400
++++ nfs-utils-1.1.2-kwc/utils/gssd/context_mit.c	2008-04-30 14:49:18.097064000 -0400
 @@ -1,5 +1,5 @@
  /*
 -  Copyright (c) 2004 The Regents of the University of Michigan.
@@ -1379,132 +861,7 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
  
  typedef struct _krb5_gss_ctx_id_rec {
     unsigned int initiate : 1;   /* nonzero if initiating, zero if accepting */
-@@ -139,6 +139,124 @@ write_keyblock(char **p, char *end, stru
- }
- 
- /*
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ *
-+ * We shouldn't be using these definitions
-+ *
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ */
-+/* for 3DES */
-+#define KG_USAGE_SEAL 22
-+#define KG_USAGE_SIGN 23
-+#define KG_USAGE_SEQ  24
-+
-+/* for rfc???? */
-+#define KG_USAGE_ACCEPTOR_SEAL  22
-+#define KG_USAGE_ACCEPTOR_SIGN  23
-+#define KG_USAGE_INITIATOR_SEAL 24
-+#define KG_USAGE_INITIATOR_SIGN 25
-+
-+/* Lifted from mit src/lib/gssapi/krb5/gssapiP_krb5.h */
-+enum seal_alg {
-+  SEAL_ALG_NONE            = 0xffff,
-+  SEAL_ALG_DES             = 0x0000,
-+  SEAL_ALG_1               = 0x0001, /* not published */
-+  SEAL_ALG_MICROSOFT_RC4   = 0x0010, /* microsoft w2k;  */
-+  SEAL_ALG_DES3KD          = 0x0002
-+};
-+
-+#define KEY_USAGE_SEED_ENCRYPTION	0xAA
-+#define KEY_USAGE_SEED_INTEGRITY	0x55
-+#define KEY_USAGE_SEED_CHECKSUM		0x99
-+#define K5CLENGTH 5
-+
-+extern void krb5_enc_des3;
-+extern void krb5int_enc_des3;
-+extern void krb5int_enc_arcfour;
-+extern void krb5int_enc_aes128;
-+extern void krb5int_enc_aes256;
-+extern int krb5_derive_key();
-+
-+/*
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ *
-+ * We should be passing down a single key to the kernel
-+ * and it should be deriving the other keys.  We cannot
-+ * depend on any of this stuff being accessible in the
-+ * future.
-+ *
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ * XXX Hack alert! XXX Do NOT submit upstream!
-+ */
-+/*
-+ * Function to derive a new key from a given key and given constant data.
-+ */
-+static krb5_error_code
-+derive_key(const krb5_keyblock *in, krb5_keyblock *out, int usage, char extra)
-+{
-+	krb5_error_code code;
-+	unsigned char constant_data[K5CLENGTH];
-+	krb5_data datain;
-+	int keylength;
-+	void *enc;
-+
-+	switch (in->enctype) {
-+#ifdef ENCTYPE_DES3_CBC_RAW
-+	case ENCTYPE_DES3_CBC_RAW:
-+		keylength = 24;
-+/* Extra hack, the structure was renamed as rc4 was added... */
-+#if defined(ENCTYPE_ARCFOUR_HMAC)
-+		enc = &krb5int_enc_des3;
-+#else
-+		enc = &krb5_enc_des3;
-+#endif
-+		break;
-+#endif
-+#ifdef ENCTYPE_ARCFOUR_HMAC
-+	case ENCTYPE_ARCFOUR_HMAC:
-+		keylength = 16;
-+		enc = &krb5int_enc_arcfour;
-+		break;
-+#endif
-+	default:
-+		code = KRB5_BAD_ENCTYPE;
-+		goto out;
-+	}
-+
-+	/* allocate memory for output key */
-+	if ((out->contents = malloc(keylength)) == NULL) {
-+		code = ENOMEM;
-+		goto out;
-+	}
-+	out->length = keylength;
-+	out->enctype = in->enctype;
-+
-+	datain.data = (char *) constant_data;
-+	datain.length = K5CLENGTH;
-+
-+	datain.data[0] = (usage>>24)&0xff;
-+	datain.data[1] = (usage>>16)&0xff;
-+	datain.data[2] = (usage>>8)&0xff;
-+	datain.data[3] = usage&0xff;
-+
-+	datain.data[4] = (char) extra;
-+
-+	if ((code = krb5_derive_key(enc, in, out, &datain))) {
-+		free(out->contents);
-+		out->contents = NULL;
-+	}
-+
-+  out:
-+  	if (code)
-+		printerr(0, "ERROR: derive_key returning error %d (%s)\n",
-+			 code, error_message(code));
-+	return (code);
-+}
-+
-+/*
-  * We really shouldn't know about glue-layer context structure, but
-  * we need to get at the real krb5 context pointer.  This should be
-  * removed as soon as we say there is no support for MIT Kerberos
-@@ -154,48 +272,124 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
+@@ -154,48 +154,120 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss
  {
  	krb5_gss_ctx_id_t kctx = ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
  	char *p, *end;
@@ -1515,8 +872,6 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
  	uint32_t word_seq_send;
 +	u_int64_t seq_send_64bit;
 +	uint32_t v2_flags = 0;
-+	krb5_keyblock derived_key;
-+	uint32_t numkeys;
  
  	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
  		goto out_err;
@@ -1536,8 +891,11 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
 -		if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
 -	}
 -	if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
-+	switch (kctx->sealalg) {
-+	case SEAL_ALG_DES:
++	switch (kctx->enc->enctype) {
++	case ENCTYPE_DES_CBC_CRC:
++	case ENCTYPE_DES_CBC_MD4:
++	case ENCTYPE_DES_CBC_MD5:
++	case ENCTYPE_DES_CBC_RAW:
 +		/* Old format of context to the kernel */
 +		if (kctx->initiate) {
 +			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
@@ -1567,67 +925,62 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
 +		if (write_keyblock(&p, end, kctx->enc)) goto out_err;
 +		if (write_keyblock(&p, end, kctx->seq)) goto out_err;
 +		break;
-+	case SEAL_ALG_MICROSOFT_RC4:
-+	case SEAL_ALG_DES3KD:
++	case ENCTYPE_DES3_CBC_RAW:
++	case ENCTYPE_DES3_CBC_SHA1:
++	case ENCTYPE_ARCFOUR_HMAC:
++	case ENCTYPE_ARCFOUR_HMAC_EXP:
++	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
++	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
 +		/* New format of context to the kernel */
-+		/* s32 endtime;
-+		 * u32 flags;
++		/* u32 flags;
 +		 * #define KRB5_CTX_FLAG_INITIATOR        0x00000001
 +		 * #define KRB5_CTX_FLAG_CFX              0x00000002
 +		 * #define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY  0x00000004
++		 * s32 endtime;
 +		 * u64 seq_send;
 +		 * u32  enctype;
-+		 * u32  size_of_each_key;    (  size in bytes )
-+		 * u32  number_of_keys;      (  N (assumed to be 3 for now) )
-+		 * keydata-1;                (  Ke  (Kenc for DES3) )
-+		 * keydata-2;                (  Ki  (Kseq for DES3) )
-+		 * keydata-3;                (  Kc (derived checksum key) )
++		 * rawkey data
 +		 */
-+		if (kctx->initiate) {
-+			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
-+		}
-+		else {
-+			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
-+		}
-+		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
 +
-+		/* Only applicable flag for this is initiator */
-+		if (kctx->initiate) v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++		if (kctx->initiate)
++			v2_flags |= KRB5_CTX_FLAG_INITIATOR;
++		if (kctx->proto == 1)
++			v2_flags |= KRB5_CTX_FLAG_CFX;
++		if (kctx->have_acceptor_subkey)
++			v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
 +		if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
++		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
 +
 +		seq_send_64bit = kctx->seq_send;
 +		if (WRITE_BYTES(&p, end, seq_send_64bit)) goto out_err;
 +
-+		if (WRITE_BYTES(&p, end, kctx->enc->enctype)) goto out_err;
-+		if (WRITE_BYTES(&p, end, kctx->enc->length)) goto out_err;
-+		numkeys = 3;
-+		if (WRITE_BYTES(&p, end, numkeys)) goto out_err;
-+		printerr(2, "serialize_krb5_ctx: serializing %d keys with "
-+			 "enctype %d and size %d\n",
-+			 numkeys, kctx->enc->enctype, kctx->enc->length);
++		if (kctx->have_acceptor_subkey) {
++			if (WRITE_BYTES(&p, end, kctx->acceptor_subkey->enctype))
++				goto out_err;
++			printerr(2, "serialize_krb5_ctx: serializing subkey "
++				 "with enctype %d and size %d\n",
++				 kctx->acceptor_subkey->enctype,
++				 kctx->acceptor_subkey->length);
 +
-+		/* Ke */
-+		if (write_bytes(&p, end, kctx->enc->contents,
-+				kctx->enc->length))
-+			goto out_err;
++			if (write_bytes(&p, end,
++					kctx->acceptor_subkey->contents,
++					kctx->acceptor_subkey->length))
++				goto out_err;
++		} else {
++			if (WRITE_BYTES(&p, end, kctx->enc->enctype))
++				goto out_err;
++			printerr(2, "serialize_krb5_ctx: serializing key "
++				 "with enctype %d and size %d\n",
++				 kctx->enc->enctype, kctx->enc->length);
 +
-+		/* Ki */
-+		if (write_bytes(&p, end, kctx->enc->contents,
-+				kctx->enc->length))
-+			goto out_err;
-+
-+		/* Kc */
-+		if (derive_key(kctx->seq, &derived_key,
-+			       KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM))
-+			goto out_err;
-+		if (write_bytes(&p, end, derived_key.contents,
-+				derived_key.length))
-+			goto out_err;
-+		free(derived_key.contents);
++			if (write_bytes(&p, end, kctx->enc->contents,
++					kctx->enc->length))
++				goto out_err;
++		}
 +		break;
 +	default:
-+		printerr(0, "ERROR: serialize_krb5_ctx: unsupported seal "
-+			 "algorithm %d\n", kctx->sealalg);
++		printerr(0, "ERROR: serialize_krb5_ctx: unsupported encryption "
++			 "algorithm %d\n", kctx->enc->enctype);
  		goto out_err;
 -	if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
 -	if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
@@ -1657,3 +1010,4 @@ diff -puN utils/gssd/context_mit.c~CITI_NFS4_ALL utils/gssd/context_mit.c
  	buf->length = 0;
  	return -1;
  }
+_
