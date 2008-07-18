@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.1.1
-Release:	4
-License:	GPL
+Version:	1.1.2
+Release:	1
+License:	GPL v2
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	407785488241f9db67b1874e3f36370e
+# Source0-md5:	616a9685c29903cbffea48143c26dbd5
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -55,6 +55,8 @@ BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
 BuildRequires:	sed >= 4.0
+# lucid context fields mismatch with current version of spkm3.h
+BuildConflicts:	gss_mech_spkm3-devel
 Requires(post):	fileutils
 Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
