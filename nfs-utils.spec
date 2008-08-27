@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.1.2
-Release:	2
+Version:	1.1.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	616a9685c29903cbffea48143c26dbd5
+# Source0-md5:	167d231850b00c7c63300747aeb94c38
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -32,13 +32,11 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
-# http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/1.1.1-1/nfs-utils-1.1.1-CITI_NFS4_ALL-1.dif
-Patch2:		%{name}-CITI_NFS4.patch
-Patch3:		%{name}-statdpath.patch
-Patch4:		%{name}-mountd.patch
-Patch5:		%{name}-idmapd.conf.patch
-Patch6:		%{name}-keytab-path.patch
-Patch7:		%{name}-subsys.patch
+Patch2:		%{name}-statdpath.patch
+Patch3:		%{name}-mountd.patch
+Patch4:		%{name}-idmapd.conf.patch
+Patch5:		%{name}-keytab-path.patch
+Patch6:		%{name}-subsys.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -166,7 +164,9 @@ Wspólne programy do obsługi NFS.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
+
+# conflict with GNU stdio extension
+sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
 
 %build
 %{__libtoolize}
