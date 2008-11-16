@@ -5,10 +5,10 @@
 %bcond_without	nfs4		# without NFSv4 support
 #
 Summary:	Kernel NFS server
-Summary(pl):	Dzia³aj±cy na poziomie j±dra serwer NFS
-Summary(pt_BR):	Os utilitários para o cliente e servidor NFS do Linux
-Summary(ru):	õÔÉÌÉÔÙ ÄÌÑ NFS É ÄÅÍÏÎÙ ÐÏÄÄÅÒÖËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
-Summary(uk):	õÔÉÌ¦ÔÉ ÄÌÑ NFS ÔÁ ÄÅÍÏÎÉ Ð¦ÄÔÒÉÍËÉ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ ÑÄÒÁ
+Summary(pl.UTF-8):	DziaÅ‚ajÄ…cy na poziomie jÄ…dra serwer NFS
+Summary(pt_BR.UTF-8):	Os utilitÃ¡rios para o cliente e servidor NFS do Linux
+Summary(ru.UTF-8):	Ð£Ñ‚Ð¸Ð»Ð¸Ñ‚Ñ‹ Ð´Ð»Ñ NFS Ð¸ Ð´ÐµÐ¼Ð¾Ð½Ñ‹ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶ÐºÐ¸ Ð´Ð»Ñ NFS-ÑÐµÑ€Ð²ÐµÑ€Ð° ÑÐ´Ñ€Ð°
+Summary(uk.UTF-8):	Ð£Ñ‚Ð¸Ð»Ñ–Ñ‚Ð¸ Ð´Ð»Ñ NFS Ñ‚Ð° Ð´ÐµÐ¼Ð¾Ð½Ð¸ Ð¿Ñ–Ð´Ñ‚Ñ€Ð¸Ð¼ÐºÐ¸ Ð´Ð»Ñ NFS-ÑÐµÑ€Ð²ÐµÑ€Ð° ÑÐ´Ñ€Ð°
 Name:		nfs-utils
 Version:	1.0.10
 Release:	7
@@ -66,29 +66,29 @@ This is the *new* kernel NFS server and related tools. It provides a
 much higher level of performance than the traditional Linux user-land
 NFS server.
 
-%description -l pl
-To jest *nowy* dzia³aj±cy na poziomie j±dra serwer NFS oraz zwi±zane z
-nim narzêdzia. Serwer ten dostarcza znacznie wiêksz± wydajno¶æ ni¿
-tradycyjny, dzia³aj±cy na poziomie u¿ytkownika serwer NFS.
+%description -l pl.UTF-8
+To jest *nowy* dziaÅ‚ajÄ…cy na poziomie jÄ…dra serwer NFS oraz zwiÄ…zane z
+nim narzÄ™dzia. Serwer ten dostarcza znacznie wiÄ™kszÄ… wydajnoÅ›Ä‡ niÅ¼
+tradycyjny, dziaÅ‚ajÄ…cy na poziomie uÅ¼ytkownika serwer NFS.
 
-%description -l pt_BR
-O pacote nfs-utils provê os utilitários para o cliente e servidor NFS
+%description -l pt_BR.UTF-8
+O pacote nfs-utils provÃª os utilitÃ¡rios para o cliente e servidor NFS
 do Linux.
 
-%description -l ru
-ðÁËÅÔ nfs-utils ÐÒÅÄÏÓÔÁ×ÌÑÅÔ ÄÅÍÏÎÁ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ, ×ËÌÀÞÅÎÎÏÇÏ ×
-ÑÄÒÏ, É ÓÏÐÕÔÓÔ×ÕÀÝÉÅ ÕÔÉÌÉÔÙ, ËÏÔÏÒÙÅ ÏÂÅÓÐÅÞÉ×ÁÀÔ ÎÁÍÎÏÇÏ ÂÏÌØÛÕÀ
-ÐÒÏÉÚ×ÏÄÉÔÅÌØÎÏÓÔØ, ÞÅÍ ÔÒÁÄÉÃÉÏÎÎÙÅ Linux NFS-ÓÅÒ×ÅÒÁ, ÉÓÐÏÌØÚÕÅÍÙÅ
-ÂÏÌØÛÉÎÓÔ×ÏÍ ÐÏÌØÚÏ×ÁÔÅÌÅÊ.
+%description -l ru.UTF-8
+ÐŸÐ°ÐºÐµÑ‚ nfs-utils Ð¿Ñ€ÐµÐ´Ð¾ÑÑ‚Ð°Ð²Ð»ÑÐµÑ‚ Ð´ÐµÐ¼Ð¾Ð½Ð° Ð´Ð»Ñ NFS-ÑÐµÑ€Ð²ÐµÑ€Ð°, Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½Ð½Ð¾Ð³Ð¾ Ð²
+ÑÐ´Ñ€Ð¾, Ð¸ ÑÐ¾Ð¿ÑƒÑ‚ÑÑ‚Ð²ÑƒÑŽÑ‰Ð¸Ðµ ÑƒÑ‚Ð¸Ð»Ð¸Ñ‚Ñ‹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð¾Ð±ÐµÑÐ¿ÐµÑ‡Ð¸Ð²Ð°ÑŽÑ‚ Ð½Ð°Ð¼Ð½Ð¾Ð³Ð¾ Ð±Ð¾Ð»ÑŒÑˆÑƒÑŽ
+Ð¿Ñ€Ð¾Ð¸Ð·Ð²Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾ÑÑ‚ÑŒ, Ñ‡ÐµÐ¼ Ñ‚Ñ€Ð°Ð´Ð¸Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ðµ Linux NFS-ÑÐµÑ€Ð²ÐµÑ€Ð°, Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÐ¼Ñ‹Ðµ
+Ð±Ð¾Ð»ÑŒÑˆÐ¸Ð½ÑÑ‚Ð²Ð¾Ð¼ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹.
 
-%description -l uk
-ðÁËÅÔ nfs-utils ÎÁÄÁ¤ ÄÅÍÏÎÁ ÄÌÑ NFS-ÓÅÒ×ÅÒÁ, ×ÂÕÄÏ×ÁÎÏÇÏ × ÑÄÒÏ, ÔÁ
-ÓÕÐÕÔÎ¦ ÕÔÉÌ¦ÔÉ, ÑË¦ ÚÁÂÅÚÐÅÞÕÀÔØ ÎÁÂÁÇÁÔÏ Â¦ÌØÛÕ ÐÒÏÄÕËÔÉ×Î¦ÓÔØ, Î¦Ö
-ÔÒÁÄÉÃ¦ÊÎ¦ Linux NFS-ÓÅÒ×ÅÒÉ, ÑË¦ ×ÉËÏÒÉÓÔÏ×Õ¤ Â¦ÌØÛ¦ÓÔØ ËÏÒÉÓÔÕ×ÁÞ¦×.
+%description -l uk.UTF-8
+ÐŸÐ°ÐºÐµÑ‚ nfs-utils Ð½Ð°Ð´Ð°Ñ” Ð´ÐµÐ¼Ð¾Ð½Ð° Ð´Ð»Ñ NFS-ÑÐµÑ€Ð²ÐµÑ€Ð°, Ð²Ð±ÑƒÐ´Ð¾Ð²Ð°Ð½Ð¾Ð³Ð¾ Ð² ÑÐ´Ñ€Ð¾, Ñ‚Ð°
+ÑÑƒÐ¿ÑƒÑ‚Ð½Ñ– ÑƒÑ‚Ð¸Ð»Ñ–Ñ‚Ð¸, ÑÐºÑ– Ð·Ð°Ð±ÐµÐ·Ð¿ÐµÑ‡ÑƒÑŽÑ‚ÑŒ Ð½Ð°Ð±Ð°Ð³Ð°Ñ‚Ð¾ Ð±Ñ–Ð»ÑŒÑˆÑƒ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð¸Ð²Ð½Ñ–ÑÑ‚ÑŒ, Ð½Ñ–Ð¶
+Ñ‚Ñ€Ð°Ð´Ð¸Ñ†Ñ–Ð¹Ð½Ñ– Linux NFS-ÑÐµÑ€Ð²ÐµÑ€Ð¸, ÑÐºÑ– Ð²Ð¸ÐºÐ¾Ñ€Ð¸ÑÑ‚Ð¾Ð²ÑƒÑ” Ð±Ñ–Ð»ÑŒÑˆÑ–ÑÑ‚ÑŒ ÐºÐ¾Ñ€Ð¸ÑÑ‚ÑƒÐ²Ð°Ñ‡Ñ–Ð².
 
 %package clients
 Summary:	Clients for connecting to a remote NFS server
-Summary(pl):	Klienci do ³±czenia siê ze zdalnym serwerem NFS
+Summary(pl.UTF-8):	Klienci do Å‚Ä…czenia siÄ™ ze zdalnym serwerem NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
@@ -107,16 +107,16 @@ about the NFS (Network File System) server on the remote host. For
 example, showmount can display the clients which are mounted on that
 host. This package is not needed to mount NFS volumes.
 
-%description clients -l pl
-Pakiet zawiera program showmount s³u¿±cy do odpytywania serwera NFS.
+%description clients -l pl.UTF-8
+Pakiet zawiera program showmount sÅ‚uÅ¼Ä…cy do odpytywania serwera NFS.
 Showmount pyta demona na zdalnej maszynie o informacje NFS na zdalnym
-ho¶cie. Na przyk³ad, showmount potrafi pokazaæ klientów, którzy s±
+hoÅ›cie. Na przykÅ‚ad, showmount potrafi pokazaÄ‡ klientÃ³w, ktÃ³rzy sÄ…
 zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
-zamountowania zasobów NFS.
+zamountowania zasobÃ³w NFS.
 
 %package lock
 Summary:	Programs for NFS file locking
-Summary(pl):	Programy do obs³ugi blokowania plików poprzez NFS (lock)
+Summary(pl.UTF-8):	Programy do obsÅ‚ugi blokowania plikÃ³w poprzez NFS (lock)
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 #Requires:	kernel >= 2.2.5
@@ -130,13 +130,13 @@ Obsoletes:	nfslockd
 The nfs-lock pacage contains programs which support the NFS file lock.
 Install nfs-lock if you want to use file lock over NFS.
 
-%description lock -l pl
-Ten pakiet zawiera programy umo¿liwiaj±ce wykonywanie blokowania
-plików (file locking) poprzez NFS.
+%description lock -l pl.UTF-8
+Ten pakiet zawiera programy umoÅ¼liwiajÄ…ce wykonywanie blokowania
+plikÃ³w (file locking) poprzez NFS.
 
 %package rquotad
 Summary:	Remote quota server
-Summary(pl):	Zdalny serwer quota
+Summary(pl.UTF-8):	Zdalny serwer quota
 Group:		Networking/Daemons
 Requires(post,preun):	/sbin/chkconfig
 Requires:	rc-scripts
@@ -148,22 +148,22 @@ local file system which is mounted by a remote machine over the NFS.
 The results are used by quota(1) to display user quotas for remote
 file systems.
 
-%description rquotad -l pl
-rquotad jest serverem rpc(3N), który zwraca quoty u¿ytkownika
-lokalnego systemu plików, który jest zamountowany przez zdaln± maszynê
-poprzez NFS. Rezultaty s± u¿ywane przez quota(1), aby wy¶wietliæ quotê
-dla zdalnego systemu plików.
+%description rquotad -l pl.UTF-8
+rquotad jest serverem rpc(3N), ktÃ³ry zwraca quoty uÅ¼ytkownika
+lokalnego systemu plikÃ³w, ktÃ³ry jest zamountowany przez zdalnÄ… maszynÄ™
+poprzez NFS. Rezultaty sÄ… uÅ¼ywane przez quota(1), aby wyÅ›wietliÄ‡ quotÄ™
+dla zdalnego systemu plikÃ³w.
 
 %package common
 Summary:	Common programs for NFS
-Summary(pl):	Wspólne programy do obs³ugi NFS
+Summary(pl.UTF-8):	WspÃ³lne programy do obsÅ‚ugi NFS
 Group:		Networking
 
 %description common
 Common programs for NFS.
 
-%description common -l pl
-Wspólne programy do obs³ugi NFS.
+%description common -l pl.UTF-8
+WspÃ³lne programy do obsÅ‚ugi NFS.
 
 %prep
 %setup -q -a1
