@@ -81,7 +81,7 @@ stop() {
 		killproc nfsd -QUIT
 		msg_stopping "NFS mountd"
 		killproc rpc.mountd
-		msg_stopping "NFS"
+		msg_stopping "NFS exportfs"
 		daemon /usr/sbin/exportfs -au
 		rm -f /var/lock/subsys/nfs
 	else
