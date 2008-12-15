@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.0.10
-Release:	8
+Release:	9
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
@@ -42,6 +42,7 @@ BuildRequires:	libevent-devel >= 1.1a
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
+BuildRequires:	cpp
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
@@ -365,9 +366,9 @@ fi
 
 %files common
 %defattr(644,root,root,755)
-%attr(755,root,root) %dir %{_var}/lib/nfs
-%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
-%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
+%dir %{_var}/lib/nfs
+%dir %{_var}/lib/nfs/rpc_pipefs
+%dir %{_var}/lib/nfs/v4recovery
 %if %{with nfs4}
 %attr(755,root,root) %{_sbindir}/gss_*
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
