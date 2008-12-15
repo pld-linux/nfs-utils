@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.0.10
-Release:	9
+Version:	1.0.12
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://dl.sourceforge.net/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	1949634d0dc896696d8a880bdca622c8
+# Source0-md5:	acf3656cec3872deb597aa7ac13f3c3a
 Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
 Source2:	nfs.init
@@ -28,17 +28,17 @@ Source8:	nfsfs.init
 Source9:	nfsfs.sysconfig
 Patch0:		%{name}-eepro-support.patch
 Patch1:		%{name}-install.patch
-Patch2:		%{name}-nolibs.patch
-Patch3:		%{name}-heimdal.patch
-Patch4:		%{name}-heimdal-internals.patch
+Patch2:		%{name}-heimdal.patch
+Patch3:		%{name}-heimdal-internals.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/nfs-utils-patches/
-Patch5:		%{name}-1.0.10-CITI_NFS4_ALL-1.dif
+#Patch4:		%{name}-1.0.11-CITI_NFS4_ALL-1.dif
+Patch4:		%{name}-CITI_NFS4.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 %if %{with nfs4}
 BuildRequires:	heimdal-devel >= 0.7
-BuildRequires:	libevent-devel >= 1.1a
+BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel
 BuildRequires:	librpcsecgss-devel >= 0.11-3
 %endif
@@ -172,8 +172,9 @@ Wspólne programy do obsługi NFS.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+# temporary hack
+rm -f utils/mountd/fsloc.[ch]
 %patch4 -p1
-%patch5 -p1
 
 %build
 %if "%{_lib}" == "lib64"
@@ -302,10 +303,6 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/nfsstat
-%attr(755,root,root) %{_sbindir}/nhfsgraph
-%attr(755,root,root) %{_sbindir}/nhfsnums
-%attr(755,root,root) %{_sbindir}/nhfsrun
-%attr(755,root,root) %{_sbindir}/nhfsstone
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 
@@ -319,10 +316,6 @@ fi
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
-%{_mandir}/man8/nhfsgraph.8*
-%{_mandir}/man8/nhfsnums.8*
-%{_mandir}/man8/nhfsrun.8*
-%{_mandir}/man8/nhfsstone.8*
 %{_mandir}/man8/nfsd.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
