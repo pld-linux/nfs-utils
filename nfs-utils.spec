@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.1.3
-Release:	4
+Version:	1.1.4
+Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.gz
-# Source0-md5:	167d231850b00c7c63300747aeb94c38
+# Source0-md5:	d7bc73915031b3291bbfd60984def329
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -30,13 +30,10 @@ Source7:	rpcsvcgssd.init
 Source8:	nfs.sysconfig
 Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
-Patch0:		%{name}-eepro-support.patch
-Patch1:		%{name}-install.patch
-Patch2:		%{name}-statdpath.patch
-Patch3:		%{name}-mountd.patch
-Patch4:		%{name}-idmapd.conf.patch
-Patch5:		%{name}-keytab-path.patch
-Patch6:		%{name}-subsys.patch
+Patch0:		%{name}-install.patch
+Patch1:		%{name}-statdpath.patch
+Patch2:		%{name}-keytab-path.patch
+Patch3:		%{name}-subsys.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -46,9 +43,10 @@ BuildRequires:	e2fsprogs-devel >= 1.39-5
 BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libgssglue-devel >= 0.1
-BuildRequires:	libnfsidmap-devel
+BuildRequires:	libnfsidmap-devel >= 0.21-3
 BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
+BuildRequires:	libtirpc-devel >= 1:0.1.10-4
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
@@ -148,6 +146,9 @@ plików (file locking) poprzez NFS.
 Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
+%if %{with nfs4}
+Requires:	libnfsidmap >= 0.21-3
+%endif
 Conflicts:	mount < 2.13-0.pre7.1
 
 %description common
@@ -162,9 +163,6 @@ Wspólne programy do obsługi NFS.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
 
 # conflict with GNU stdio extension
 sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
@@ -212,7 +210,6 @@ EOF
 sed -e "s|#!/bin/bash|#!/bin/sh|" utils/gssd/gss_destroy_creds > $RPM_BUILD_ROOT%{_sbindir}/gss_destroy_creds
 
 mv $RPM_BUILD_ROOT%{_sbindir}/rpcdebug $RPM_BUILD_ROOT/sbin
-install utils/idmapd/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}/
 
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
@@ -415,6 +412,5 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %attr(755,root,root) %{_sbindir}/gss_*
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
-%attr(660,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %{_mandir}/man[58]/*idmap*
 %endif
