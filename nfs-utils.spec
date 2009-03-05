@@ -52,7 +52,7 @@ Requires(post):	fileutils
 Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
-Requires:	portmap >= 4.0
+Requires:	rpcbind >= 0.1.7
 Requires:	rc-scripts >= 0.4.1.5
 Requires:	setup >= 2.4.6-7
 Provides:	nfsdaemon
@@ -121,7 +121,7 @@ Summary:	Programs for NFS file locking
 Summary(pl.UTF-8):	Programy do obsługi blokowania plików poprzez NFS (lock)
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
-Requires:	portmap >= 4.0
+Requires:	rpcbind >= 0.1.7
 Requires:	rc-scripts
 Provides:	group(rpcstatd)
 Provides:	user(rpcstatd)
