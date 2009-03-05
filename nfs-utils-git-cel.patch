@@ -1,0 +1,905 @@
+commit 5245fa971d220896bfdb4f35f0c0d7dff8ea5e9b
+Author: Jeff Layton <jlayton@redhat.com>
+Date:   Wed Mar 4 18:41:20 2009 -0500
+
+    nfs-utils: clean up handling of libgssglue in gssd Makefile
+    
+    Make the pkgconfig check for libgssglue conditional on tirpc being
+    enabled. When it's disabled, the pkgconfig check for librpcsecgss will
+    pull in the gssglue lib and include dir automatically.
+    
+    Also, make sure we include GSSGLUE_CFLAGS and the GSSGLUE_LIBS to the
+    appropriate places in utils/gssd/Makefile.am so that we pick up
+    the gssglue libs when tirpc is enabled.
+    
+    Signed-off-by: Jeff Layton <jlayton@redhat.com>
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit a60410dcf62185f9f4abf2d8a77e638eea75e476
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:38:35 2009 -0500
+
+    nfs-utils: Include legacy or TI-RPC headers, not both
+    
+    Data type incompatibilities between the legacy RPC headers and the
+    TI-RPC headers mean we can't use libtirpc with code that was compiled
+    against the legacy RPC headers.  The definition of rpcprog_t for
+    example is "unsigned long" in the legacy library, but it's "uint32_t"
+    for TI-RPC.  On 32-bit systems, these types happen to have the same
+    width, but on 64-bit systems they don't, making more complex data
+    structures that use these types in fields ABI incompatible.
+    
+    Adopt a new strategy to deal with this issue.  When --enable-tirpc is
+    set, append "-I/usr/include/tirpc" to the compilation steps.  This
+    should cause the compiler to grab the tirpc/ headers instead of the
+    legacy headers.  Now, for TI-RPC builds, the TI-RPC legacy functions
+    and the TI-RPC headers will be used.  On legacy systems, the legacy
+    headers and legacy glibc RPC implementation will be used.
+    
+    A new ./configure option is introduced to allow system integrators to
+    use TI-RPC headers in some other location than /usr/include/tirpc.
+    /usr/include/tirpc remains the default setting for this new option.
+    
+    The gssd implementation presents a few challenges, but it turns out
+    the gssglue library is similar to the auth_gss pieces of TI-RPC.  To
+    avoid similar header incompatibility issues, gssd now uses libtirpc
+    instead of libgssglue if --enable-tirpc is specified.  There may be
+    other issues to tackle with gssd, but for now, we just make sure it
+    builds with --enable-tirpc.
+    
+    Note also: svc_getcaller() is a macro in both cases that points to
+    a sockaddr field in the svc_req structure.  The legacy version points
+    to a sockaddr_in type field, but the TI-RPC version points to a
+    sockaddr_in6 type field.
+    
+    rpc.mountd unconditionally casts the result of svc_getcaller() to a
+    sockaddr_in *.  This should be OK for TI-RPC as well, since rpc.mountd
+    still uses legacy RPC calls (provided by glibc, or emulated by TI-RPC)
+    to set up its listeners, and therefore rpc.mountd callers will always
+    be from AF_INET addresses for now.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit 4069fc444b9f50459abad1cd19cb6278ad76f81b
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:38:33 2009 -0500
+
+    configure: move IPv6 feature checks into aclocal/
+    
+    Clean up: for consistency with other local feature checks, move IPv6
+    feature checks into aclocal/
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit d4cf713e88bdbf4bcad9c76d19f83828e3de9db2
+Author: Jeff Layton <jlayton@redhat.com>
+Date:   Wed Mar 4 18:38:19 2009 -0500
+
+    nfs-utils: don't need extra libs to do AC_CHECK_LIBS for librpcsecgss
+    
+    The conftest should work without these extra libs being included.
+    
+    Signed-off-by: Jeff Layton <jlayton@redhat.com>
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit bff44d423f6e7c199deaaffb3a786f4878301dee
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:23:28 2009 -0500
+
+    configure: Move rpcsecgss checking into aclocal
+    
+    Clean up: Introduce two more aclocal scripts for handling rpcsecgss
+    dependency checking.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit c25e45c7cdf64826a4ead9bd7d8ff11b98861d47
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:23:28 2009 -0500
+
+    configure: pull common nfsidmap and event checks into aclocal/
+    
+    Clean up: Create an aclocal script for the nfsidmap library and
+    headers checks used for both --enable-gss and --enable-nfsv4.
+    Move libevent checks out too.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit a15242aa10c97bc5bc930266a7b87ab327b29307
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:23:28 2009 -0500
+
+    nfs-utils: replace function-specific switches with HAVE_LIBTIRPC
+    
+    Instead of switching in TI-RPC-specific logic with a function-specific
+    switch like HAVE_CLNT_VG_CREATE, let's use the more generic
+    HAVE_LIBTIRPC macro everywhere.
+    
+    This simplifies ./configure (always a good thing), and makes it more
+    clear in the source code exactly what the extra conditionally compiled
+    code is for.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit 33ea560291d280555ac2aacdbda561cf962f79c2
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:23:27 2009 -0500
+
+    configure: move TI-RPC checks into aclocal/
+    
+    Define an aclocal test for TI-RPC headers and library, and move the
+    TI-RPC checks earlier in our configure script so other feature checks
+    can use the availability of TI-RPC to decide what to do.
+    
+    Since bindresvport_sa is required just for IPv6 support, move that
+    check to the IPv6 feature tests.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+commit cf8c8619de71bd82c15bd9be00bc74a1edd29067
+Author: Chuck Lever <chuck.lever@oracle.com>
+Date:   Wed Mar 4 18:23:27 2009 -0500
+
+    configure: add defensive quoting in some function checks
+    
+    Clean up: Add proper m4 quoting in macros that check for the presence
+    of some functions in configure.ac.
+    
+    Signed-off-by: Chuck Lever <chuck.lever@oracle.com>
+
+diff --git a/Makefile.am b/Makefile.am
+index 88ae210..b3a6e91 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -40,7 +40,12 @@ EXTRA_DIST = \
+ 	aclocal/bsdsignals.m4 \
+ 	aclocal/nfs-utils.m4 \
+ 	aclocal/kerberos5.m4 \
+-	aclocal/tcp-wrappers.m4
++	aclocal/tcp-wrappers.m4 \
++	aclocal/libtirpc.m4 \
++	aclocal/libevent.m4 \
++	aclocal/libnfsidmap.m4 \
++	aclocal/rpcsec_vers.m4 \
++	aclocal/ipv6.m4
+ 
+ ACLOCAL_AMFLAGS = -I aclocal
+ 
+diff --git a/aclocal/ipv6.m4 b/aclocal/ipv6.m4
+new file mode 100644
+index 0000000..0564b3e
+--- /dev/null
++++ b/aclocal/ipv6.m4
+@@ -0,0 +1,29 @@
++dnl Checks for IPv6 support
++dnl
++AC_DEFUN([AC_IPV6], [
++
++  AC_CHECK_DECL([AI_ADDRCONFIG],
++                [AC_DEFINE([HAVE_DECL_AI_ADDRCONFIG], 1,
++                           [Define this to 1 if AI_ADDRCONFIG macro is defined])], ,
++                [ #include <netdb.h> ])
++
++  if test "$enable_ipv6" = yes; then
++
++    dnl TI-RPC required for IPv6
++    if test "$enable_tirpc" = no; then
++      AC_MSG_ERROR(['--enable-ipv6' requires '--enable-tirpc'.])
++    fi
++
++    dnl IPv6-enabled networking functions required for IPv6
++    AC_CHECK_FUNCS([getnameinfo bindresvport_sa], , ,
++                   [AC_MSG_ERROR([Missing functions needed for IPv6.])])
++
++    dnl Need to detect presence of IPv6 networking at run time via
++    dnl getaddrinfo(3); old versions of glibc do not support ADDRCONFIG
++    AC_CHECK_DECL([AI_ADDRCONFIG], ,
++                  [AC_MSG_ERROR([full getaddrinfo(3) implementation needed for IPv6 support])],
++                  [ #include <netdb.h> ])
++
++  fi
++
++])dnl
+diff --git a/aclocal/libevent.m4 b/aclocal/libevent.m4
+new file mode 100644
+index 0000000..3c962b3
+--- /dev/null
++++ b/aclocal/libevent.m4
+@@ -0,0 +1,11 @@
++dnl Checks for libevent
++AC_DEFUN([AC_LIBEVENT], [
++
++  dnl Check for libevent, but do not add -levent to LIBS
++  AC_CHECK_LIB([event], [event_dispatch], [libevent=1],
++               [AC_MSG_ERROR([libevent not found.])])
++
++  AC_CHECK_HEADERS([event.h], ,
++                   [AC_MSG_ERROR([libevent headers not found.])])
++
++])dnl
+diff --git a/aclocal/libnfsidmap.m4 b/aclocal/libnfsidmap.m4
+new file mode 100644
+index 0000000..cfcde2f
+--- /dev/null
++++ b/aclocal/libnfsidmap.m4
+@@ -0,0 +1,17 @@
++dnl Checks for libnfsidmap
++dnl
++AC_DEFUN([AC_LIBNFSIDMAP], [
++
++  dnl Check for libnfsidmap, but do not add -lnfsidmap to LIBS
++  AC_CHECK_LIB([nfsidmap], [nfs4_init_name_mapping], [libnfsidmap=1],
++               [AC_MSG_ERROR([libnfsidmap not found.])])
++
++  AC_CHECK_HEADERS([nfsidmap.h], ,
++                   [AC_MSG_ERROR([libnfsidmap headers not found.])])
++
++  dnl nfs4_set_debug() doesn't appear in all versions of libnfsidmap
++  AC_CHECK_LIB([nfsidmap], [nfs4_set_debug],
++               [AC_DEFINE([HAVE_NFS4_SET_DEBUG], 1,
++                          [Define to 1 if you have the `nfs4_set_debug' function.])])
++
++])dnl
+diff --git a/aclocal/librpcsecgss.m4 b/aclocal/librpcsecgss.m4
+new file mode 100644
+index 0000000..d1dd25e
+--- /dev/null
++++ b/aclocal/librpcsecgss.m4
+@@ -0,0 +1,19 @@
++dnl Checks for rpcsecgss library and headers
++dnl KRB5LIBS must be set before this function is invoked.
++dnl
++AC_DEFUN([AC_LIBRPCSECGSS], [
++
++  dnl libtirpc provides an rpcsecgss API
++  if test "$enable_tirpc" = no; then
++
++    dnl Check for library, but do not add -lrpcsecgss to LIBS
++    AC_CHECK_LIB([rpcsecgss], [authgss_create_default], [librpcsecgss=1],
++                 [AC_MSG_ERROR([librpcsecgss not found.])])
++
++    AC_CHECK_LIB([rpcsecgss], [authgss_set_debug_level],
++                 [AC_DEFINE([HAVE_AUTHGSS_SET_DEBUG_LEVEL], 1,
++                 [Define to 1 if you have the `authgss_set_debug_level' function.])])
++
++  fi
++
++])dnl
+diff --git a/aclocal/libtirpc.m4 b/aclocal/libtirpc.m4
+new file mode 100644
+index 0000000..af4c7d3
+--- /dev/null
++++ b/aclocal/libtirpc.m4
+@@ -0,0 +1,28 @@
++dnl Checks for TI-RPC library and headers
++dnl
++AC_DEFUN([AC_LIBTIRPC], [
++
++  AC_ARG_WITH([tirpcinclude],
++              [AC_HELP_STRING([--with-tirpcinclude=DIR],
++                              [use TI-RPC headers in DIR])],
++              [tirpc_header_dir=$withval],
++              [tirpc_header_dir=/usr/include/tirpc])
++
++  dnl if --enable-tirpc was specifed, the following components
++  dnl must be present, and we set up HAVE_ macros for them.
++
++  if test "$enable_tirpc" = yes; then
++
++    dnl look for the library; add to LIBS if found
++    AC_CHECK_LIB([tirpc], [clnt_tli_create], ,
++                 [AC_MSG_ERROR([libtirpc not found.])])
++
++    dnl also must have the headers installed where we expect
++    dnl look for headers; add -I compiler option if found
++    AC_CHECK_HEADERS([${tirpc_header_dir}/netconfig.h], ,
++                     [AC_MSG_ERROR([libtirpc headers not found.])])
++    AC_SUBST([AM_CPPFLAGS], ["-I${tirpc_header_dir}"])
++
++  fi
++
++])dnl
+diff --git a/aclocal/rpcsec_vers.m4 b/aclocal/rpcsec_vers.m4
+new file mode 100644
+index 0000000..e59c0aa
+--- /dev/null
++++ b/aclocal/rpcsec_vers.m4
+@@ -0,0 +1,12 @@
++dnl Checks librpcsec version
++AC_DEFUN([AC_RPCSEC_VERSION], [
++
++  dnl TI-RPC replaces librpcsecgss, but we still need libgssglue
++  if test "$enable_tirpc" = no; then
++    PKG_CHECK_MODULES([RPCSECGSS], [librpcsecgss >= 0.16], ,
++                      [AC_MSG_ERROR([Unable to locate information required to use librpcsecgss.  If you have pkgconfig installed, you might try setting environment variable PKG_CONFIG_PATH to /usr/local/lib/pkgconfig])])
++  else
++    PKG_CHECK_MODULES([GSSGLUE], [libgssglue >= 0.1])
++  fi
++
++])dnl
+diff --git a/configure.ac b/configure.ac
+index b2c8190..ce5d308 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -118,6 +118,11 @@ AC_ARG_ENABLE(mount,
+ 	enable_mount=$enableval,
+ 	enable_mount=yes)
+ 	AM_CONDITIONAL(CONFIG_MOUNT, [test "$enable_mount" = "yes"])
++AC_ARG_ENABLE(tirpc,
++	[AC_HELP_STRING([--enable-tirpc],
++			[enable use of TI-RPC @<:@default=no@:>@])],
++	enable_tirpc=$enableval,
++	enable_tirpc=no)
+ AC_ARG_ENABLE(ipv6,
+ 	[AC_HELP_STRING([--enable-ipv6],
+                         [enable support for IPv6 @<:@default=no@:>@])],
+@@ -131,13 +136,8 @@ AC_ARG_ENABLE(ipv6,
+ 	AC_SUBST(enable_ipv6)
+ 	AM_CONDITIONAL(CONFIG_IPV6, [test "$enable_ipv6" = "yes"])
+ 
+-AC_ARG_ENABLE(tirpc,
+-	[AC_HELP_STRING([--enable-tirpc],
+-                        [enable use of TI-RPC @<:@default=no@:>@])],
+-	enable_tirpc=$enableval,
+-	enable_tirpc=no)
+-	AC_SUBST(enable_tirpc)
+-	AM_CONDITIONAL(CONFIG_TIRPC, [test "$enable_tirpc" = "yes"])
++dnl Check for TI-RPC library and headers
++AC_LIBTIRPC
+ 
+ # Check whether user wants TCP wrappers support
+ AC_TCP_WRAPPERS
+@@ -176,39 +176,40 @@ AC_BSD_SIGNALS
+ dnl *************************************************************
+ dnl * Check for required libraries
+ dnl *************************************************************
+-AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl, gethostbyname, [LIBNSL="-lnsl"])])
++
++AC_CHECK_FUNC([gethostbyname], ,
++              [AC_CHECK_LIB([nsl], [gethostbyname], [LIBNSL="-lnsl"])])
+ AC_SUBST(LIBNSL)
+ 
+-AC_CHECK_FUNC(connect, ,
+-      AC_CHECK_LIB(socket, connect, [LIBSOCKET="-lsocket"],
+-                AC_MSG_ERROR(Function 'socket' not found.), $LIBNSL))
++AC_CHECK_FUNC([connect], ,
++              [AC_CHECK_LIB([socket], [connect], [LIBSOCKET="-lsocket"],
++                    [AC_MSG_ERROR([Function 'socket' not found.])], [$LIBNSL])])
++
++AC_CHECK_FUNC([getaddrinfo], , ,
++              [AC_MSG_ERROR([Function 'getaddrinfo' not found.])])
+ 
+-AC_CHECK_FUNC(getaddrinfo, , ,
+-                AC_MSG_ERROR(Function 'getaddrinfo' not found.))
++AC_CHECK_FUNC([getrpcbynumber], , ,
++              [AC_MSG_ERROR([Function 'getrpcbynumber' not found.])])
+ 
+-AC_CHECK_FUNC(getrpcbynumber, , ,
+-                AC_MSG_ERROR(Function 'getrpcbynumber' not found.))
++AC_CHECK_FUNC([getservbyname], , ,
++              [AC_MSG_ERROR([Function 'getservbyname' not found.])])
+ 
+-AC_CHECK_FUNC(getservbyname, , ,
+-                AC_MSG_ERROR(Function 'getservbyname' not found.))
++AC_CHECK_LIB([crypt], [crypt], [LIBCRYPT="-lcrypt"])
+ 
+-AC_CHECK_LIB(crypt, crypt, [LIBCRYPT="-lcrypt"])
+ if test "$enable_nfsv4" = yes; then
+-    AC_CHECK_LIB(event, event_dispatch, [libevent=1], AC_MSG_ERROR([libevent needed for nfsv4 support]))
+-    AC_CHECK_LIB(nfsidmap, nfs4_init_name_mapping, [libnfsidmap=1], AC_MSG_ERROR([libnfsidmap needed for nfsv4 support]))
+-    AC_CHECK_HEADERS(event.h, ,AC_MSG_ERROR([libevent needed for nfsv4 support]))
+-    AC_CHECK_HEADERS(nfsidmap.h, ,AC_MSG_ERROR([libnfsidmap needed for nfsv4 support]))
+-    dnl librpcsecgss already has a dependency on libgssapi,
+-    dnl but we need to make sure we get the right version
+-    if test "$enable_gss" = yes; then
+-     PKG_CHECK_MODULES(RPCSECGSS, librpcsecgss >= 0.16, ,
+-      [AC_MSG_ERROR([Unable to locate information required to use librpcsecgss.  If you have pkgconfig installed, you might try setting environment variable PKG_CONFIG_PATH to /usr/local/lib/pkgconfig])
+-      ]
+-     )
+-    PKG_CHECK_MODULES(GSSGLUE, libgssglue >= 0.1)
+-    fi
++  dnl check for libevent libraries and headers
++  AC_LIBEVENT
++
++  dnl check for nfsidmap libraries and headers
++  AC_LIBNFSIDMAP
+ 
++  dnl librpcsecgss already has a dependency on libgssapi,
++  dnl but we need to make sure we get the right version
++  if test "$enable_gss" = yes; then
++    AC_RPCSEC_VERSION
++  fi
+ fi
++
+ if test "$knfsd_cv_glibc2" = no; then
+     AC_CHECK_LIB(bsd, daemon, [LIBBSD="-lbsd"])
+ fi
+@@ -236,49 +237,21 @@ AC_SUBST(LIBBLKID)
+ 
+ if test "$enable_gss" = yes; then
+   dnl 'gss' also depends on nfsidmap.h - at least for svcgssd_proc.c
+-  AC_CHECK_HEADERS(nfsidmap.h, ,AC_MSG_ERROR([libnfsidmap needed for gss support]))
+-  AC_CHECK_HEADERS(spkm3.h, ,AC_MSG_WARN([could not locate SPKM3 header; will not have SPKM3 support]))
+-  dnl the nfs4_set_debug function doesn't appear in all version of the library
+-  AC_CHECK_LIB(nfsidmap, nfs4_set_debug,
+-	       AC_DEFINE(HAVE_NFS4_SET_DEBUG,1,
+-			 [Whether nfs4_set_debug() is present in libnfsidmap]),)
++  AC_LIBNFSIDMAP
++
++  AC_CHECK_HEADERS([spkm3.h], ,
++                   [AC_MSG_WARN([Could not locate SPKM3 header; will not have SPKM3 support])])
+ 
+   dnl Check for Kerberos V5
+   AC_KERBEROS_V5
+ 
+-  dnl This is not done until here because we need to have KRBLIBS set
+-  dnl ("librpcsecgss=1" is so that it doesn't get added to LIBS)
+-  AC_CHECK_LIB(rpcsecgss, authgss_create_default, [librpcsecgss=1], AC_MSG_ERROR([librpcsecgss needed for nfsv4 support]), -lgssglue -ldl)
+-  AC_CHECK_LIB(rpcsecgss, authgss_set_debug_level,
+-  	       AC_DEFINE(HAVE_AUTHGSS_SET_DEBUG_LEVEL, 1, [Define this if the rpcsec_gss library has the function authgss_set_debug_level]),, -lgssglue -ldl)
++  dnl Invoked after AC_KERBEROS_V5; AC_LIBRPCSECGSS needs to have KRBLIBS set
++  AC_LIBRPCSECGSS
+ 
+ fi
+ 
+-AC_CHECK_DECL([AI_ADDRCONFIG],
+-              AC_DEFINE([HAVE_DECL_AI_ADDRCONFIG], 1,
+-                         [Define this to 1 if AI_ADDRCONFIG macro is defined]), ,
+-              [ #include <netdb.h> ] )
+-
+-if test "$enable_tirpc" = yes; then
+-  AC_CHECK_LIB(tirpc, clnt_tli_create, ,
+-           AC_MSG_ERROR([libtirpc not found.]))
+-  AC_CHECK_HEADERS(tirpc/netconfig.h, ,
+-                   AC_MSG_ERROR([libtirpc headers not found.]))
+-  AC_CHECK_FUNCS([bindresvport_sa getnetconfig \
+-                  clnt_create clnt_create_timed \
+-                  clnt_vc_create clnt_dg_create xdr_rpcb])
+-fi
+-
+-if test "$enable_ipv6" = yes; then
+-  if test "$enable_tirpc" = no; then
+-    AC_MSG_ERROR('--enable-ipv6' requires '--enable-tirpc'.)
+-  fi
+-  AC_CHECK_FUNC(getnameinfo, , ,
+-               AC_MSG_ERROR(Function 'getnameinfo' not found.))
+-  AC_CHECK_DECL([AI_ADDRCONFIG], ,
+-               AC_MSG_ERROR([full getaddrinfo(3) implementation needed for IPv6 support]),
+-               [ #include <netdb.h> ] )
+-fi
++dnl Check for IPv6 support
++AC_IPV6
+ 
+ dnl *************************************************************
+ dnl Check for headers
+diff --git a/support/nfs/getport.c b/support/nfs/getport.c
+index 5da1749..734d21a 100644
+--- a/support/nfs/getport.c
++++ b/support/nfs/getport.c
+@@ -40,9 +40,9 @@
+ #include <rpc/rpc.h>
+ #include <rpc/pmap_prot.h>
+ 
+-#ifdef HAVE_TIRPC_NETCONFIG_H
+-#include <tirpc/netconfig.h>
+-#include <tirpc/rpc/rpcb_prot.h>
++#ifdef HAVE_LIBTIRPC
++#include <netconfig.h>
++#include <rpc/rpcb_prot.h>
+ #endif
+ 
+ #include "nfsrpc.h"
+@@ -53,17 +53,17 @@
+  * Rpcbind's local socket service does not seem to be working.
+  * Disable this logic for now.
+  */
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ #undef NFS_GP_LOCAL
+-#else	/* HAVE_XDR_RPCB */
++#else	/* !HAVE_LIBTIRPC */
+ #undef NFS_GP_LOCAL
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* !HAVE_LIBTIRPC */
+ 
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ const static rpcvers_t default_rpcb_version = RPCBVERS_4;
+-#else
++#else	/* !HAVE_LIBTIRPC */
+ const static rpcvers_t default_rpcb_version = PMAPVERS;
+-#endif
++#endif	/* !HAVE_LIBTIRPC */
+ 
+ #ifdef HAVE_DECL_AI_ADDRCONFIG
+ /*
+@@ -242,7 +242,7 @@ static CLIENT *nfs_gp_get_rpcbclient(const struct sockaddr *sap,
+  * Returns a '\0'-terminated string if successful; otherwise NULL.
+  * rpc_createerr.cf_stat is set to reflect the error.
+  */
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ 
+ static char *nfs_gp_get_netid(const sa_family_t family,
+ 			      const unsigned short protocol)
+@@ -290,7 +290,7 @@ out:
+ 	return NULL;
+ }
+ 
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* HAVE_LIBTIRPC */
+ 
+ /*
+  * Extract a port number from a universal address, and terminate the
+@@ -453,7 +453,7 @@ static int nfs_gp_ping(CLIENT *client, struct timeval timeout)
+ 	return (int)(status == RPC_SUCCESS);
+ }
+ 
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ 
+ /*
+  * Initialize the rpcb argument for a GETADDR request.
+@@ -565,7 +565,7 @@ static unsigned short nfs_gp_rpcb_getaddr(CLIENT *client,
+ 	return port;
+ }
+ 
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* HAVE_LIBTIRPC */
+ 
+ /*
+  * Try GETPORT request via rpcbind version 2.
+@@ -595,7 +595,7 @@ static unsigned long nfs_gp_pmap_getport(CLIENT *client,
+ 	return port;
+ }
+ 
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ 
+ static unsigned short nfs_gp_getport_rpcb(CLIENT *client,
+ 					  const struct sockaddr *sap,
+@@ -617,7 +617,7 @@ static unsigned short nfs_gp_getport_rpcb(CLIENT *client,
+ 	return port;
+ }
+ 
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* HAVE_LIBTIRPC */
+ 
+ static unsigned long nfs_gp_getport_pmap(CLIENT *client,
+ 					 const rpcprog_t program,
+@@ -652,11 +652,11 @@ static unsigned short nfs_gp_getport(CLIENT *client,
+ 				     struct timeval timeout)
+ {
+ 	switch (sap->sa_family) {
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ 	case AF_INET6:
+ 		return nfs_gp_getport_rpcb(client, sap, salen, program,
+ 						version, protocol, timeout);
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* HAVE_LIBTIRPC */
+ 	case AF_INET:
+ 		return nfs_gp_getport_pmap(client, program, version,
+ 							protocol, timeout);
+@@ -922,7 +922,7 @@ unsigned short nfs_getlocalport(const rpcprot_t program,
+  * address of the same address family.  In this way an RPC server can
+  * advertise via rpcbind that it does not support AF_INET6.
+  */
+-#ifdef HAVE_XDR_RPCB
++#ifdef HAVE_LIBTIRPC
+ 
+ unsigned short nfs_rpcb_getaddr(const struct sockaddr *sap,
+ 				const socklen_t salen,
+@@ -955,7 +955,7 @@ unsigned short nfs_rpcb_getaddr(const struct sockaddr *sap,
+ 	return port;
+ }
+ 
+-#else	/* HAVE_XDR_RPCB */
++#else	/* !HAVE_LIBTIRPC */
+ 
+ unsigned short nfs_rpcb_getaddr(const struct sockaddr *sap,
+ 				const socklen_t salen,
+@@ -971,7 +971,7 @@ unsigned short nfs_rpcb_getaddr(const struct sockaddr *sap,
+ 	return 0;
+ }
+ 
+-#endif	/* HAVE_XDR_RPCB */
++#endif	/* !HAVE_LIBTIRPC */
+ 
+ /**
+  * nfs_pmap_getport - query rpcbind via the portmap protocol (rpcbindv2)
+diff --git a/support/nfs/rpc_socket.c b/support/nfs/rpc_socket.c
+index b7420d1..2b11e35 100644
+--- a/support/nfs/rpc_socket.c
++++ b/support/nfs/rpc_socket.c
+@@ -40,51 +40,10 @@
+ 
+ #include "nfsrpc.h"
+ 
+-#ifdef HAVE_TIRPC_NETCONFIG_H
+-
+-/*
+- * Most of the headers under /usr/include/tirpc are currently
+- * unusable for various reasons.  We statically define the bits
+- * we need here until the official headers are fixed.
+- *
+- * The commonly used RPC calls such as CLNT_CALL and CLNT_DESTROY
+- * are actually virtual functions in both the legacy and TI-RPC
+- * implementations.  The proper _CALL or _DESTROY will be invoked
+- * no matter if we used a legacy clnt_create() or clnt_tli_create()
+- * from libtirpc.
+- */
+-
+-#include <tirpc/netconfig.h>
+-#include <tirpc/rpc/rpcb_prot.h>
+-
+-/* definitions from tirpc/rpc/types.h */
+-
+-/*
+- * The netbuf structure is used for transport-independent address storage.
+- */
+-struct netbuf {
+-	unsigned int	maxlen;
+-	unsigned int	len;
+-	void		*buf;
+-};
+-
+-/* definitions from tirpc/rpc/clnt.h */
+-
+-/*
+- * Low level clnt create routine for connectionless transports, e.g. udp.
+- */
+-extern CLIENT *clnt_dg_create(const int, const struct netbuf *,
+-			      const rpcprog_t, const rpcvers_t,
+-			      const u_int, const u_int);
+-
+-/*
+- * Low level clnt create routine for connectionful transports, e.g. tcp.
+- */
+-extern CLIENT *clnt_vc_create(const int, const struct netbuf *,
+-			      const rpcprog_t, const rpcvers_t,
+-			      u_int, u_int);
+-
+-#endif	/* HAVE_TIRPC_NETCONFIG_H */
++#ifdef HAVE_LIBTIRPC
++#include <netconfig.h>
++#include <rpc/rpcb_prot.h>
++#endif	/* HAVE_LIBTIRPC */
+ 
+ /*
+  * If "-1" is specified in the tv_sec field, use these defaults instead.
+@@ -107,14 +66,14 @@ static CLIENT *nfs_get_localclient(const struct sockaddr *sap,
+ 				   const rpcvers_t version,
+ 				   struct timeval *timeout)
+ {
+-#ifdef HAVE_CLNT_VC_CREATE
++#ifdef HAVE_LIBTIRPC
+ 	struct sockaddr_storage address;
+ 	const struct netbuf nbuf = {
+ 		.maxlen		= sizeof(struct sockaddr_un),
+ 		.len		= (size_t)salen,
+ 		.buf		= &address,
+ 	};
+-#endif	/* HAVE_CLNT_VC_CREATE */
++#endif	/* HAVE_LIBTIRPC */
+ 	CLIENT *client;
+ 	int sock;
+ 
+@@ -128,13 +87,13 @@ static CLIENT *nfs_get_localclient(const struct sockaddr *sap,
+ 	if (timeout->tv_sec == -1)
+ 		timeout->tv_sec = NFSRPC_TIMEOUT_TCP;
+ 
+-#ifdef HAVE_CLNT_VC_CREATE
++#ifdef HAVE_LIBTIRPC
+ 	memcpy(nbuf.buf, sap, (size_t)salen);
+ 	client = clnt_vc_create(sock, &nbuf, program, version, 0, 0);
+-#else	/* HAVE_CLNT_VC_CREATE */
++#else	/* !HAVE_LIBTIRPC */
+ 	client = clntunix_create((struct sockaddr_un *)sap,
+ 					program, version, &sock, 0, 0);
+-#endif	/* HAVE_CLNT_VC_CREATE */
++#endif	/* !HAVE_LIBTIRPC */
+ 	if (client != NULL)
+ 		CLNT_CONTROL(client, CLSET_FD_CLOSE, NULL);
+ 	else
+@@ -261,23 +220,23 @@ static CLIENT *nfs_get_udpclient(const struct sockaddr *sap,
+ 				 const rpcvers_t version,
+ 				 struct timeval *timeout)
+ {
+-#ifdef HAVE_CLNT_DG_CREATE
++	CLIENT *client;
++	int ret, sock;
++#ifdef HAVE_LIBTIRPC
+ 	struct sockaddr_storage address;
+ 	const struct netbuf nbuf = {
+ 		.maxlen		= salen,
+ 		.len		= salen,
+ 		.buf		= &address,
+ 	};
+-#endif	/* HAVE_CLNT_DG_CREATE */
+-	CLIENT *client;
+-	int ret, sock;
+ 
+-#ifndef HAVE_CLNT_DG_CREATE
++#else	/* !HAVE_LIBTIRPC */
++
+ 	if (sap->sa_family != AF_INET) {
+ 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
+ 		return NULL;
+ 	}
+-#endif	/* !HAVE_CLNT_DG_CREATE */
++#endif	/* !HAVE_LIBTIRPC */
+ 
+ 	sock = socket((int)sap->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+ 	if (sock == -1) {
+@@ -305,13 +264,13 @@ static CLIENT *nfs_get_udpclient(const struct sockaddr *sap,
+ 		return NULL;
+ 	}
+ 
+-#ifdef HAVE_CLNT_DG_CREATE
++#ifdef HAVE_LIBTIRPC
+ 	memcpy(nbuf.buf, sap, (size_t)salen);
+ 	client = clnt_dg_create(sock, &nbuf, program, version, 0, 0);
+-#else	/* HAVE_CLNT_DG_CREATE */
++#else	/* !HAVE_LIBTIRPC */
+ 	client = clntudp_create((struct sockaddr_in *)sap, program,
+ 					version, *timeout, &sock);
+-#endif	/* HAVE_CLNT_DG_CREATE */
++#endif	/* !HAVE_LIBTIRPC */
+ 	if (client != NULL) {
+ 		CLNT_CONTROL(client, CLSET_RETRY_TIMEOUT, (char *)timeout);
+ 		CLNT_CONTROL(client, CLSET_FD_CLOSE, NULL);
+@@ -337,23 +296,23 @@ static CLIENT *nfs_get_tcpclient(const struct sockaddr *sap,
+ 				 const rpcvers_t version,
+ 				 struct timeval *timeout)
+ {
+-#ifdef HAVE_CLNT_VC_CREATE
++	CLIENT *client;
++	int ret, sock;
++#ifdef HAVE_LIBTIRPC
+ 	struct sockaddr_storage address;
+ 	const struct netbuf nbuf = {
+ 		.maxlen		= salen,
+ 		.len		= salen,
+ 		.buf		= &address,
+ 	};
+-#endif	/* HAVE_CLNT_VC_CREATE */
+-	CLIENT *client;
+-	int ret, sock;
+ 
+-#ifndef HAVE_CLNT_VC_CREATE
++#else	/* !HAVE_LIBTIRPC */
++
+ 	if (sap->sa_family != AF_INET) {
+ 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
+ 		return NULL;
+ 	}
+-#endif	/* !HAVE_CLNT_VC_CREATE */
++#endif	/* !HAVE_LIBTIRPC */
+ 
+ 	sock = socket((int)sap->sa_family, SOCK_STREAM, IPPROTO_TCP);
+ 	if (sock == -1) {
+@@ -381,13 +340,13 @@ static CLIENT *nfs_get_tcpclient(const struct sockaddr *sap,
+ 		return NULL;
+ 	}
+ 
+-#ifdef HAVE_CLNT_VC_CREATE
++#ifdef HAVE_LIBTIRPC
+ 	memcpy(nbuf.buf, sap, (size_t)salen);
+ 	client = clnt_vc_create(sock, &nbuf, program, version, 0, 0);
+-#else	/* HAVE_CLNT_VC_CREATE */
++#else	/* !HAVE_LIBTIRPC */
+ 	client = clnttcp_create((struct sockaddr_in *)sap,
+ 					program, version, &sock, 0, 0);
+-#endif	/* HAVE_CLNT_VC_CREATE */
++#endif	/* !HAVE_LIBTIRPC */
+ 	if (client != NULL)
+ 		CLNT_CONTROL(client, CLSET_FD_CLOSE, NULL);
+ 	else
+diff --git a/utils/gssd/Makefile.am b/utils/gssd/Makefile.am
+index e42b339..95a2bd0 100644
+--- a/utils/gssd/Makefile.am
++++ b/utils/gssd/Makefile.am
+@@ -39,11 +39,11 @@ gssd_SOURCES = \
+ 	write_bytes.h
+ 
+ gssd_LDADD =	../../support/nfs/libnfs.a \
+-		$(RPCSECGSS_LIBS) $(KRBLIBS)
++		$(RPCSECGSS_LIBS) $(GSSGLUE_LIBS) $(KRBLIBS)
+ gssd_LDFLAGS = $(KRBLDFLAGS)
+ 
+ gssd_CFLAGS = $(AM_CFLAGS) $(CFLAGS) \
+-	      $(RPCSECGSS_CFLAGS) $(KRBCFLAGS)
++	      $(RPCSECGSS_CFLAGS) $(GSSGLUE_CFLAGS) $(KRBCFLAGS)
+ 
+ svcgssd_SOURCES = \
+ 	$(COMMON_SRCS) \
+@@ -56,18 +56,18 @@ svcgssd_SOURCES = \
+ 
+ svcgssd_LDADD = \
+ 	../../support/nfs/libnfs.a \
+-	$(RPCSECGSS_LIBS) -lnfsidmap \
++	$(RPCSECGSS_LIBS) $(GSSGLUE_LIBS) -lnfsidmap \
+ 	$(KRBLIBS)
+ 
+ svcgssd_LDFLAGS = $(KRBLDFLAGS)
+ 
+ svcgssd_CFLAGS = $(AM_CFLAGS) $(CFLAGS) \
+-		 $(RPCSECGSS_CFLAGS) $(KRBCFLAGS)
++		 $(RPCSECGSS_CFLAGS) $(GSSGLUE_CFLAGS) $(KRBCFLAGS)
+ 
+ gss_clnt_send_err_SOURCES = gss_clnt_send_err.c
+ 
+ gss_clnt_send_err_CFLAGS = $(AM_CFLAGS) $(CFLAGS) \
+-		 $(RPCSECGSS_CFLAGS) $(KRBCFLAGS)
++		 $(RPCSECGSS_CFLAGS) $(GSSGLUE_CFLAGS) $(KRBCFLAGS)
+ 
+ MAINTAINERCLEANFILES = Makefile.in
+ 
+diff --git a/utils/gssd/gssd_proc.c b/utils/gssd/gssd_proc.c
+index d0d3f7f..295c37d 100644
+--- a/utils/gssd/gssd_proc.c
++++ b/utils/gssd/gssd_proc.c
+@@ -70,7 +70,6 @@
+ #include "gssd.h"
+ #include "err_util.h"
+ #include "gss_util.h"
+-#include "gss_oids.h"
+ #include "krb5_util.h"
+ #include "context.h"
+ 
+@@ -778,8 +777,10 @@ handle_krb5_upcall(struct clnt_info *clp)
+ out:
+ 	if (token.value)
+ 		free(token.value);
++#ifndef HAVE_LIBTIRPC
+ 	if (pd.pd_ctx_hndl.length != 0)
+ 		authgss_free_private_data(&pd);
++#endif
+ 	if (auth)
+ 		AUTH_DESTROY(auth);
+ 	if (rpc_clnt)
+diff --git a/utils/gssd/krb5_util.c b/utils/gssd/krb5_util.c
+index 8923b3b..e3c6f5e 100644
+--- a/utils/gssd/krb5_util.c
++++ b/utils/gssd/krb5_util.c
+@@ -124,7 +124,6 @@
+ #include "gssd.h"
+ #include "err_util.h"
+ #include "gss_util.h"
+-#include "gss_oids.h"
+ #include "krb5_util.h"
+ 
+ /* Global list of principals/cache file names for machine credentials */
+diff --git a/utils/gssd/krb5_util.h b/utils/gssd/krb5_util.h
+index 4b2da6b..7d808f5 100644
+--- a/utils/gssd/krb5_util.h
++++ b/utils/gssd/krb5_util.h
+@@ -3,6 +3,12 @@
+ 
+ #include <krb5.h>
+ 
++#ifdef HAVE_LIBTIRPC
++#include <rpc/auth_gss.h>
++#else
++#include "gss_oids.h"
++#endif
++
+ /*
+  * List of principals from our keytab that we
+  * will try to use to obtain credentials
+diff --git a/utils/mountd/svc_run.c b/utils/mountd/svc_run.c
+index 422e839..5ba5af6 100644
+--- a/utils/mountd/svc_run.c
++++ b/utils/mountd/svc_run.c
+@@ -54,6 +54,10 @@
+ #include <errno.h>
+ #include <time.h>
+ 
++#ifdef HAVE_LIBTIRPC
++#include <rpc/rpc_com.h>
++#endif
++
+ void cache_set_fds(fd_set *fdset);
+ int cache_process_req(fd_set *readfds);
+ 
