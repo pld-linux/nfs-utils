@@ -80,13 +80,13 @@ stop() {
 			$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile)
 	while [ -n "$remaining" -a $retry -gt 0 ]; do
 		fuser -msk -TERM `awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
-					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' < $fsfile`
+					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile`
 		sleep 2
 		fuser -msk -KILL `awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
-					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' < $fsfile`
+					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile`
 		# Sort filesystems to unmount in reverse order
 		rem=""
-		for r in $(`awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+		for r in $(awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
 				$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile) ; do
 			rem="$r $rem"
 		done
