@@ -35,6 +35,10 @@ if [ "$1" != "stop" ]; then
 	check_portmapper || { nls "Error: portmap isn't running" && exit 0; }
 fi
 
+if [ -z "$NFSUMOUNT_IGNORE" ]; then
+	NFSUMOUNT_IGNORE="/ /usr"
+fi
+
 start() {
   	if [ ! -f /var/lock/subsys/nfsfs ]; then
 		# Set the ports lockd should listen on
@@ -72,20 +76,25 @@ stop() {
 	show "Unmounting NFS filesystems"
 	busy
 	retry=3
-	remaining=$(awk '$3 ~ /^nfs(4$|$)/ && $2 !~ /^\/(usr$|$)/ {print $2}' $fsfile)
+	remaining=$(awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+			$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile)
 	while [ -n "$remaining" -a $retry -gt 0 ]; do
-		fuser -msk -TERM `awk '$3 ~ /^nfs(4$|$)/ && $2 !~ /^\/(usr$|$)/ {print $2}' < $fsfile`
+		fuser -msk -TERM `awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' < $fsfile`
 		sleep 2
-		fuser -msk -KILL `awk '$3 ~ /^nfs(4$|$)/ && $2 !~ /^\/(usr$|$)/ {print $2}' < $fsfile`
+		fuser -msk -KILL `awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+					$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' < $fsfile`
 		# Sort filesystems to unmount in reverse order
 		rem=""
-		for r in $(awk '$3 ~ /^nfs(4$|$)/ && $2 !~ /^\/(usr$|$)/ {print $2}' $fsfile) ; do
+		for r in $(`awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+				$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile) ; do
 			rem="$r $rem"
 		done
 		for fs in $rem ; do
 			umount $fs
 		done
-		remaining=$(awk '$3 ~ /^nfs(4$|$)/ && $2 !~ /^\/(usr$|$)/ {print $2}' $fsfile)
+		remaining=$(awk -v ig="^($NFSUMOUNT_IGNORE)$" 'BEGIN { gsub(/[\t ]+/, "|", ig); } \
+				$3 ~ /^nfs(4$|$)/ && $2 !~ ig {print $2}' $fsfile)
 		retry=$(($retry-1))
 	done
 	ok
