@@ -39,33 +39,35 @@ is_yes "${SECURE_NFS}" || exit 0
 
 start() {
 	# Check if the service is already running?
-	if [ ! -f /var/lock/subsys/gssd ]; then
-		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe sunrpc >/dev/null 2>&1
-			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
-				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-		fi
-		# Load rpcsec modules
-		for i in ${SECURE_NFS_MODS} ; do 
-			_modprobe single die $i
-		done
-		msg_starting "RPC gssd"
-		daemon rpc.gssd $RPCGSSOPTIONS
-		RETVAL=$?
-		[ $RETVAL = 0 ] && touch /var/lock/subsys/gssd
-	else
+	if [ -f /var/lock/subsys/gssd ]; then
 		msg_already_running "RPC gssd"
+		return
 	fi
+
+	if ! grep -q rpc_pipefs /proc/mounts; then
+		modprobe sunrpc >/dev/null 2>&1
+		run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+			mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+	fi
+	# Load rpcsec modules
+	for i in ${SECURE_NFS_MODS}; do
+		_modprobe single die $i
+	done
+	msg_starting "RPC gssd"
+	daemon rpc.gssd $RPCGSSOPTIONS
+	RETVAL=$?
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/gssd
 }
 
 stop() {
-	if [ -f /var/lock/subsys/gssd ]; then
-		msg_stopping "RPC gssd"
-		killproc rpc.gssd
-		rm -f /var/lock/subsys/gssd
-	else
+	if [ ! -f /var/lock/subsys/gssd ]; then
 		msg_not_running "RPC gssd"
+		return
 	fi
+
+	msg_stopping "RPC gssd"
+	killproc rpc.gssd
+	rm -f /var/lock/subsys/gssd
 }
 
 # See how we were called.
@@ -77,13 +79,13 @@ case "$1" in
   stop)
   	stop
 	;;
-  status)
-	status rpc.gssd
-	RETVAL=$?
-	;;
   restart|reload)
 	stop
 	start
+	;;
+  status)
+	status rpc.gssd
+	RETVAL=$?
 	;;
   *)
 	msg_usage "$0 {start|stop|restart|status}"

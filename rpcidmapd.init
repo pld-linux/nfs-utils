@@ -38,38 +38,40 @@ RUNLEVELDIR=$(cat /var/run/runlevel.dir)
 
 start() {
 	# Check if the service is already running?
-	if [ ! -f /var/lock/subsys/idmapd ]; then
-		# This is whacko, but we need /proc/fs/nfsd mounted before
-		# starting idmapd on NFS server
-		if [ -e "$RUNLEVELDIR"/S*nfs ]; then
-			if ! grep -q nfsd /proc/mounts ; then
-				modprobe nfsd > /dev/null 2>&1
-				run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
-			fi
-		fi
-		if ! grep -q rpc_pipefs /proc/mounts ; then
-			modprobe sunrpc >/dev/null 2>&1
-			run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
-				mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
-		fi
-
-		msg_starting "RPC idmapd"
-		daemon rpc.idmapd $RPCIDMAPOPTIONS
-		RETVAL=$?
-		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
-	else
+	if [ -f /var/lock/subsys/idmapd ]; then
 		msg_already_running "RPC idmapd"
+		return
 	fi
+
+	# This is whacko, but we need /proc/fs/nfsd mounted before
+	# starting idmapd on NFS server
+	if [ -e "$RUNLEVELDIR"/S*nfs ]; then
+		if ! grep -q nfsd /proc/mounts ; then
+			modprobe nfsd > /dev/null 2>&1
+			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
+		fi
+	fi
+	if ! grep -q rpc_pipefs /proc/mounts; then
+		modprobe sunrpc >/dev/null 2>&1
+		run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+			mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+	fi
+
+	msg_starting "RPC idmapd"
+	daemon rpc.idmapd $RPCIDMAPOPTIONS
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
 }
 
 stop() {
-	if [ -f /var/lock/subsys/idmapd ]; then
-		msg_stopping "RPC idmapd"
-		killproc rpc.idmapd
-		rm -f /var/lock/subsys/idmapd
-	else
+	if [ ! -f /var/lock/subsys/idmapd ]; then
 		msg_not_running "RPC idmapd"
+		return
 	fi
+
+	msg_stopping "RPC idmapd"
+	killproc rpc.idmapd
+	rm -f /var/lock/subsys/idmapd
 }
 
 # See how we were called.
@@ -81,10 +83,6 @@ case "$1" in
   stop)
   	stop
 	;;
-  status)
-	status rpc.idmapd
-	RETVAL=$?
-	;;
   restart)
 	stop
 	start
@@ -95,9 +93,13 @@ case "$1" in
 		killproc rpc.idmapd -HUP
 		RETVAL=$?
 	else
-		msg_not_running "RPC idmapd" >&2
+		msg_not_running "RPC idmapd"
 		exit 7
 	fi
+	;;
+  status)
+	status rpc.idmapd
+	RETVAL=$?
 	;;
   *)
 	msg_usage "$0 {start|stop|restart|reload|status}"

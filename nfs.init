@@ -40,53 +40,55 @@ fi
 
 start() {
 	# Check if the service is already running?
-	if [ ! -f /var/lock/subsys/nfs ]; then
-		if ! grep -q nfsd /proc/mounts ; then
-			modprobe -s nfsd > /dev/null 2>&1
-			run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
-		fi
-
-		# Set the ports lockd should listen on
-		if [ -n "$LOCKD_TCPPORT" ]; then
-			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
-		fi
-		if [ -n "$LOCKD_UDPPORT" ]; then
-			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
-		fi
-
-		for vers in 1 2 3 4 ; do
-			is_yes $(eval echo \$NFSv$vers) || \
-				RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
-		done
-
-		[ -n "$MOUNTD_PORT" ] && RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS -p $MOUNTD_PORT"
-
-		# Start daemons.
-		msg_starting "NFS exportfs"
-		daemon /usr/sbin/exportfs -r
-		msg_starting "NFS mountd"
-		daemon rpc.mountd $RPCMOUNTOPTIONS
-		msg_starting "NFS daemon"
-		daemon rpc.nfsd $RPCNFSDCOUNT
-		touch /var/lock/subsys/nfs
-	else
+	if [ -f /var/lock/subsys/nfs ]; then
 		msg_already_running "NFS daemon"
+		return
 	fi
+
+	if ! grep -q nfsd /proc/mounts ; then
+		modprobe -s nfsd > /dev/null 2>&1
+		run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
+	fi
+
+	# Set the ports lockd should listen on
+	if [ -n "$LOCKD_TCPPORT" ]; then
+		/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+	fi
+	if [ -n "$LOCKD_UDPPORT" ]; then
+		/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+	fi
+
+	for vers in 1 2 3 4 ; do
+		is_yes $(eval echo \$NFSv$vers) || \
+			RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
+	done
+
+	[ -n "$MOUNTD_PORT" ] && RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS -p $MOUNTD_PORT"
+
+	# Start daemons.
+	msg_starting "NFS exportfs"
+	daemon /usr/sbin/exportfs -r
+	msg_starting "NFS mountd"
+	daemon rpc.mountd $RPCMOUNTOPTIONS
+	msg_starting "NFS daemon"
+	daemon rpc.nfsd $RPCNFSDCOUNT
+	touch /var/lock/subsys/nfs
 }
 
 stop() {
-	if [ -f /var/lock/subsys/nfs ]; then
-		# Stop daemons.
-		msg_stopping "NFS daemon"
-		killproc nfsd -QUIT
-		msg_stopping "NFS mountd"
-		killproc rpc.mountd
-		msg_stopping "NFS exportfs"
-		daemon /usr/sbin/exportfs -au
-		rm -f /var/lock/subsys/nfs
-	else
+	if [ ! -f /var/lock/subsys/nfs ]; then
 		msg_not_running "NFS"
+		return
 	fi
+
+	# Stop daemons.
+	msg_stopping "NFS daemon"
+	killproc nfsd -QUIT
+	msg_stopping "NFS mountd"
+	killproc rpc.mountd
+	msg_stopping "NFS exportfs"
+	daemon /usr/sbin/exportfs -au
+	rm -f /var/lock/subsys/nfs
 }
 
 RETVAL=0
