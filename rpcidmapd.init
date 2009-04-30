@@ -58,7 +58,7 @@ start() {
 	fi
 
 	msg_starting "RPC idmapd"
-	daemon rpc.idmapd $RPCIDMAPOPTIONS
+	daemon /usr/sbin/rpc.idmapd $RPCIDMAPOPTIONS
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
 }

@@ -58,7 +58,7 @@ start() {
 	# Start daemons.
 	# Don't put sm-notify here, statd will run it when started
 	msg_starting "RPC statd"
-	daemon rpc.statd $STATDOPTS
+	daemon /usr/sbin/rpc.statd $STATDOPTS
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
 }
