@@ -31,12 +31,13 @@ Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-keytab-path.patch
 Patch3:		%{name}-subsys.patch
 Patch4:		%{name}-git-cel.patch
+Patch5:		%{name}-union-mount.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
-BuildRequires:	e2fsprogs-devel >= 1.41
 BuildRequires:	krb5-devel >= 1.6
+BuildRequires:	libblkid-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libgssglue-devel >= 0.1
 BuildRequires:	libnfsidmap-devel >= 0.21-3
@@ -157,6 +158,7 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 # conflict with GNU stdio extension
 sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
