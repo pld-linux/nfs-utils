@@ -9,7 +9,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.0
-Release:	0.1
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -30,8 +30,7 @@ Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-keytab-path.patch
 Patch3:		%{name}-subsys.patch
-Patch4:		%{name}-git-cel.patch
-Patch5:		%{name}-union-mount.patch
+Patch4:		%{name}-union-mount.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -158,7 +157,6 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
 
 # conflict with GNU stdio extension
 sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
