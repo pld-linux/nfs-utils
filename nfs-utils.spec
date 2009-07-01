@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.0
-Release:	2
+Release:	2.2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -31,13 +31,12 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
-Patch2:		%{name}-keytab-path.patch
-Patch3:		%{name}-subsys.patch
-Patch4:		%{name}-union-mount.patch
-Patch5:		%{name}-kerberos-ac.patch
-Patch6:		%{name}-no_libgssapi.patch
-Patch7:		%{name}-pkgconfig_ac.patch
-Patch8:		%{name}-heimdal_functions.patch
+Patch2:		%{name}-subsys.patch
+Patch3:		%{name}-union-mount.patch
+Patch4:		%{name}-kerberos-ac.patch
+Patch5:		%{name}-no_libgssapi.patch
+Patch6:		%{name}-pkgconfig_ac.patch
+Patch7:		%{name}-heimdal_functions.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -71,6 +70,7 @@ Obsoletes:	knfsd
 Obsoletes:	nfs-server
 Obsoletes:	nfsdaemon
 Conflicts:	kernel < 2.2.5
+Conflicts:	krb5-common < 1.7
 ExcludeArch:	armv4l
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -112,6 +112,7 @@ Provides:	nfsclient
 Obsoletes:	knfsd-clients
 Obsoletes:	nfs-server-clients
 Obsoletes:	nfsclient
+Conflicts:	krb5-common < 1.7
 
 %description clients
 The nfs-server-clients package contains the showmount program.
@@ -165,15 +166,12 @@ Wspólne programy do obsługi NFS.
 %setup -q -a1
 %patch0 -p1
 %patch1 -p1
-%{!?with_heimdal:%patch2 -p1}
+%patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%if %{with heimdal}
-%patch5 -p1
+%{?with_heimdal:%patch5 -p1}
 %patch6 -p1
-%patch7 -p1
-%patch8 -p0
-%endif
+%patch7 -p0
 
 # conflict with GNU stdio extension
 sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
