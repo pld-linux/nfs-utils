@@ -57,3 +57,12 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
+@@ -1262,7 +1294,7 @@
+ 	if (context != NULL) {
+ 		origmsg = krb5_get_error_message(context, code);
+ 		msg = strdup(origmsg);
+-		krb5_free_error_message(context, origmsg);
++		krb5_free_error_string(context, origmsg);
+ 	}
+ #endif
+ 	if (msg != NULL)
