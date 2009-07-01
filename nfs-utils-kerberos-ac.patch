@@ -53,7 +53,7 @@ diff -NaurwB nfs-utils-1.1.2.orig/aclocal/kerberos5.m4 nfs-utils-1.1.2/aclocal/k
 +      AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
 +      gssapi_lib=gssapi
 +      KRBIMPL="heimdal"
-+    elif $K5CONFIG --version | grep -q -e mit; then
++    elif $K5CONFIG --vendor | grep -q -e Massachusetts; then
 +      K5VERS=`$K5CONFIG --version | head -n 1 | cut -f4 -d ' ' | tr -d '.'`
           AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
 -         KRBDIR="$dir"
