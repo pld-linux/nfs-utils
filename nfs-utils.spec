@@ -193,11 +193,7 @@ sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
 	--with-statduser=rpcstatd \
 	--with-start-statd=%{_sbindir}/start-statd \
 	--with-tcp-wrappers \
-%if %{with heimdal}
 	--with-krb5-config=%{_bindir}/krb5-config
-%else
-	--with-krb5=%{_prefix}
-%endif
 
 %{__make} all
 
