@@ -3,7 +3,7 @@
 #	uninstall (or in service nfs stop)
 #
 # Conditional build:
-%bcond_with	heimdal		# build with Heimdal Kerberos instead of MIT
+%bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
 #
 Summary:	Kernel NFS server
 Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.0
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -41,12 +41,12 @@ URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
-%if %{with heimdal}
-BuildRequires:	heimdal-devel >= 1.0
-BuildConflicts:	libgssglue-devel
-%else
+%if %{with krb5}
 BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libgssglue-devel >= 0.1
+%else
+BuildRequires:	heimdal-devel >= 1.0
+BuildConflicts:	libgssglue-devel
 %endif
 BuildRequires:	libblkid-devel
 BuildRequires:	libevent-devel >= 1.2
@@ -170,7 +170,7 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%{?with_heimdal:%patch5 -p1}
+%{!?with_krb5:%patch5 -p1}
 %patch6 -p1
 %patch7 -p0
 
