@@ -43,6 +43,7 @@ BuildRequires:	automake
 BuildRequires:	cpp
 %if %{with heimdal}
 BuildRequires:	heimdal-devel >= 1.0
+BuildConflicts:	libgssglue-devel
 %else
 BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libgssglue-devel >= 0.1
