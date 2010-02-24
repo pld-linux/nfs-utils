@@ -1,115 +1,3 @@
-diff -ur nfs-utils-1.1.0-rc1.orig/utils/statd/sm-notify.c nfs-utils-1.1.0-rc1/utils/statd/sm-notify.c
---- nfs-utils-1.1.0-rc1.orig/utils/statd/sm-notify.c	2007-03-29 05:55:33.000000000 +0200
-+++ nfs-utils-1.1.0-rc1/utils/statd/sm-notify.c	2007-04-06 01:07:43.000000000 +0200
-@@ -1,5 +1,5 @@
- /*
-- * Send NSM notify calls to all hosts listed in /var/lib/sm
-+ * Send NSM notify calls to all hosts listed in /var/lib/statd/sm
-  *
-  * Copyright (C) 2004-2006 Olaf Kirch <okir@suse.de>
-  */
-@@ -26,9 +26,9 @@
- 
- #ifndef BASEDIR
- # ifdef NFS_STATEDIR
--#  define BASEDIR		NFS_STATEDIR
-+#  define BASEDIR		NFS_STATEDIR "/statd"
- # else
--#  define BASEDIR		"/var/lib/nfs"
-+#  define BASEDIR		"/var/lib/nfs/statd"
- # endif
- #endif
- 
-diff -ur nfs-utils-1.1.0-rc1.orig/utils/statd/sm-notify.man nfs-utils-1.1.0-rc1/utils/statd/sm-notify.man
---- nfs-utils-1.1.0-rc1.orig/utils/statd/sm-notify.man	2007-03-29 05:55:33.000000000 +0200
-+++ nfs-utils-1.1.0-rc1/utils/statd/sm-notify.man	2007-04-06 01:08:49.000000000 +0200
-@@ -33,7 +33,7 @@
- For each NFS client or server machine to be monitored,
- .B rpc.statd
- creates a file in
--.BR /var/lib/nfs/sm ", "
-+.BR /var/lib/nfs/statd/sm ", "
- and removes the file if monitoring is no longer required.
- .PP
- When the machine is rebooted,
-@@ -47,7 +47,7 @@
- which is basically an integer counter that is incremented
- each time the machine reboots. This counter is stored
- in
--.BR /var/lib/nfs/state ,
-+.BR /var/lib/nfs/statd/state ,
- and updated by
- .BR sm-notify .
- .SS Security
-@@ -149,13 +149,13 @@
- .B sm-notify
- forks and puts itself in the background after obtaining the
- list of hosts from
--.BR /var/lib/nfs/sm .
-+.BR /var/lib/nfs/statd/sm .
- .SH FILES
--.BR /var/lib/nfs/state
-+.BR /var/lib/nfs/statd/state
- .br
--.BR /var/lib/nfs/sm/*
-+.BR /var/lib/nfs/statd/sm/*
- .br
--.BR /var/lib/nfs/sm.bak/*
-+.BR /var/lib/nfs/statd/sm.bak/*
- .br
- .BR /var/run/sm-notify.pid
- .SH SEE ALSO
-diff -ur nfs-utils-1.1.0-rc1.orig/utils/statd/statd.h nfs-utils-1.1.0-rc1/utils/statd/statd.h
---- nfs-utils-1.1.0-rc1.orig/utils/statd/statd.h	2007-03-29 05:55:33.000000000 +0200
-+++ nfs-utils-1.1.0-rc1/utils/statd/statd.h	2007-04-06 01:09:27.000000000 +0200
-@@ -17,9 +17,9 @@
-  * Paths and filenames.
-  */
- #if defined(NFS_STATEDIR)
--# define DEFAULT_DIR_BASE	NFS_STATEDIR "/"
-+# define DEFAULT_DIR_BASE	NFS_STATEDIR "/statd/"
- #else
--# define DEFAULT_DIR_BASE	"/var/lib/nfs/"
-+# define DEFAULT_DIR_BASE	"/var/lib/nfs/statd/"
- #endif
- 
- #define DEFAULT_SM_DIR		DEFAULT_DIR_BASE "sm"
-diff -ur nfs-utils-1.1.0-rc1.orig/utils/statd/statd.man nfs-utils-1.1.0-rc1/utils/statd/statd.man
---- nfs-utils-1.1.0-rc1.orig/utils/statd/statd.man	2007-03-29 05:55:33.000000000 +0200
-+++ nfs-utils-1.1.0-rc1/utils/statd/statd.man	2007-04-06 01:04:26.000000000 +0200
-@@ -24,7 +24,7 @@
- For each NFS client or server machine to be monitored,
- .B rpc.statd
- creates a file in
--.BR /var/lib/nfs/sm .
-+.BR /var/lib/nfs/statd/sm .
- When starting, it normally runs
- .B sm-notify
- to iterate through these files and notify the
-@@ -95,7 +95,7 @@
- .BI "\-P," "" " \-\-state\-directory\-path "  directory
- specify a directory in which to place statd state information.
- If this option is not specified the default of 
--.BR /var/lib/nfs
-+.BR /var/lib/nfs/statd
- is used.
- .TP
- .B -N
-@@ -176,11 +176,11 @@
- of an NFS export from another server.
- 
- .SH FILES
--.BR /var/lib/nfs/state
-+.BR /var/lib/nfs/statd/state
- .br
--.BR /var/lib/nfs/sm/*
-+.BR /var/lib/nfs/statd/sm/*
- .br
--.BR /var/lib/nfs/sm.bak/*
-+.BR /var/lib/nfs/statd/sm.bak/*
- .SH SEE ALSO
- .BR rpc.nfsd(8),
- .BR portmap(8)
 --- nfs-utils-1.1.4/Makefile.am~	2009-03-05 12:29:46.000000000 +0100
 +++ nfs-utils-1.1.4/Makefile.am	2009-03-05 12:44:46.000000000 +0100
 @@ -54,8 +54,8 @@
@@ -123,3 +11,72 @@ diff -ur nfs-utils-1.1.0-rc1.orig/utils/statd/statd.man nfs-utils-1.1.0-rc1/util
  
  uninstall-hook:
  	rm $(DESTDIR)$(statedir)/xtab
+--- nfs-utils-1.2.2/support/nsm/file.c~	2010-02-18 13:35:00.000000000 +0100
++++ nfs-utils-1.2.2/support/nsm/file.c	2010-02-24 17:27:51.635249268 +0100
+@@ -95,8 +95,8 @@
+ /*
+  * Some distributions place statd's files in a subdirectory
+  */
+-#define NSM_PATH_EXTENSION
+-/* #define NSM_PATH_EXTENSION	"/statd" */
++/* #define NSM_PATH_EXTENSION */
++#define NSM_PATH_EXTENSION	"/statd"
+ 
+ #define NSM_DEFAULT_STATEDIR		NFS_STATEDIR NSM_PATH_EXTENSION
+ 
+--- nfs-utils-1.2.2/utils/statd/statd.man~	2010-02-18 13:35:00.000000000 +0100
++++ nfs-utils-1.2.2/utils/statd/statd.man	2010-02-24 17:30:05.097124679 +0100
+@@ -232,7 +232,7 @@
+ If this option is not specified,
+ .B rpc.statd
+ uses
+-.I /var/lib/nfs
++.I /var/lib/nfs/statd
+ by default.
+ .IP
+ After starting,
+@@ -365,13 +365,13 @@
+ will operate.
+ .SH FILES
+ .TP 2.5i
+-.I /var/lib/nfs/sm
++.I /var/lib/nfs/statd/sm
+ directory containing monitor list
+ .TP 2.5i
+-.I /var/lib/nfs/sm.bak
++.I /var/lib/nfs/statd/sm.bak
+ directory containing notify list
+ .TP 2.5i
+-.I /var/lib/nfs/state
++.I /var/lib/nfs/statd/state
+ NSM state number for this host
+ .TP 2.5i
+ .I /var/run/run.statd.pid
+--- nfs-utils-1.2.2/utils/statd/sm-notify.man~	2010-02-18 13:35:00.000000000 +0100
++++ nfs-utils-1.2.2/utils/statd/sm-notify.man	2010-02-24 17:30:27.917124808 +0100
+@@ -186,7 +186,7 @@
+ If this option is not specified,
+ .B sm-notify
+ uses
+-.I /var/lib/nfs
++.I /var/lib/nfs/statd
+ by default.
+ .IP
+ After starting,
+@@ -287,13 +287,13 @@
+ command supports sending notification only via datagram transport protocols.
+ .SH FILES
+ .TP 2.5i
+-.I /var/lib/nfs/sm
++.I /var/lib/nfs/statd/sm
+ directory containing monitor list
+ .TP 2.5i
+-.I /var/lib/nfs/sm.bak
++.I /var/lib/nfs/statd/sm.bak
+ directory containing notify list
+ .TP 2.5i
+-.I /var/lib/nfs/state
++.I /var/lib/nfs/statd/state
+ NSM state number for this host
+ .TP 2.5i
+ .I /proc/sys/fs/nfs/nsm_local_state
