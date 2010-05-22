@@ -49,6 +49,7 @@ BuildRequires:	heimdal-devel >= 1.0
 BuildConflicts:	libgssglue-devel
 %endif
 BuildRequires:	libblkid-devel
+BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel >= 0.21-3
 BuildRequires:	librpcsecgss-devel >= 0.16
@@ -63,8 +64,8 @@ Requires(post):	fileutils
 Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
-Requires:	rpcbind >= 0.1.7
 Requires:	rc-scripts >= 0.4.1.5
+Requires:	rpcbind >= 0.1.7
 Requires:	setup >= 2.4.6-7
 Provides:	nfsdaemon
 Obsoletes:	knfsd
@@ -134,11 +135,11 @@ Summary:	Programs for NFS file locking
 Summary(pl.UTF-8):	Programy do obsługi blokowania plików poprzez NFS (lock)
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
-Requires:	rpcbind >= 0.1.7
 Requires:	rc-scripts
+Requires:	rpcbind >= 0.1.7
 Provides:	group(rpcstatd)
-Provides:	user(rpcstatd)
 Provides:	nfslockd
+Provides:	user(rpcstatd)
 Obsoletes:	knfsd-lock
 Obsoletes:	nfslockd
 
@@ -389,9 +390,9 @@ fi
 
 %files common
 %defattr(644,root,root,755)
-%attr(755,root,root) %dir %{_var}/lib/nfs
-%attr(755,root,root) %dir %{_var}/lib/nfs/rpc_pipefs
-%attr(755,root,root) %dir %{_var}/lib/nfs/v4recovery
+%dir %{_var}/lib/nfs
+%dir %{_var}/lib/nfs/rpc_pipefs
+%dir %{_var}/lib/nfs/v4recovery
 %{_mandir}/man5/nfs*
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %attr(755,root,root) %{_sbindir}/gss_*
