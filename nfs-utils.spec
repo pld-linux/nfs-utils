@@ -175,9 +175,6 @@ Wspólne programy do obsługi NFS.
 %patch6 -p1
 %patch7 -p0
 
-# conflict with GNU stdio extension
-sed -i -e 's/dprintf/dbgprintf/' support/include/ha-callout.h utils/statd/*.[ch]
-
 %build
 %{__libtoolize}
 %{__aclocal} -I aclocal
