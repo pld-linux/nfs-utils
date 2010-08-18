@@ -4,6 +4,7 @@
 #
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
+%bcond_without	tirpc		# use librpcsecgss instead of libtirpc
 #
 Summary:	Kernel NFS server
 Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
@@ -41,6 +42,18 @@ URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
+BuildRequires:	libblkid-devel
+BuildRequires:	libcap-devel
+BuildRequires:	libevent-devel >= 1.2
+BuildRequires:	libnfsidmap-devel >= 0.21-3
+BuildRequires:	libtool
+BuildRequires:	libwrap-devel
+BuildRequires:	pkgconfig
+%if %{with tirpc}
+BuildRequires:	libtirpc-devel >= 1:0.1.10-4
+%else
+BuildRequires:	librpcsecgss-devel >= 0.16
+%endif
 %if %{with krb5}
 BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libgssglue-devel >= 0.1
@@ -48,16 +61,6 @@ BuildRequires:	libgssglue-devel >= 0.1
 BuildRequires:	heimdal-devel >= 1.0
 BuildConflicts:	libgssglue-devel
 %endif
-BuildRequires:	libblkid-devel
-BuildRequires:	libcap-devel
-BuildRequires:	libevent-devel >= 1.2
-BuildRequires:	libnfsidmap-devel >= 0.21-3
-BuildRequires:	librpcsecgss-devel >= 0.16
-BuildRequires:	libtirpc-devel >= 1:0.1.10-4
-BuildRequires:	libtool
-BuildRequires:	libwrap-devel
-BuildRequires:	pkgconfig
-BuildRequires:	sed >= 4.0
 # lucid context fields mismatch with current version of spkm3.h
 BuildConflicts:	gss_mech_spkm3-devel
 Requires(post):	fileutils
@@ -186,7 +189,7 @@ Wspólne programy do obsługi NFS.
 	--enable-nfsv4 \
 	--enable-gss \
 	--enable-mount \
-	--enable-tirpc \
+	--%{?with_tirpc:en}%{!?with_tirpc:dis}able-tirpc \
 	--enable-ipv6 \
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
