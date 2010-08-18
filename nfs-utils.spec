@@ -3,7 +3,7 @@
 #	uninstall (or in service nfs stop)
 #
 # Conditional build:
-%bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
+%bcond_with	krb5		# build with MIT Kerberos (+libgssglue) instead of Heimdal
 %bcond_without	tirpc		# use librpcsecgss instead of libtirpc
 #
 Summary:	Kernel NFS server
@@ -59,7 +59,6 @@ BuildRequires:	krb5-devel >= 1.6
 BuildRequires:	libgssglue-devel >= 0.1
 %else
 BuildRequires:	heimdal-devel >= 1.0
-BuildConflicts:	libgssglue-devel
 %endif
 # lucid context fields mismatch with current version of spkm3.h
 BuildConflicts:	gss_mech_spkm3-devel
@@ -174,9 +173,11 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%{!?with_krb5:%patch5 -p1}
+%if %{without krb5}
+%patch5 -p1
 %patch6 -p1
 %patch7 -p0
+%endif
 
 %build
 %{__libtoolize}
@@ -335,9 +336,11 @@ fi
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
+%attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %attr(755,root,root) %{_sbindir}/nfsstat
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
+%attr(754,root,root) /etc/rc.d/init.d/svcgssd
 
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
@@ -353,10 +356,9 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
+%{_mandir}/man8/rpc.svcgssd.8*
 %{_mandir}/man8/rpcdebug.8*
-%attr(754,root,root) /etc/rc.d/init.d/svcgssd
-%attr(755,root,root) %{_sbindir}/rpc.svcgssd
-%{_mandir}/man8/*svcgss*
+%{_mandir}/man8/svcgssd.8*
 
 %files lock
 %defattr(644,root,root,755)
@@ -369,32 +371,37 @@ fi
 %attr(755,root,root) %{_sbindir}/start-statd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
-%{_mandir}/man8/*statd.8*
-%{_mandir}/man8/*sm-notify.8*
+%{_mandir}/man8/rpc.sm-notify.8*
+%{_mandir}/man8/rpc.statd.8*
+%{_mandir}/man8/sm-notify.8*
+%{_mandir}/man8/statd.8*
 
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
-%attr(755,root,root) %{_sbindir}/showmount
-%{_mandir}/man8/showmount.8*
 %attr(4755,root,root) /sbin/mount.nfs
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
-%{_mandir}/man8/*mount.nfs.8*
-%attr(754,root,root) /etc/rc.d/init.d/gssd
+%attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_sbindir}/rpc.gssd
-%{_mandir}/man8/rpc.gssd*
-%{_mandir}/man8/gssd*
+%attr(754,root,root) /etc/rc.d/init.d/gssd
+%{_mandir}/man8/gssd.8*
+%{_mandir}/man8/mount.nfs.8*
+%{_mandir}/man8/rpc.gssd.8*
+%{_mandir}/man8/showmount.8*
+%{_mandir}/man8/umount.nfs.8*
 
 %files common
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_sbindir}/gss_clnt_send_err
+%attr(755,root,root) %{_sbindir}/gss_destroy_creds
+%attr(755,root,root) %{_sbindir}/rpc.idmapd
+%attr(754,root,root) /etc/rc.d/init.d/idmapd
 %dir %{_var}/lib/nfs
 %dir %{_var}/lib/nfs/rpc_pipefs
 %dir %{_var}/lib/nfs/v4recovery
-%{_mandir}/man5/nfs*
-%attr(754,root,root) /etc/rc.d/init.d/idmapd
-%attr(755,root,root) %{_sbindir}/gss_*
-%attr(755,root,root) %{_sbindir}/rpc.idmapd
-%{_mandir}/man[58]/*idmap*
+%{_mandir}/man5/nfs.5*
+%{_mandir}/man8/idmapd.8*
+%{_mandir}/man8/rpc.idmapd.8*
