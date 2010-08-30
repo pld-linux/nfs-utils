@@ -1,5 +1,15 @@
 --- utils/gssd/krb5_util.c	2008-10-17 14:20:09.000000000 +0000
 +++ utils/gssd/krb5_util.c	2008-11-22 13:52:42.000000000 +0000
+@@ -115,9 +115,7 @@
+ #include <errno.h>
+ #include <time.h>
+ #include <gssapi/gssapi.h>
+-#ifdef USE_PRIVATE_KRB5_FUNCTIONS
+ #include <gssapi/gssapi_krb5.h>
+-#endif
+ #include <krb5.h>
+ #include <rpc/auth_gss.h>
+ 
 @@ -927,9 +927,37 @@ 
  {
  	krb5_error_code ret;
@@ -9,14 +19,14 @@
  
 +#ifdef HAVE_HEIMDAL
 +	krb5_creds pattern;
-+	krb5_realm *client_realm;
++	krb5_const_realm client_realm;
 +
 +	krb5_cc_clear_mcred(&pattern);
 +
-+	client_realm = krb5_princ_realm (context, principal);
++	client_realm = krb5_principal_get_realm (context, principal);
 +
 +	ret = krb5_make_principal (context, &pattern.server,
-+				   *client_realm, KRB5_TGS_NAME, *client_realm,
++				   client_realm, KRB5_TGS_NAME, client_realm,
 +				   NULL);
 +	if (ret)
 +	  krb5_err (context, 1, ret, "krb5_make_principal");
@@ -57,15 +67,3 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
-@@ -1262,7 +1294,11 @@
- 	if (context != NULL) {
- 		origmsg = krb5_get_error_message(context, code);
- 		msg = strdup(origmsg);
-+#ifdef HAVE_HEIMDAL
-+		krb5_free_error_string(context, origmsg);
-+#else
- 		krb5_free_error_message(context, origmsg);
-+#endif
- 	}
- #endif
- 	if (msg != NULL)
