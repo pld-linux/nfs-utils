@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.2
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -38,7 +38,6 @@ Patch4:		%{name}-kerberos-ac.patch
 Patch5:		%{name}-no_libgssapi.patch
 Patch6:		%{name}-pkgconfig_ac.patch
 Patch7:		%{name}-heimdal_functions.patch
-Patch100:	%{name}-git.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -169,7 +168,6 @@ Wspólne programy do obsługi NFS.
 
 %prep
 %setup -q -a1
-%patch100 -p1
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -386,15 +384,11 @@ fi
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
-%attr(755,root,root) %{_sbindir}/mountstats
-%attr(755,root,root) %{_sbindir}/nfsiostat
 %attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_sbindir}/rpc.gssd
 %attr(754,root,root) /etc/rc.d/init.d/gssd
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
-%{_mandir}/man8/mountstats.8*
-%{_mandir}/man8/nfsiostat.8*
 %{_mandir}/man8/rpc.gssd.8*
 %{_mandir}/man8/showmount.8*
 %{_mandir}/man8/umount.nfs.8*
