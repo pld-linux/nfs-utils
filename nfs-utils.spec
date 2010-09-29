@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.2
-Release:	4
+Version:	1.2.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	dad92f64db3266c7757f71bb53ee8f35
+# Source0-md5:	1131dc5f27c4f3905a6e7ee0d594fd4d
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -384,11 +384,15 @@ fi
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
+%attr(755,root,root) %{_sbindir}/mountstats
+%attr(755,root,root) %{_sbindir}/nfsiostat
 %attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_sbindir}/rpc.gssd
 %attr(754,root,root) /etc/rc.d/init.d/gssd
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
+%{_mandir}/man8/mountstats.8*
+%{_mandir}/man8/nfsiostat.8*
 %{_mandir}/man8/rpc.gssd.8*
 %{_mandir}/man8/showmount.8*
 %{_mandir}/man8/umount.nfs.8*
