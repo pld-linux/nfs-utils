@@ -5,7 +5,6 @@ SERVICE_RUN_NICE_LEVEL="+0"
 RPCNFSDCOUNT=8
 
 # NFS versions to use (default all-yes)
-NFSv1="yes"
 NFSv2="yes"
 NFSv3="yes"
 NFSv4="yes"

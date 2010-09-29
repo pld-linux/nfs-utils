@@ -19,7 +19,6 @@
 [ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
 
-[ -n "$NFSv1" ] || NFSv1="yes"
 [ -n "$NFSv2" ] || NFSv2="yes"
 [ -n "$NFSv3" ] || NFSv3="yes"
 [ -n "$NFSv4" ] || NFSv4="yes"
@@ -58,7 +57,7 @@ start() {
 		/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
 	fi
 
-	for vers in 1 2 3 4 ; do
+	for vers in 2 3 4 ; do
 		is_yes $(eval echo \$NFSv$vers) || \
 			RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
 	done
