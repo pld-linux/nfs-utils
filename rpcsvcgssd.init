@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# svcgssd	Start up and shut down RPCSEC GSS daemon
+#
+# chkconfig:	345 12 82
+# description:	Starts user-level daemon that manages RPCSEC GSS contexts \
+#		for the NFSv4 server.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "RPC svcgssd"
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+if [ "$1" != "stop" ]; then
+	check_portmapper || { nls "Error: portmap isn't running" && exit 0; }
+fi
+
+# Get service config
+[ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
+
+is_yes "${SECURE_NFS}" || exit 0
+
+# List of kernel modules to load
+[ -z "${SECURE_NFS_MODS}" ] && SECURE_NFS_MODS="des rpcsec_gss_krb5"
+
+start() {
+	# Check if the service is already running?
+	if [ -f /var/lock/subsys/svcgssd ]; then
+		msg_already_running "RPC svcgssd"
+		return
+	fi
+
+	# We need /proc/fs/nfsd mounted before starting svcgssd
+	if ! grep -q nfsd /proc/mounts ; then
+		modprobe nfsd > /dev/null 2>&1
+		run_cmd "Mounting /proc/fs/nfsd filesystem" mount -t nfsd nfsd /proc/fs/nfsd
+	fi
+	# Load rpcsec modules
+	for i in ${SECURE_NFS_MODS} ; do 
+		_modprobe single die $i
+	done
+	msg_starting "RPC svcgssd"
+	daemon /usr/sbin/rpc.svcgssd $RPCSVCGSSOPTIONS
+	RETVAL=$?
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/svcgssd
+}
+
+stop() {
+	if [ ! -f /var/lock/subsys/svcgssd ]; then
+		msg_not_running "RPC svcgssd"
+		return
+	fi
+
+	msg_stopping "RPC svcgssd"
+	killproc rpc.svcgssd
+	rm -f /var/lock/subsys/svcgssd
+}
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+	stop
+	start
+	;;
+  status)
+	status rpc.svcgssd
+	RETVAL=$?
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

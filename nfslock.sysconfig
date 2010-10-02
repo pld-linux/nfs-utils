@@ -1,0 +1,15 @@
+# Define nice level for rpc.statd daemon
+SERVICE_RUN_NICE_LEVEL="+0"
+
+# TCP and UDP ports lockd should listen on (default is portmap assigned)
+#LOCKD_TCPPORT=
+#LOCKD_UDPPORT=
+
+# Port for rpc.statd to listen on (default is portmap assigned)
+#STATD_PORT=
+
+# Port for rpc.statd to send outgoing status requests from
+#STATD_OUTPORT=
+
+# Options for rpc.statd.
+#STATDOPTS=

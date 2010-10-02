@@ -1,0 +1,20 @@
+# Options for NFSv4 ID <-> Name Mapper (idmapd)
+#RPCIDMAPOPTIONS=
+
+# Uncomment if you want to use secure NFSv4 exports
+#SECURE_NFS="yes"
+
+# List of kernel modules to use for secure NFS
+#SECURE_NFS_MODS="des rpcsec_gss_krb5"
+
+# Options for NFSv4 rpcsec_gss daemon
+#RPCGSSOPTIONS=
+
+# Space separated list of mount points that init script should not even
+# try to umount because it will not work 
+# May contain regular expressions (ex. "/dev/union/.*")
+NFSUMOUNT_IGNORE="/ /usr"
+
+# Enable if you don't want rpm upgrade to remount Your NFS mounts
+# By default is on, because it's really dangerous to remount i.e. /home
+RPM_SKIP_AUTO_RESTART=yes

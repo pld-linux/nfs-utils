@@ -1,0 +1,12 @@
+diff -ur nfs-utils-1.2.0/aclocal/rpcsec_vers.m4 nfs-utils-1.2.0-pkg/aclocal/rpcsec_vers.m4
+--- nfs-utils-1.2.0/aclocal/rpcsec_vers.m4	2009-06-02 16:43:05.000000000 +0200
++++ nfs-utils-1.2.0-pkg/aclocal/rpcsec_vers.m4	2009-06-30 15:48:36.603210573 +0200
+@@ -1,7 +1,7 @@
+ dnl Checks librpcsec version
+ AC_DEFUN([AC_RPCSEC_VERSION], [
+ 
+-  PKG_CHECK_MODULES([GSSGLUE], [libgssglue >= 0.1])
++  PKG_CHECK_MODULES([GSSGLUE], [libgssglue >= 0.1], , [PKG_CHECK_MODULES([GSSGLUE], [heimdal-gssapi])])
+ 
+   dnl TI-RPC replaces librpcsecgss
+   if test "$enable_tirpc" = no; then

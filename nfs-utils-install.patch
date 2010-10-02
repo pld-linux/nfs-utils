@@ -1,0 +1,11 @@
+--- nfs-utils-1.0.8/Makefile.am~	2006-03-28 02:53:30.000000000 +0200
++++ nfs-utils-1.0.8/Makefile.am	2006-05-08 13:24:32.000000000 +0200
+@@ -46,8 +46,6 @@
+ 	touch $(DESTDIR)$(statedir)/rmtab; chmod 644 $(DESTDIR)$(statedir)/rmtab
+ 	mkdir -p $(DESTDIR)$(statedir)/sm $(DESTDIR)$(statedir)/sm.bak
+ 	touch $(DESTDIR)$(statedir)/state
+-	chmod go-rwx $(DESTDIR)$(statedir)/sm $(DESTDIR)$(statedir)/sm.bak $(DESTDIR)$(statedir)/state
+-	-chown $(statduser) $(DESTDIR)$(statedir)/sm $(DESTDIR)$(statedir)/sm.bak $(DESTDIR)$(statedir)/state
+ 
+ uninstall-hook:
+ 	rm $(DESTDIR)$(statedir)/xtab
