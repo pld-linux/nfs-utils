@@ -1,0 +1,189 @@
+--- nfs-utils-1.2.3.dist/configure.ac.orig	2010-09-28 14:24:16.000000000 +0200
++++ nfs-utils-1.2.3.dist/configure.ac	2010-10-03 14:47:50.699424847 +0200
+@@ -246,12 +246,6 @@
+ 
+   dnl check for nfsidmap libraries and headers
+   AC_LIBNFSIDMAP
+-
+-  dnl librpcsecgss already has a dependency on libgssapi,
+-  dnl but we need to make sure we get the right version
+-  if test "$enable_gss" = yes; then
+-    AC_RPCSEC_VERSION
+-  fi
+ fi
+ 
+ if test "$knfsd_cv_glibc2" = no; then
+@@ -295,6 +289,11 @@
+   dnl Invoked after AC_KERBEROS_V5; AC_LIBRPCSECGSS needs to have KRBLIBS set
+   AC_LIBRPCSECGSS
+ 
++  dnl Invoked after AC_KERBEROS_V5
++  dnl AC_RPCSEC_VERSION needs to now which Kerberos implementation we're using
++  dnl librpcsecgss already has a dependency on libgssapi,
++  dnl but we need to make sure we get the right version
++  AC_RPCSEC_VERSION
+ fi
+ 
+ dnl Check for IPv6 support
+--- nfs-utils-1.2.3.dist/aclocal/rpcsec_vers.m4.orig	2010-09-28 14:24:16.000000000 +0200
++++ nfs-utils-1.2.3.dist/aclocal/rpcsec_vers.m4	2010-10-03 14:53:06.379424854 +0200
+@@ -1,7 +1,10 @@
+ dnl Checks librpcsec version
+ AC_DEFUN([AC_RPCSEC_VERSION], [
+ 
+-  PKG_CHECK_MODULES([GSSGLUE], [libgssglue >= 0.1])
++  dnl libgssglue is needed only for MIT Kerberos
++  if test "$gssapi_lib" = gssapi_krb5; then
++    PKG_CHECK_MODULES([GSSGLUE], [libgssglue >= 0.1])
++  fi
+ 
+   dnl TI-RPC replaces librpcsecgss
+   if test "$enable_tirpc" = no; then
+--- nfs-utils-1.2.3.dist/aclocal/kerberos5.m4~	2010-09-28 14:24:16.000000000 +0200
++++ nfs-utils-1.2.3.dist/aclocal/kerberos5.m4	2010-10-03 14:13:17.274424855 +0200
+@@ -32,13 +32,13 @@
+     if test "$K5CONFIG" != ""; then
+       KRBCFLAGS=`$K5CONFIG --cflags`
+       KRBLIBS=`$K5CONFIG --libs gssapi`
+-      K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
+       AC_DEFINE_UNQUOTED(KRB5_VERSION, $K5VERS, [Define this as the Kerberos version number])
+       if test -f $dir/include/gssapi/gssapi_krb5.h -a \
+                 \( -f $dir/lib/libgssapi_krb5.a -o \
+                    -f $dir/lib64/libgssapi_krb5.a -o \
+                    -f $dir/lib64/libgssapi_krb5.so -o \
+                    -f $dir/lib/libgssapi_krb5.so \) ; then
++         K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
+          AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
+          KRBDIR="$dir"
+   dnl If we are using MIT K5 1.3.1 and before, we *MUST* use the
+@@ -56,7 +56,11 @@
+       dnl of Heimdal Kerberos on SuSe
+       elif test \( -f $dir/include/heim_err.h -o\
+       		 -f $dir/include/heimdal/heim_err.h \) -a \
+-                -f $dir/lib/libroken.a; then
++                \( -f $dir/lib/libroken.a -o \
++                   -f $dir/lib64/libroken.a -o \
++                   -f $dir/lib64/libroken.so -o \
++                   -f $dir/lib/libroken.so \) ; then
++         K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(2),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
+          AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
+          KRBDIR="$dir"
+          gssapi_lib=gssapi
+--- nfs-utils-1.2.3.dist/utils/gssd/context_lucid.c.orig	2010-09-28 14:24:16.000000000 +0200
++++ nfs-utils-1.2.3.dist/utils/gssd/context_lucid.c	2010-10-03 14:31:31.150424854 +0200
+@@ -267,8 +267,13 @@
+ 	int retcode = 0;
+ 
+ 	printerr(2, "DEBUG: %s: lucid version!\n", __FUNCTION__);
++#ifdef HAVE_HEIMDAL
++	maj_stat = gss_krb5_export_lucid_sec_context(&min_stat, &ctx,
++						1, &return_ctx);
++#else
+ 	maj_stat = gss_export_lucid_sec_context(&min_stat, &ctx,
+ 						1, &return_ctx);
++#endif
+ 	if (maj_stat != GSS_S_COMPLETE) {
+ 		pgsserr("gss_export_lucid_sec_context",
+ 			maj_stat, min_stat, &krb5oid);
+@@ -303,7 +308,11 @@
+ 	else
+ 		retcode = prepare_krb5_rfc4121_buffer(lctx, buf, endtime);
+ 
++#ifdef HAVE_HEIMDAL
++	maj_stat = gss_krb5_free_lucid_sec_context(&min_stat, return_ctx);
++#else
+ 	maj_stat = gss_free_lucid_sec_context(&min_stat, ctx, return_ctx);
++#endif
+ 	if (maj_stat != GSS_S_COMPLETE) {
+ 		pgsserr("gss_export_lucid_sec_context",
+ 			maj_stat, min_stat, &krb5oid);
+--- nfs-utils-1.2.3.dist/utils/gssd/krb5_util.c.orig	2010-09-28 14:24:16.000000000 +0200
++++ nfs-utils-1.2.3.dist/utils/gssd/krb5_util.c	2010-10-03 14:33:07.992424854 +0200
+@@ -115,7 +115,7 @@
+ #include <errno.h>
+ #include <time.h>
+ #include <gssapi/gssapi.h>
+-#ifdef USE_PRIVATE_KRB5_FUNCTIONS
++#ifdef HAVE_HEIMDAL
+ #include <gssapi/gssapi_krb5.h>
+ #endif
+ #include <krb5.h>
+@@ -927,9 +927,37 @@ 
+ {
+ 	krb5_error_code ret;
+ 	krb5_creds creds;
+-	krb5_cc_cursor cur;
+ 	int found = 0;
+ 
++#ifdef HAVE_HEIMDAL
++	krb5_creds pattern;
++	krb5_const_realm client_realm;
++
++	krb5_cc_clear_mcred(&pattern);
++
++	client_realm = krb5_principal_get_realm (context, principal);
++
++	ret = krb5_make_principal (context, &pattern.server,
++				   client_realm, KRB5_TGS_NAME, client_realm,
++				   NULL);
++	if (ret)
++	  krb5_err (context, 1, ret, "krb5_make_principal");
++	pattern.client = principal;
++
++	ret = krb5_cc_retrieve_cred (context, ccache, 0, &pattern, &creds);
++	krb5_free_principal (context, pattern.server);
++	if (ret) {
++	  if (ret == KRB5_CC_END)
++            return 1;
++	  krb5_err (context, 1, ret, "krb5_cc_retrieve_cred");
++	}
++
++	found = creds.times.endtime > time(NULL);
++
++	krb5_free_cred_contents (context, &creds);
++#else
++	krb5_cc_cursor cur;
++
+ 	ret = krb5_cc_start_seq_get(context, ccache, &cur);
+ 	if (ret) 
+ 		return 0;
+@@ -949,6 +977,7 @@ 
+ 		krb5_free_cred_contents(context, &creds);
+ 	}
+ 	krb5_cc_end_seq_get(context, ccache, &cur);
++#endif
+ 
+ 	return found;
+ }
+@@ -995,6 +1024,9 @@ 
+ 	}
+ 	krb5_free_principal(context, principal);
+ err_princ:
++#ifdef HAVE_HEIMDAL
++#define KRB5_TC_OPENCLOSE              0x00000001
++#endif
+ 	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
+ 	krb5_cc_close(context, ccache);
+ err_cache:
+@@ -1316,12 +1316,21 @@
+ 	 * If we failed for any reason to produce global
+ 	 * list of supported enctypes, use local default here.
+ 	 */
++#ifdef HAVE_HEIMDAL
++	if (krb5_enctypes == NULL)
++		maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, credh,
++					num_enctypes, enctypes);
++	else
++		maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, credh,
++					num_krb5_enctypes, krb5_enctypes);
++#else
+ 	if (krb5_enctypes == NULL)
+ 		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
+ 					&krb5oid, num_enctypes, enctypes);
+ 	else
+ 		maj_stat = gss_set_allowable_enctypes(&min_stat, credh,
+ 					&krb5oid, num_krb5_enctypes, krb5_enctypes);
++#endif
+ 
+ 	if (maj_stat != GSS_S_COMPLETE) {
+ 		pgsserr("gss_set_allowable_enctypes",
