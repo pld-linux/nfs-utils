@@ -34,10 +34,7 @@ Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
-Patch4:		%{name}-kerberos-ac.patch
-Patch5:		%{name}-no_libgssapi.patch
-Patch6:		%{name}-pkgconfig_ac.patch
-Patch7:		%{name}-heimdal_functions.patch
+Patch7:		%{name}-heimdal.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -172,12 +169,7 @@ Wspólne programy do obsługi NFS.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%if %{without krb5}
-%patch5 -p1
-%patch6 -p1
-%patch7 -p0
-%endif
+%patch7 -p1
 
 %build
 %{__libtoolize}
@@ -196,7 +188,7 @@ Wspólne programy do obsługi NFS.
 	--with-statduser=rpcstatd \
 	--with-start-statd=%{_sbindir}/start-statd \
 	--with-tcp-wrappers \
-	--with-krb5-config=%{_bindir}/krb5-config
+	--with-krb5
 
 %{__make} all
 
