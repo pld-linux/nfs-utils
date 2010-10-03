@@ -34,7 +34,7 @@ Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
-Patch7:		%{name}-heimdal.patch
+Patch4:		%{name}-heimdal.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -169,7 +169,7 @@ Wspólne programy do obsługi NFS.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch7 -p1
+%patch4 -p1
 
 %build
 %{__libtoolize}
