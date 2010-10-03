@@ -182,8 +182,13 @@ Wspólne programy do obsługi NFS.
 	--enable-nfsv4 \
 	--enable-gss \
 	--enable-mount \
-	--%{?with_tirpc:en}%{!?with_tirpc:dis}able-tirpc \
+%if %{with tirpc}
+	--enable-tirpc \
 	--enable-ipv6 \
+%else
+	--disable-tirpc \
+	--disable-ipv6 \
+%endif
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
 	--with-start-statd=%{_sbindir}/start-statd \
