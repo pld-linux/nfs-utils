@@ -1,0 +1,212 @@
+diff --git a/utils/gssd/gssd.c b/utils/gssd/gssd.c
+index ccadb07..c1339b6 100644
+--- a/utils/gssd/gssd.c
++++ b/utils/gssd/gssd.c
+@@ -60,6 +60,7 @@ char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
+ char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
+ char *ccachesearch[GSSD_MAX_CCACHE_SEARCH + 1];
+ int  use_memcache = 0;
++int  use_kcmcache = 0;
+ int  root_uses_machine_creds = 1;
+ unsigned int  context_timeout = 0;
+ char *preferred_realm = NULL;
+@@ -85,7 +86,7 @@ sig_hup(int signal)
+ static void
+ usage(char *progname)
+ {
+-	fprintf(stderr, "usage: %s [-f] [-M] [-n] [-v] [-r] [-p pipefsdir] [-k keytab] [-d ccachedir] [-t timeout] [-R preferred realm]\n",
++	fprintf(stderr, "usage: %s [-f] [-K] [-M] [-n] [-v] [-r] [-p pipefsdir] [-k keytab] [-d ccachedir] [-t timeout] [-R preferred realm]\n",
+ 		progname);
+ 	exit(1);
+ }
+@@ -102,7 +103,7 @@ main(int argc, char *argv[])
+ 	char *progname;
+ 
+ 	memset(ccachesearch, 0, sizeof(ccachesearch));
+-	while ((opt = getopt(argc, argv, "fvrmnMp:k:d:t:R:")) != -1) {
++	while ((opt = getopt(argc, argv, "fvrmnMKp:k:d:t:R:")) != -1) {
+ 		switch (opt) {
+ 			case 'f':
+ 				fg = 1;
+@@ -113,6 +114,9 @@ main(int argc, char *argv[])
+ 			case 'M':
+ 				use_memcache = 1;
+ 				break;
++			case 'K':
++				use_kcmcache = 1;
++				break;
+ 			case 'n':
+ 				root_uses_machine_creds = 0;
+ 				break;
+diff --git a/utils/gssd/gssd.h b/utils/gssd/gssd.h
+index b1b5793..82c4406 100644
+--- a/utils/gssd/gssd.h
++++ b/utils/gssd/gssd.h
+@@ -63,6 +63,7 @@ extern char			pipefs_dir[PATH_MAX];
+ extern char			keytabfile[PATH_MAX];
+ extern char			*ccachesearch[];
+ extern int			use_memcache;
++extern int			use_kcmcache;
+ extern int			root_uses_machine_creds;
+ extern unsigned int 		context_timeout;
+ extern char			*preferred_realm;
+diff --git a/utils/gssd/krb5_util.c b/utils/gssd/krb5_util.c
+index f071600..503cac2 100644
+--- a/utils/gssd/krb5_util.c
++++ b/utils/gssd/krb5_util.c
+@@ -125,6 +125,7 @@
+ #include "err_util.h"
+ #include "gss_util.h"
+ #include "krb5_util.h"
++#include "xcommon.h"
+ 
+ /* Global list of principals/cache file names for machine credentials */
+ struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
+@@ -299,6 +300,115 @@ gssd_find_existing_krb5_ccache(uid_t uid, char *dirname, struct dirent **d)
+ 	return err;
+ }
+ 
++#ifdef HAVE_HEIMDAL
++static int
++gssd_find_existing_krb5_ccache_kcm(uid_t uid, char **cc)
++{
++	krb5_context context;
++	krb5_cc_cache_cursor cursor;
++	krb5_ccache id;
++	char *best_match_name = NULL;
++	krb5_timestamp best_match_mtime, mtime;
++	char *ccname;
++	uid_t ccuid;
++	int i;
++	int found = 0;
++	char buf[1030];
++	char *princname = NULL;
++	char *realm = NULL;
++	int score, best_match_score = 0, err = -EACCES;
++
++	*cc = NULL;
++	if (krb5_init_context(&context))
++		return err;
++
++	if (krb5_cc_cache_get_first(context, "KCM", &cursor))
++		return err;
++
++	while (krb5_cc_cache_next(context, cursor, &id) == 0) {
++		ccname = xstrdup(krb5_cc_get_name(context, id));
++		if (ccname == NULL) {
++			printerr(0, "Error getting CC name\n");
++			continue;
++		}
++		for (i=0,ccuid=0; ccname[i] && isdigit(ccname[i]); i++) {
++			ccuid = ccuid*10 + (ccname[i] - '0');
++		}
++		if (i == 0) {
++			printerr(3, "CC '%s' not available due to"
++					" non-standard name\n",
++				 ccname);
++			continue;
++		}
++		/* Only pick caches owned by the user (uid) */
++		if (ccuid != uid) {
++			printerr(3, "CC '%s' owned by %u, not %u\n",
++				 ccname, ccuid, uid);
++			continue;
++		}
++		snprintf(buf, sizeof(buf), "KCM:%s", ccname);
++		if (!query_krb5_ccache(buf, &princname, &realm)) {
++			printerr(3, "CC '%s' is expired or corrupt\n",
++				 ccname);
++			err = -EKEYEXPIRED;
++			continue;
++		}
++		krb5_cc_last_change_time(context, id, &mtime);
++
++		score = 0;
++		if (preferred_realm && strcmp(realm, preferred_realm) == 0) 
++			score++;
++
++		printerr(3, "CC '%s'(%s@%s) passed all checks and"
++			    " has mtime of %u\n",
++			 ccname, princname, realm, mtime);
++		/*
++		 * if more than one match is found, return the most
++		 * recent (the one with the latest mtime), and
++		 * don't free the dirent
++		 */
++		if (!found) {
++			best_match_name = ccname;
++			best_match_mtime = mtime;
++			best_match_score = score;
++			found++;
++		} else {
++			/*
++			 * If current score is higher than best match 
++			 * score, we use the current match. Otherwise,
++			 * if the current match has an mtime later
++			 * than the one we are looking at, then use
++			 * the current match.  Otherwise, we still
++			 * have the best match.
++			 */
++			if (best_match_score < score ||
++			    (best_match_score == score && 
++			       mtime > best_match_mtime)) {
++				free(best_match_name);
++				best_match_name = ccname;
++				best_match_mtime = mtime;
++				best_match_score = score;
++			} else {
++				free(ccname);
++			}
++			printerr(3, "CC '%s' is our current best match "
++				    "with mtime of %u\n",
++				 best_match_name, best_match_mtime);
++		}
++		free(princname);
++		free(realm);
++	}
++	krb5_cc_cache_end_seq_get(context, cursor);
++	krb5_free_context(context);
++	if (found) {
++		*cc = best_match_name;
++		return 0;
++	}
++
++	return err;
++}
++#endif
++
+ /*
+  * Obtain credentials via a key in the keytab given
+  * a keytab handle and a gssd_k5_kt_princ structure.
+@@ -1002,12 +1112,26 @@ gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername, char *dirname)
+ 	printerr(2, "getting credentials for client with uid %u for "
+ 		    "server %s\n", uid, servername);
+ 	memset(buf, 0, sizeof(buf));
+-	err = gssd_find_existing_krb5_ccache(uid, dirname, &d);
+-	if (err)
+-		return err;
++#ifdef HAVE_HEIMDAL
++	if (use_kcmcache) {
++		char *s;
++		err = gssd_find_existing_krb5_ccache_kcm(uid, &s);
++		if (err)
++			return err;
++
++		snprintf(buf, sizeof(buf), "KCM:%s", s);
++		free(s);
++	} else {
++#endif
++		err = gssd_find_existing_krb5_ccache(uid, dirname, &d);
++		if (err)
++			return err;
+ 
+-	snprintf(buf, sizeof(buf), "FILE:%s/%s", dirname, d->d_name);
+-	free(d);
++		snprintf(buf, sizeof(buf), "FILE:%s/%s", dirname, d->d_name);
++		free(d);
++#ifdef HAVE_HEIMDAL
++	}
++#endif
+ 
+ 	printerr(2, "using %s as credentials cache for client with "
+ 		    "uid %u for server %s\n", buf, uid, servername);
