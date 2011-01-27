@@ -48,6 +48,7 @@ BuildRequires:	libnfsidmap-devel >= 0.21-3
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
+BuildRequires:	rpm-pythonprov
 %if %{with tirpc}
 BuildRequires:	libtirpc-devel >= 1:0.1.10-4
 %else
