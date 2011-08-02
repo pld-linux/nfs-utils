@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.3
-Release:	6
+Version:	1.2.4
+Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	1131dc5f27c4f3905a6e7ee0d594fd4d
+# Source0-md5:	938dc0574f3eb9891a8ed4746f806277
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -35,12 +35,12 @@ Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
-Patch5:		svc-create-fixed-port.patch
-Patch6:		%{name}-heimdal-kcm.patch
+Patch5:		%{name}-heimdal-kcm.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
+BuildRequires:	keyutils-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
@@ -174,7 +174,6 @@ Wspólne programy do obsługi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
 
 %build
 %{__libtoolize}

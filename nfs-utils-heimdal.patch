@@ -2,8 +2,8 @@
 +++ nfs-utils-1.2.3.dist/configure.ac	2010-10-03 14:47:50.699424847 +0200
 @@ -246,12 +246,6 @@
  
-   dnl check for nfsidmap libraries and headers
-   AC_LIBNFSIDMAP
+   dnl check for the keyutils libraries and headers
+   AC_KEYUTILS
 -
 -  dnl librpcsecgss already has a dependency on libgssapi,
 -  dnl but we need to make sure we get the right version
