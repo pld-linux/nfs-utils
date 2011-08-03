@@ -1,4 +1,5 @@
 # TODO
+# - consider enabling: nfsv41, mountconfig, libmount-mount
 # - should unmount /proc/fs/nfsd and /var/lib/nfs/rpc_pipefs at package
 #	uninstall (or in service nfs stop)
 #
@@ -41,7 +42,7 @@ BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
 BuildRequires:	keyutils-devel
-BuildRequires:	libblkid-devel
+BuildRequires:	libblkid-devel >= 1.40
 BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel >= 0.21-3
