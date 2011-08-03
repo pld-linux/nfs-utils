@@ -189,7 +189,7 @@
  		pgsserr("gss_set_allowable_enctypes",
 --- nfs-utils-1.2.4/utils/gssd/svcgssd_krb5.c~	2011-06-30 15:00:42.000000000 +0200
 +++ nfs-utils-1.2.4/utils/gssd/svcgssd_krb5.c	2011-08-03 12:40:53.865782009 +0200
-@@ -186,8 +186,12 @@
+@@ -186,8 +186,13 @@
  		num_enctypes = default_num_enctypes;
  	}
  
