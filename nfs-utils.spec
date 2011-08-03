@@ -402,6 +402,7 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_sbindir}/gss_clnt_send_err
 %attr(755,root,root) %{_sbindir}/gss_destroy_creds
+%attr(755,root,root) %{_sbindir}/nfsidmap
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %dir %{_var}/lib/nfs
@@ -409,4 +410,5 @@ fi
 %dir %{_var}/lib/nfs/v4recovery
 %{_mandir}/man5/nfs.5*
 %{_mandir}/man8/idmapd.8*
+%{_mandir}/man8/nfsidmap.8*
 %{_mandir}/man8/rpc.idmapd.8*
