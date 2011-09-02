@@ -14,7 +14,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.4
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -204,7 +204,7 @@ Wspólne programy do obsługi NFS.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig} \
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig.exports.d} \
 	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery}
 
 %{__make} install \
@@ -345,6 +345,8 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/svcgssd
 
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
+%dir %{_sysconfdir}/exports.d
+
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsd
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/xtab
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/etab
