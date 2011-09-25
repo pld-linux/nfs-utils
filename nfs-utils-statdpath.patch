@@ -11,19 +11,6 @@
  
  uninstall-hook:
  	rm $(DESTDIR)$(statedir)/xtab
---- nfs-utils-1.2.2/support/nsm/file.c~	2010-02-18 13:35:00.000000000 +0100
-+++ nfs-utils-1.2.2/support/nsm/file.c	2010-02-24 17:27:51.635249268 +0100
-@@ -95,8 +95,8 @@
- /*
-  * Some distributions place statd's files in a subdirectory
-  */
--#define NSM_PATH_EXTENSION
--/* #define NSM_PATH_EXTENSION	"/statd" */
-+/* #define NSM_PATH_EXTENSION */
-+#define NSM_PATH_EXTENSION	"/statd"
- 
- #define NSM_DEFAULT_STATEDIR		NFS_STATEDIR NSM_PATH_EXTENSION
- 
 --- nfs-utils-1.2.2/utils/statd/statd.man~	2010-02-18 13:35:00.000000000 +0100
 +++ nfs-utils-1.2.2/utils/statd/statd.man	2010-02-24 17:30:05.097124679 +0100
 @@ -232,7 +232,7 @@

@@ -1,5 +1,6 @@
 # TODO
-# - consider enabling: nfsv41, mountconfig, libmount-mount
+# - where to package pNFS blkmapd client deamon (clients or separate package)
+# - consider enabling: libmount-mount
 # - should unmount /proc/fs/nfsd and /var/lib/nfs/rpc_pipefs at package
 #	uninstall (or in service nfs stop)
 #
@@ -13,12 +14,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.4
-Release:	3
+Version:	1.2.5
+Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
-Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	938dc0574f3eb9891a8ed4746f806277
+#Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
+Source0:	http://downloads.sourceforge.net/project/nfs/nfs-utils/%{version}/%{name}-%{version}.tar.bz2
+# Source0-md5:	8395ac770720b83c5c469f88306d7765
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -44,6 +46,7 @@ BuildRequires:	cpp
 BuildRequires:	keyutils-devel
 BuildRequires:	libblkid-devel >= 1.40
 BuildRequires:	libcap-devel
+BuildRequires:	device-mapper-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libnfsidmap-devel >= 0.21-3
 BuildRequires:	libtool
@@ -185,8 +188,10 @@ Wspólne programy do obsługi NFS.
 %configure \
 	--enable-nfsv3 \
 	--enable-nfsv4 \
+	--enable-nfsv41 \
 	--enable-gss \
 	--enable-mount \
+	--enable-mountconfig \
 %if %{with tirpc}
 	--enable-tirpc \
 	--enable-ipv6 \
@@ -194,6 +199,7 @@ Wspólne programy do obsługi NFS.
 	--disable-tirpc \
 	--disable-ipv6 \
 %endif
+	--with-statdpath=/var/lib/nfs/statd \
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
 	--with-start-statd=%{_sbindir}/start-statd \
@@ -209,6 +215,8 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d} \
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
+
+install -p utils/mount/nfsmount.conf $RPM_BUILD_ROOT/etc
 
 cat >$RPM_BUILD_ROOT%{_sbindir}/start-statd <<EOF
 #!/bin/sh
@@ -235,8 +243,7 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,sm-notify}.8
-rm $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{svcgssd,gssd,idmapd}.8
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,sm-notify,svcgssd,gssd,idmapd}.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
@@ -384,6 +391,7 @@ fi
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
+%attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) /etc/nfsmount.conf
 %attr(4755,root,root) /sbin/mount.nfs
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
@@ -393,6 +401,7 @@ fi
 %attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_sbindir}/rpc.gssd
 %attr(754,root,root) /etc/rc.d/init.d/gssd
+%{_mandir}/man5/nfsmount.conf.5*
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
 %{_mandir}/man8/mountstats.8*
