@@ -15,7 +15,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -45,6 +45,7 @@ BuildRequires:	automake
 BuildRequires:	cpp
 BuildRequires:	keyutils-devel
 BuildRequires:	libblkid-devel >= 1.40
+BuildRequires:	libmount-devel
 BuildRequires:	libcap-devel
 BuildRequires:	device-mapper-devel
 BuildRequires:	libevent-devel >= 1.2
@@ -192,6 +193,7 @@ Wspólne programy do obsługi NFS.
 	--enable-gss \
 	--enable-mount \
 	--enable-mountconfig \
+	--enable-libmount-mount \
 %if %{with tirpc}
 	--enable-tirpc \
 	--enable-ipv6 \
