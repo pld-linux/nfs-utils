@@ -365,6 +365,7 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.gssd
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man5/nfsmount.conf.5*
+%{_mandir}/man8/blkmapd.8*
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
 %{_mandir}/man8/mountstats.8*
