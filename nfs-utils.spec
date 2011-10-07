@@ -31,6 +31,7 @@ Source7:	rpcsvcgssd.init
 Source8:	nfs.sysconfig
 Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
+Source11:	blkmapd.init
 Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
@@ -225,6 +226,7 @@ install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
+install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs

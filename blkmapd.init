@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# blkmapd	Start up and shut down pNFS block layout mapping daemon
+#
+# chkconfig:	345 13 82
+# description:	Starts the blkmapd daemon that performs device discovery \
+#		and mapping for the parallel NFS (pNFS) block layout \
+#		client [RFC5663].
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "pNFS block layout mapping daemon"
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+# Get service config
+[ -f /etc/sysconfig/nfsfs ] && . /etc/sysconfig/nfsfs
+
+is_yes "${ENABLE_PNFS}" || exit 0
+
+start() {
+	# Check if the service is already running?
+	if [ -f /var/lock/subsys/blkmapd ]; then
+		msg_already_running "pNFS block layout mapping daemon"
+		return
+	fi
+
+	if ! grep -q rpc_pipefs /proc/mounts; then
+		modprobe sunrpc >/dev/null 2>&1
+		run_cmd "Mounting /var/lib/nfs/rpc_pipefs filesystem" \
+			mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
+	fi
+	msg_starting "pNFS block layout mapping daemon"
+	daemon /usr/sbin/blkmapd $BLKMAPDOPTIONS
+	RETVAL=$?
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/blkmapd
+}
+
+stop() {
+	if [ ! -f /var/lock/subsys/blkmapd ]; then
+		msg_not_running "pNFS block layout mapping daemon"
+		return
+	fi
+
+	msg_stopping "pNFS block layout mapping daemon"
+	killproc blkmapd
+	rm -f /var/lock/subsys/blkmapd
+}
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+	stop
+	start
+	;;
+  status)
+	status blkmapd
+	RETVAL=$?
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

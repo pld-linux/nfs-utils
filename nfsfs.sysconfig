@@ -10,6 +10,12 @@
 # Options for NFSv4 rpcsec_gss daemon
 #RPCGSSOPTIONS=
 
+# Uncomment if you want to mount pNFS volumes
+#ENABLE_PNFS=yes
+
+# Options for pNFS blkmapd daemon
+#BLKMAPDOPTIONS=
+
 # Space separated list of mount points that init script should not even
 # try to umount because it will not work 
 # May contain regular expressions (ex. "/dev/union/.*")
