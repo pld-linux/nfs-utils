@@ -1,6 +1,4 @@
 # TODO
-# - where to package pNFS blkmapd client deamon (clients or separate package)
-# - consider enabling: libmount-mount
 # - should unmount /proc/fs/nfsd and /var/lib/nfs/rpc_pipefs at package
 #	uninstall (or in service nfs stop)
 #
@@ -15,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	2
+Release:	2.1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -137,32 +135,21 @@ hoście. Na przykład, showmount potrafi pokazać klientów, którzy są
 zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
 zamountowania zasobów NFS.
 
-%package lock
-Summary:	Programs for NFS file locking
-Summary(pl.UTF-8):	Programy do obsługi blokowania plików poprzez NFS (lock)
-Group:		Networking
-Requires(post,preun):	/sbin/chkconfig
-Requires:	rc-scripts
-Requires:	rpcbind >= 0.1.7
-Provides:	group(rpcstatd)
-Provides:	nfslockd
-Provides:	user(rpcstatd)
-Obsoletes:	knfsd-lock
-Obsoletes:	nfslockd
-
-%description lock
-The nfs-lock pacage contains programs which support the NFS file lock.
-Install nfs-lock if you want to use file lock over NFS.
-
-%description lock -l pl.UTF-8
-Ten pakiet zawiera programy umożliwiające wykonywanie blokowania
-plików (file locking) poprzez NFS.
-
 %package common
 Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
+Requires(post,preun):	/sbin/chkconfig
+Provides:	user(rpcstatd)
+Provides:	group(rpcstatd)
+Provides:	nfslockd
+Provides:	nfs-utils-lock
 Requires:	libnfsidmap >= 0.21-3
+Requires:	rc-scripts
+Requires:	rpcbind >= 0.1.7
+Obsoletes:	nfs-utils-lock
+Obsoletes:	knfsd-lock
+Obsoletes:	nfslockd
 Conflicts:	mount < 2.13-0.pre7.1
 
 %description common
@@ -282,6 +269,8 @@ fi
 %service nfsfs restart
 /sbin/chkconfig --add gssd
 %service gssd restart "RPC gssd"
+/sbin/chkconfig --add blkmapd
+%service blkmapd restart "pNFS blkmapd"
 
 %preun clients
 if [ "$1" = "0" ]; then
@@ -289,55 +278,39 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del nfsfs
 	%service gssd stop
 	/sbin/chkconfig --del gssd
+	%service blkmapd stop
+	/sbin/chkconfig --del blkmapd
 fi
 
-%pre lock
+%pre common
 %groupadd -g 191 rpcstatd
 %useradd -u 191 -d /var/lib/nfs/statd -s /bin/false -c "RPC statd user" -g rpcstatd rpcstatd
-
-%post lock
-/sbin/chkconfig --add nfslock
-%service nfslock restart "RPC statd"
-
-%preun lock
-if [ "$1" = "0" ]; then
-	%service nfslock stop
-	/sbin/chkconfig --del nfslock
-fi
-
-%postun lock
-if [ "$1" = "0" ]; then
-	%userremove rpcstatd
-	%groupremove rpcstatd
-fi
 
 %post common
 /sbin/chkconfig --add idmapd
 %service idmapd restart "RPC idmapd"
+/sbin/chkconfig --add nfslock
+%service nfslock restart "RPC statd"
 
 %preun common
 if [ "$1" = "0" ]; then
 	%service idmapd stop
 	/sbin/chkconfig --del idmapd
+	%service nfslock stop
+	/sbin/chkconfig --del nfslock
 fi
 
-%triggerpostun -- %{name} < 1.1.0-0.rc1.1
-/sbin/chkconfig nfs reset
-/sbin/chkconfig svcgssd reset
-
-%triggerpostun lock -- %{name}-lock < 1.1.0-0.rc1.1
-/sbin/chkconfig nfslock reset
-
-%triggerpostun clients -- %{name}-clients < 1.1.0-0.rc1.1
-if [ -f /etc/sysconfig/nfsclient.rpmsave ]; then
-	mv -f /etc/sysconfig/nfsfs{,.rpmnew}
-	mv -f /etc/sysconfig/nfsclient.rpmsave /etc/sysconfig/nfsfs
+%postun common
+if [ "$1" = "0" ]; then
+	%userremove rpcstatd
+	%groupremove rpcstatd
 fi
-/sbin/chkconfig nfsfs reset
-/sbin/chkconfig gssd reset
 
-%triggerpostun common -- %{name}-common < 1.1.0-0.rc1.1
-/sbin/chkconfig idmapd reset
+%triggerpostun common -- %{name}-lock < 1.2.5-3
+if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
+	mv -f /etc/sysconfig/nfslock{,.rpmnew}
+	mv -f /etc/sysconfig/nfslock.rpmsave /etc/sysconfig/nfslock
+fi
 
 %files
 %defattr(644,root,root,755)
@@ -373,24 +346,10 @@ fi
 %{_mandir}/man8/rpcdebug.8*
 %{_mandir}/man8/svcgssd.8*
 
-%files lock
-%defattr(644,root,root,755)
-%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd
-%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm
-%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm.bak
-%attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
-%attr(755,root,root) %{_sbindir}/rpc.statd
-%attr(755,root,root) %{_sbindir}/sm-notify
-%attr(755,root,root) %{_sbindir}/start-statd
-%attr(754,root,root) /etc/rc.d/init.d/nfslock
-%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
-%{_mandir}/man8/rpc.sm-notify.8*
-%{_mandir}/man8/rpc.statd.8*
-%{_mandir}/man8/sm-notify.8*
-%{_mandir}/man8/statd.8*
-
 %files clients
 %defattr(644,root,root,755)
+%attr(754,root,root) /etc/rc.d/init.d/blkmapd
+%attr(754,root,root) /etc/rc.d/init.d/gssd
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) /etc/nfsmount.conf
@@ -398,11 +357,11 @@ fi
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
+%attr(755,root,root) %{_sbindir}/blkmapd
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
-%attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_sbindir}/rpc.gssd
-%attr(754,root,root) /etc/rc.d/init.d/gssd
+%attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man5/nfsmount.conf.5*
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
@@ -414,15 +373,28 @@ fi
 
 %files common
 %defattr(644,root,root,755)
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
+%attr(754,root,root) /etc/rc.d/init.d/idmapd
+%attr(754,root,root) /etc/rc.d/init.d/nfslock
 %attr(755,root,root) %{_sbindir}/gss_clnt_send_err
 %attr(755,root,root) %{_sbindir}/gss_destroy_creds
 %attr(755,root,root) %{_sbindir}/nfsidmap
 %attr(755,root,root) %{_sbindir}/rpc.idmapd
-%attr(754,root,root) /etc/rc.d/init.d/idmapd
+%attr(755,root,root) %{_sbindir}/rpc.statd
+%attr(755,root,root) %{_sbindir}/sm-notify
+%attr(755,root,root) %{_sbindir}/start-statd
 %dir %{_var}/lib/nfs
 %dir %{_var}/lib/nfs/rpc_pipefs
 %dir %{_var}/lib/nfs/v4recovery
+%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd
+%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm
+%attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm.bak
+%attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
 %{_mandir}/man5/nfs.5*
 %{_mandir}/man8/idmapd.8*
 %{_mandir}/man8/nfsidmap.8*
 %{_mandir}/man8/rpc.idmapd.8*
+%{_mandir}/man8/rpc.sm-notify.8*
+%{_mandir}/man8/rpc.statd.8*
+%{_mandir}/man8/sm-notify.8*
+%{_mandir}/man8/statd.8*
