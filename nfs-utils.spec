@@ -49,7 +49,7 @@ BuildRequires:	libmount-devel
 BuildRequires:	libcap-devel
 BuildRequires:	device-mapper-devel
 BuildRequires:	libevent-devel >= 1.2
-BuildRequires:	libnfsidmap-devel >= 0.23
+BuildRequires:	libnfsidmap-devel >= 0.24
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
