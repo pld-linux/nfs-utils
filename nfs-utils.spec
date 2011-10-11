@@ -60,7 +60,7 @@ BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
 %if %{with krb5}
 BuildRequires:	krb5-devel >= 1.6
-BuildRequires:	libgssglue-devel >= 0.1
+BuildRequires:	libgssglue-devel >= 0.3
 %else
 BuildRequires:	heimdal-devel >= 1.0
 %endif
