@@ -17,7 +17,7 @@ Release:	3
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
-Source0:	http://downloads.sourceforge.net/project/nfs/nfs-utils/%{version}/%{name}-%{version}.tar.bz2
+Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
 # Source0-md5:	8395ac770720b83c5c469f88306d7765
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
