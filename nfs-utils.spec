@@ -1,6 +1,3 @@
-# TODO
-# - should unmount /proc/fs/nfsd and /var/lib/nfs/rpc_pipefs at package
-#	uninstall (or in service nfs stop)
 #
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos (+libgssglue) instead of Heimdal
