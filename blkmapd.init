@@ -41,7 +41,7 @@ start() {
 			mount -t rpc_pipefs rpc_pipefs /var/lib/nfs/rpc_pipefs
 	fi
 	msg_starting "pNFS block layout mapping daemon"
-	daemon /usr/sbin/blkmapd $BLKMAPDOPTIONS
+	daemon /sbin/blkmapd $BLKMAPDOPTIONS
 	RETVAL=$?
 	[ $RETVAL = 0 ] && touch /var/lock/subsys/blkmapd
 }

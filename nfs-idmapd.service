@@ -8,7 +8,7 @@ Type=forking
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsfs
 EnvironmentFile=-/etc/sysconfig/nfsd
-ExecStart=/usr/sbin/rpc.idmapd $RPCIDMAPOPTIONS
+ExecStart=/sbin/rpc.idmapd $RPCIDMAPOPTIONS
 
 [Install]
 WantedBy=multi-user.target

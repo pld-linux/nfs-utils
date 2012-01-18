@@ -34,9 +34,6 @@ if [ "$1" != "stop" ]; then
 	check_portmapper || { nls "Error: portmap isn't running" && exit 0; }
 fi
 
-# /usr may be on NFS, fail silently, nfsfs will start it
-[ -x /usr/sbin/rpc.statd ] || exit 0
-
 start() {
 	# Check if the service is already running?
 	if [ -f /var/lock/subsys/nfslock ]; then
@@ -55,7 +52,7 @@ start() {
 	# Start daemons.
 	# Don't put sm-notify here, statd will run it when started
 	msg_starting "RPC statd"
-	daemon /usr/sbin/rpc.statd $STATDOPTIONS
+	daemon /sbin/rpc.statd $STATDOPTIONS
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/nfslock
 }

@@ -7,7 +7,7 @@ Requires=var-lib-nfs-rpc_pipefs.mount
 Type=forking
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsfs
-ExecStart=/usr/sbin/blkmapd $BLKMAPDOPTIONS
+ExecStart=/sbin/blkmapd $BLKMAPDOPTIONS
 
 [Install]
 WantedBy=multi-user.target

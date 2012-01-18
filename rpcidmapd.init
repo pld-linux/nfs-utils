@@ -26,9 +26,6 @@ fi
 [ -f /etc/sysconfig/nfsfs ] && . /etc/sysconfig/nfsfs
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
 
-# /usr may be on NFS, fail silently, nfsfs will start it
-[ -x /usr/sbin/rpc.idmapd ] || exit 0
-
 # Find out what the current runlevel dir is
 RUNLEVELDIR=$(cat /var/run/runlevel.dir)
 
@@ -54,7 +51,7 @@ start() {
 	fi
 
 	msg_starting "RPC idmapd"
-	daemon /usr/sbin/rpc.idmapd $RPCIDMAPOPTIONS
+	daemon /sbin/rpc.idmapd $RPCIDMAPOPTIONS
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/idmapd
 }

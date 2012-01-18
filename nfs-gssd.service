@@ -7,7 +7,7 @@ After=syslog.target var-lib-nfs-rpc_pipefs.mount nfs-idmapd.service
 Type=forking
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsfs
-ExecStart=/usr/sbin/rpc.gssd $RPCGSSOPTIONS
+ExecStart=/sbin/rpc.gssd $RPCGSSOPTIONS
 
 [Install]
 WantedBy=multi-user.target

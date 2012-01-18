@@ -81,6 +81,7 @@ Requires(post):	fileutils
 Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
+Requires:	libevent >= 2.0.14-2
 Requires:	rc-scripts >= 0.4.1.5
 Requires:	rpcbind >= 0.1.7
 Requires:	setup >= 2.4.6-7
@@ -184,7 +185,7 @@ Provides:	user(rpcstatd)
 Provides:	group(rpcstatd)
 Provides:	nfslockd
 Provides:	nfs-utils-lock
-Requires:	libnfsidmap >= 0.21-3
+Requires:	libnfsidmap >= 0.25-3
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
 Obsoletes:	nfs-utils-lock
@@ -245,7 +246,7 @@ Jednostki systemd dla wspólnych serwisów NFS.
 	--with-statdpath=/var/lib/nfs/statd \
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
-	--with-start-statd=%{_sbindir}/start-statd \
+	--with-start-statd=/sbin/start-statd \
 	--with-tcp-wrappers \
 	--with-krb5
 
@@ -262,17 +263,20 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d} \
 
 install -p utils/mount/nfsmount.conf $RPM_BUILD_ROOT/etc
 
-cat >$RPM_BUILD_ROOT%{_sbindir}/start-statd <<EOF
+cat >$RPM_BUILD_ROOT/sbin/start-statd <<EOF
 #!/bin/sh
 # mount.nfs calls this script when mounting a filesystem with locking
 # enabled, but when statd does not seem to be running (based on
 # /var/run/rpc.statd.pid).
-exec /sbin/service nfslock start
+exec /sbin/rpc.statd --no-notify
 EOF
 
-sed -e "s|#!/bin/bash|#!/bin/sh|" utils/gssd/gss_destroy_creds > $RPM_BUILD_ROOT%{_sbindir}/gss_destroy_creds
+%{__sed} -i -e "s|#!/bin/bash|#!/bin/sh|" $RPM_BUILD_ROOT%{_sbindir}/gss_destroy_creds
+%{__sed} -i -e 's|%{_sbindir}nfsidmap|/sbin/nfsidmap|g' $RPM_BUILD_ROOT%{_mandir}/man8/nfsidmap.8
 
-mv $RPM_BUILD_ROOT%{_sbindir}/rpcdebug $RPM_BUILD_ROOT/sbin
+for f in rpcdebug blkmapd nfsidmap rpc.gssd rpc.idmapd rpc.statd ; do
+	mv $RPM_BUILD_ROOT%{_sbindir}/$f $RPM_BUILD_ROOT/sbin
+done
 
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
@@ -503,10 +507,10 @@ fi
 %attr(4755,root,root) /sbin/umount.nfs
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
-%attr(755,root,root) %{_sbindir}/blkmapd
+%attr(755,root,root) /sbin/blkmapd
+%attr(755,root,root) /sbin/rpc.gssd
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
-%attr(755,root,root) %{_sbindir}/rpc.gssd
 %attr(755,root,root) %{_sbindir}/showmount
 %{_mandir}/man5/nfsmount.conf.5*
 %{_mandir}/man8/blkmapd.8*
@@ -530,11 +534,11 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %attr(755,root,root) %{_sbindir}/gss_clnt_send_err
 %attr(755,root,root) %{_sbindir}/gss_destroy_creds
-%attr(755,root,root) %{_sbindir}/nfsidmap
-%attr(755,root,root) %{_sbindir}/rpc.idmapd
-%attr(755,root,root) %{_sbindir}/rpc.statd
 %attr(755,root,root) %{_sbindir}/sm-notify
-%attr(755,root,root) %{_sbindir}/start-statd
+%attr(755,root,root) /sbin/nfsidmap
+%attr(755,root,root) /sbin/rpc.idmapd
+%attr(755,root,root) /sbin/rpc.statd
+%attr(755,root,root) /sbin/start-statd
 %dir %{_var}/lib/nfs
 %dir %{_var}/lib/nfs/rpc_pipefs
 %dir %{_var}/lib/nfs/v4recovery

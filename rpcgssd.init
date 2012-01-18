@@ -34,9 +34,6 @@ is_yes "${SECURE_NFS}" || exit 0
 # List of kernel modules to load
 [ -z "${SECURE_NFS_MODS}" ] && SECURE_NFS_MODS="des rpcsec_gss_krb5"
 
-# /usr may be on NFS, fail silently, nfsfs will start it
-[ -x /usr/sbin/rpc.gssd ] || exit 0
-
 start() {
 	# Check if the service is already running?
 	if [ -f /var/lock/subsys/gssd ]; then
@@ -54,7 +51,7 @@ start() {
 		_modprobe single die $i
 	done
 	msg_starting "RPC gssd"
-	daemon rpc.gssd $RPCGSSOPTIONS
+	daemon /sbin/rpc.gssd $RPCGSSOPTIONS
 	RETVAL=$?
 	[ $RETVAL = 0 ] && touch /var/lock/subsys/gssd
 }

@@ -53,15 +53,6 @@ start() {
 		/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
 	fi
 
-	# Special case /usr first
-	if ! awk '{ if ($2 == "/usr" && $3 ~ /^nfs(4$|$)/ && $4 !~ /noauto/) exit 1}' /etc/fstab; then
-		run_cmd "Mounting /usr filesystem" mount /usr
-		# In case of /usr over NFS idmapd, gssd and lockd may not start
-		# check if they're running and try to start them if not
-		/sbin/service idmapd status >/dev/null || /sbin/service idmapd start
-		/sbin/service gssd status >/dev/null || /sbin/service gssd start
-		/sbin/service nfslock status >/dev/null || /sbin/service nfslock start
-	fi
 	run_cmd "Mounting NFS filesystems" mount -a -t nfs,nfs4
 	touch /var/lock/subsys/nfsfs
 }
