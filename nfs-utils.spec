@@ -13,7 +13,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	3
+Release:	3.1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -32,6 +32,19 @@ Source8:	nfs.sysconfig
 Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Source11:	blkmapd.init
+Source100:	proc-fs-nfsd.mount
+Source101:	var-lib-nfs-rpc_pipefs.mount
+Source102:	nfsd.service
+Source103:	nfs-blkmapd.service
+Source104:	nfs-exportfs.service
+Source105:	nfs-gssd.service
+Source106:	nfs-idmapd.service
+Source107:	nfs-lock.service
+Source108:	nfs-mountd.service
+Source109:	nfs-svcgssd.service
+Source110:	nfsd.postconfig
+Source111:	nfsd.preconfig
+Source112:	nfs-lock.preconfig
 Patch0:		%{name}-install.patch
 Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
@@ -64,6 +77,7 @@ BuildRequires:	libgssglue-devel >= 0.3
 %else
 BuildRequires:	heimdal-devel >= 1.0
 %endif
+BuildRequires:	rpmbuild(macros) >= 1.623
 # lucid context fields mismatch with current version of spkm3.h
 BuildConflicts:	gss_mech_spkm3-devel
 Requires(post):	fileutils
@@ -107,6 +121,20 @@ do Linux.
 супутні утиліти, які забезпечують набагато більшу продуктивність, ніж
 традиційні Linux NFS-сервери, які використовує більшість користувачів.
 
+%package systemd
+Summary:	systemd units for NFS server services
+Summary(pl.UTF-8):	Jednostki systemd dla serwisów serwera NFS
+Group:		Daemons
+Requires:	%{name} = %{version}-%{release}
+Requires:	systemd
+Requires:	systemd-units
+
+%description systemd
+Systemd units for NFS server services.
+
+%description systemd -l pl.UTF-8
+Jednostki systemd dla serwisów serwera NFS.
+
 %package clients
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl.UTF-8):	Klienci do łączenia się ze zdalnym serwerem NFS
@@ -136,6 +164,20 @@ hoście. Na przykład, showmount potrafi pokazać klientów, którzy są
 zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
 zamountowania zasobów NFS.
 
+%package clients-systemd
+Summary:	systemd units for NFS clients
+Summary(pl.UTF-8):	Jednostki systemd dla klientów NFS
+Group:		Daemons
+Requires:	%{name}-clients = %{version}-%{release}
+Requires:	systemd
+Requires:	systemd-units
+
+%description clients-systemd
+Systemd units for NFS clients.
+
+%description clients-systemd -l pl.UTF-8
+Jednostki systemd dla klientów NFS.
+
 %package common
 Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
@@ -158,6 +200,20 @@ Common programs for NFS.
 
 %description common -l pl.UTF-8
 Wspólne programy do obsługi NFS.
+
+%package common-systemd
+Summary:	systemd units for common NFS services
+Summary(pl.UTF-8):	Jednostki systemd dla wspólnych serwisów NFS
+Group:		Daemons
+Requires:	%{name}-common = %{version}-%{release}
+Requires:	systemd
+Requires:	systemd-units
+
+%description common-systemd
+Systemd units for common NFS services.
+
+%description common-systemd -l pl.UTF-8
+Jednostki systemd dla wspólnych serwisów NFS.
 
 %prep
 %setup -q -a1
@@ -201,7 +257,8 @@ Wspólne programy do obsługi NFS.
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d} \
-	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery}
+	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery} \
+	$RPM_BUILD_ROOT{%{systemdunitdir},%{_datadir}/nfs-utils}
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
@@ -230,6 +287,20 @@ install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
+
+install %{SOURCE100} $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
+install %{SOURCE101} $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+install %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
+install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-blkmapd.service
+install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-exportfs.service
+install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-gssd.service
+install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-idmapd.service
+install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-lock.service
+install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-mountd.service
+install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-svcgssd.service
+install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
+install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
+install %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfs-lock.preconfig
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
@@ -266,6 +337,21 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del svcgssd
 fi
 
+%post systemd
+%systemd_post nfsd.service
+%systemd_post nfs-exportfs.service
+%systemd_post nfs-mountd.service
+%systemd_post nfs-svcgssd.service
+
+%preun systemd
+%systemd_preun nfsd.service
+%systemd_preun nfs-exportfs.service
+%systemd_preun nfs-mountd.service
+%systemd_preun nfs-svcgssd.service
+
+%postun systemd
+%systemd_reload
+
 %post clients
 /sbin/chkconfig --add nfsfs
 %service nfsfs restart
@@ -283,6 +369,17 @@ if [ "$1" = "0" ]; then
 	%service blkmapd stop
 	/sbin/chkconfig --del blkmapd
 fi
+
+%post clients-systemd
+%systemd_post nfs-blkmapd.service
+%systemd_post nfs-gssd.service
+
+%preun clients-systemd
+%systemd_preun nfs-blkmapd.service
+%systemd_preun nfs-gssd.service
+
+%postun clients-systemd
+%systemd_reload
 
 %pre common
 %groupadd -g 191 rpcstatd
@@ -308,10 +405,50 @@ if [ "$1" = "0" ]; then
 	%groupremove rpcstatd
 fi
 
+%post common-systemd
+%systemd_post nfs-idmapd.service
+%systemd_post nfs-lock.service
+
+%preun common-systemd
+%systemd_preun nfs-idmapd.service
+%systemd_preun nfs-lock.service
+
+%postun common-systemd
+%systemd_reload
+
+%triggerpostun -- %{name} < 1.2.5-4
+if [ -f /etc/sysconfig/nfsd ]; then
+	. /etc/sysconfig/nfsd
+	__RPCMOUNTOPTIONS=
+	[ -n "$MOUNTD_PORT" ] && __RPCMOUNTOPTIONS="-p $MOUNTD_PORT"
+	for vers in 2 3 4 ; do
+		__var=$(eval echo \$NFSv$vers)
+		[ -n "$__var" -a "$__var" != "yes" ] && \
+			__RPCMOUNTOPTIONS="$__RPCMOUNTOPTIONS --no-nfs-version $vers"
+	done
+	[ -z "$__RPCMOUNTOPTIONS" ] && exit 0
+	cp -f /etc/sysconfig/nfsd{,.rpmsave}
+	echo >>/etc/sysconfig/nfsd
+	echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
+	echo "RPCMOUNTOPTIONS=$RPCMOUNTOPTIONS $__RPCMOUNTOPTIONS" >>/etc/sysconfig/nfsd
+fi
+
 %triggerpostun common -- %{name}-lock < 1.2.5-3
 if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
 	mv -f /etc/sysconfig/nfslock{,.rpmnew}
 	mv -f /etc/sysconfig/nfslock.rpmsave /etc/sysconfig/nfslock
+fi
+
+%triggerpostun common -- %{name}-common < 1.2.5-4
+if [ -f /etc/sysconfig/nfslock ]; then
+	. /etc/sysconfig/nfslock
+	[ -n "$STATD_PORT" ] && STATDOPTS="$STATDOPTS -p $STATD_PORT"
+	[ -n "$STATD_OUTPORT" ] && STATDOPTS="$STATDOPTS -o $STATD_OUTPORT"
+	[ -z "$STATDOPTS" ] && exit 0
+	cp -f /etc/sysconfig/nfslock{,.rpmsave}
+	echo >>/etc/sysconfig/nfslock
+	echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
+	echo "STATDOPTIONS=$STATDOPTS" >>/etc/sysconfig/nfslock
 fi
 
 %files
@@ -348,6 +485,16 @@ fi
 %{_mandir}/man8/rpcdebug.8*
 %{_mandir}/man8/svcgssd.8*
 
+%files systemd
+%defattr(644,root,root,755)
+%{systemdunitdir}/nfsd.service
+%{systemdunitdir}/nfs-exportfs.service
+%{systemdunitdir}/nfs-mountd.service
+%{systemdunitdir}/nfs-svcgssd.service
+%{systemdunitdir}/proc-fs-nfsd.mount
+%attr(755,root,root) %{_datadir}/nfs-utils/nfsd.postconfig
+%attr(755,root,root) %{_datadir}/nfs-utils/nfsd.preconfig
+
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/blkmapd
@@ -373,6 +520,11 @@ fi
 %{_mandir}/man8/rpc.gssd.8*
 %{_mandir}/man8/showmount.8*
 %{_mandir}/man8/umount.nfs.8*
+
+%files clients-systemd
+%defattr(644,root,root,755)
+%{systemdunitdir}/nfs-blkmapd.service
+%{systemdunitdir}/nfs-gssd.service
 
 %files common
 %defattr(644,root,root,755)
@@ -401,3 +553,11 @@ fi
 %{_mandir}/man8/rpc.statd.8*
 %{_mandir}/man8/sm-notify.8*
 %{_mandir}/man8/statd.8*
+
+%files common-systemd
+%defattr(644,root,root,755)
+%{systemdunitdir}/nfs-idmapd.service
+%{systemdunitdir}/nfs-lock.service
+%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+%dir %{_datadir}/nfs-utils
+%attr(755,root,root) %{_datadir}/nfs-utils/nfs-lock.preconfig

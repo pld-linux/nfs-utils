@@ -19,10 +19,6 @@
 [ -f /etc/sysconfig/nfslock ] && . /etc/sysconfig/nfslock
 [ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
 
-[ -n "$NFSv2" ] || NFSv2="yes"
-[ -n "$NFSv3" ] || NFSv3="yes"
-[ -n "$NFSv4" ] || NFSv4="yes"
-
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
@@ -56,13 +52,6 @@ start() {
 	if [ -n "$LOCKD_UDPPORT" ]; then
 		/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
 	fi
-
-	for vers in 2 3 4 ; do
-		is_yes $(eval echo \$NFSv$vers) || \
-			RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS --no-nfs-version $vers"
-	done
-
-	[ -n "$MOUNTD_PORT" ] && RPCMOUNTOPTIONS="$RPCMOUNTOPTIONS -p $MOUNTD_PORT"
 
 	# Start daemons.
 	msg_starting "NFS exportfs"

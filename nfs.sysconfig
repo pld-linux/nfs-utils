@@ -4,22 +4,8 @@ SERVICE_RUN_NICE_LEVEL="+0"
 # Number of NFSD servers to start
 RPCNFSDCOUNT=8
 
-# NFS versions to use (default all-yes)
-NFSv2="yes"
-NFSv3="yes"
-NFSv4="yes"
-
-# Port mount should listen on (default is portmap assigned)
-#MOUNTD_PORT=
-
 # Options for NFS rpc.mountd
-#RPCMOUNTOPTIONS=""
-
-# Uncomment if you want to use secure NFSv4 exports
-#SECURE_NFS="yes"
-
-# List of kernel modules to use for secure NFS
-#SECURE_NFS_MODS="des rpcsec_gss_krb5"
+#RPCMOUNTOPTIONS=
 
 # Options for NFSv4 server-side rpcsec_gss daemon
 #RPCSVCGSSOPTIONS=
