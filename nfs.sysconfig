@@ -4,6 +4,9 @@ SERVICE_RUN_NICE_LEVEL="+0"
 # Number of NFSD servers to start
 RPCNFSDCOUNT=8
 
+# Set NFSv4 grace period
+#NFSD_V4_GRACE=
+
 # Options for NFS rpc.mountd
 #RPCMOUNTOPTIONS=
 
