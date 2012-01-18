@@ -431,7 +431,7 @@ if [ -f /etc/sysconfig/nfsd ]; then
 	cp -f /etc/sysconfig/nfsd{,.rpmsave}
 	echo >>/etc/sysconfig/nfsd
 	echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
-	echo "RPCMOUNTOPTIONS=$RPCMOUNTOPTIONS $__RPCMOUNTOPTIONS" >>/etc/sysconfig/nfsd
+	echo "RPCMOUNTOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTOPTIONS\"" >>/etc/sysconfig/nfsd
 fi
 
 %triggerpostun common -- %{name}-lock < 1.2.5-3
@@ -449,7 +449,7 @@ if [ -f /etc/sysconfig/nfslock ]; then
 	cp -f /etc/sysconfig/nfslock{,.rpmsave}
 	echo >>/etc/sysconfig/nfslock
 	echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
-	echo "STATDOPTIONS=$STATDOPTS" >>/etc/sysconfig/nfslock
+	echo "STATDOPTIONS=\"$STATDOPTS\"" >>/etc/sysconfig/nfslock
 fi
 
 %files
