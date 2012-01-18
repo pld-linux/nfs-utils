@@ -7,6 +7,10 @@ RPCNFSDCOUNT=8
 # Set NFSv4 grace period
 #NFSD_V4_GRACE=
 
+# Enable RDMA support on the server by setting this to                                                      
+# the port the server should listen on                                                                         
+#RDMA_PORT=20049
+
 # Options for NFS rpc.mountd
 #RPCMOUNTOPTIONS=
 
