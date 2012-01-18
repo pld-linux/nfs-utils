@@ -1,0 +1,15 @@
+[Unit]
+Description=NFS Server
+Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service
+After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount
+
+[Service]
+Type=forking
+StandardError=syslog+console
+EnvironmentFile=-/etc/sysconfig/nfsfs
+EnvironmentFile=-/etc/sysconfig/nfsd
+ExecStart=/usr/sbin/rpc.idmapd $RPCIDMAPOPTIONS
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+[ -f /etc/sysconfig/nfsd ] && . /etc/sysconfig/nfsd
+
+# Set v4 grace period if requested
+if [ -n "$NFSD_V4_GRACE" ]; then
+	echo "$NFSD_V4_GRACE" > /proc/fs/nfsd/nfsv4gracetime
+fi
+
+exit 0

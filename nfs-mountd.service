@@ -1,0 +1,14 @@
+[Unit]
+Description=NFS Server
+Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfs-exportfs.service
+After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfs-exportfs.service
+
+[Service]
+Type=forking
+StandardError=syslog+console
+EnvironmentFile=-/etc/sysconfig/nfsd
+ExecStart=/usr/sbin/rpc.mountd $RPCMOUNTDOPTIONS
+
+[Install]
+WantedBy=multi-user.target
+
