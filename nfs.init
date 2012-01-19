@@ -57,7 +57,7 @@ start() {
 	msg_starting "NFS exportfs"
 	daemon /usr/sbin/exportfs -r
 	msg_starting "NFS mountd"
-	daemon /usr/sbin/rpc.mountd $RPCMOUNTOPTIONS
+	daemon /usr/sbin/rpc.mountd $RPCMOUNTDOPTIONS
 	msg_starting "NFS daemon"
 	daemon /usr/sbin/rpc.nfsd $RPCNFSDCOUNT
 	touch /var/lock/subsys/nfs

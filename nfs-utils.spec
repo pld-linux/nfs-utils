@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	3.1
+Release:	4
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -420,18 +420,18 @@ fi
 %triggerpostun -- %{name} < 1.2.5-4
 if [ -f /etc/sysconfig/nfsd ]; then
 	. /etc/sysconfig/nfsd
-	__RPCMOUNTOPTIONS=
-	[ -n "$MOUNTD_PORT" ] && __RPCMOUNTOPTIONS="-p $MOUNTD_PORT"
+	__RPCMOUNTDOPTIONS=
+	[ -n "$MOUNTD_PORT" ] && __RPCMOUNTDOPTIONS="-p $MOUNTD_PORT"
 	for vers in 2 3 4 ; do
 		__var=$(eval echo \$NFSv$vers)
 		[ -n "$__var" -a "$__var" != "yes" ] && \
-			__RPCMOUNTOPTIONS="$__RPCMOUNTOPTIONS --no-nfs-version $vers"
+			__RPCMOUNTDOPTIONS="$__RPCMOUNTDOPTIONS --no-nfs-version $vers"
 	done
-	[ -z "$__RPCMOUNTOPTIONS" ] && exit 0
+	[ -z "$__RPCMOUNTDOPTIONS" ] && exit 0
 	cp -f /etc/sysconfig/nfsd{,.rpmsave}
 	echo >>/etc/sysconfig/nfsd
 	echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
-	echo "RPCMOUNTOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTOPTIONS\"" >>/etc/sysconfig/nfsd
+	echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
 fi
 
 %triggerpostun common -- %{name}-lock < 1.2.5-3

@@ -12,7 +12,7 @@ RPCNFSDCOUNT=8
 #RDMA_PORT=20049
 
 # Options for NFS rpc.mountd
-#RPCMOUNTOPTIONS=
+#RPCMOUNTDOPTIONS=
 
 # Options for NFSv4 server-side rpcsec_gss daemon
 #RPCSVCGSSOPTIONS=
