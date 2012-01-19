@@ -1,5 +1,5 @@
 [Unit]
-Description=NFS Server
+Description=NFS Server exports
 Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service
 After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount
 

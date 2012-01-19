@@ -1,5 +1,5 @@
 [Unit]
-Description=Secure NFS Server
+Description=NFS server GSSAPI daemon
 Requires=var-lib-nfs-rpc_pipefs.mount proc-fs-nfsd.mount
 After=syslog.target var-lib-nfs-rpc_pipefs.mount proc-fs-nfsd.mount rpcbind.service nfs-idmapd.service 
 
