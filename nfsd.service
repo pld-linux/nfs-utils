@@ -4,12 +4,13 @@ Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfs-exp
 After=network.target named.service rpcbind.service rquotad.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfs-exportfs.service nfs-mountd.service
 
 [Service]
-Type=forking
+Type=oneshot
+RemainAfterExit=true
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsd
 ExecStartPre=-/usr/share/nfs-utils/nfs-lock.preconfig
 ExecStartPre=/usr/share/nfs-utils/nfsd.preconfig
-ExecStart=/usr/sbin/rpc.nfsd $RPCNFSDOPTIONS ${RPCNFSDCOUNT}
+ExecStart=/usr/sbin/rpc.nfsd $RPCNFSDOPTIONS $RPCNFSDCOUNT
 ExecStartPost=-/usr/share/nfs-utils/nfsd.postconfig
 ExecStop=/usr/sbin/rpc.nfsd 0
 
