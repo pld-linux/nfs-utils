@@ -7,10 +7,10 @@ After=network.target named.service rpcbind.service rquotad.service proc-fs-nfsd.
 Type=forking
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsd
-ExecStartPre=-/usr/share/nfs-utils/scripts/nfs-lock.preconfig
-ExecStartPre=/usr/share/nfs-utils/scripts/nfsd.preconfig
+ExecStartPre=-/usr/share/nfs-utils/nfs-lock.preconfig
+ExecStartPre=/usr/share/nfs-utils/nfsd.preconfig
 ExecStart=/usr/sbin/rpc.nfsd $RPCNFSDOPTIONS ${RPCNFSDCOUNT}
-ExecStartPost=-/usr/share/nfs-utils/scripts/nfsd.postconfig
+ExecStartPost=-/usr/share/nfs-utils/nfsd.postconfig
 ExecStop=/usr/sbin/rpc.nfsd 0
 
 [Install]
