@@ -292,16 +292,20 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 install %{SOURCE100} $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
 install %{SOURCE101} $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
 install %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
-install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-blkmapd.service
-install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-exportfs.service
-install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-gssd.service
-install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-idmapd.service
-install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-lock.service
-install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-mountd.service
-install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/nfs-svcgssd.service
+install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
+install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
+install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
+install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
+install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
+install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
+install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
 install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
 install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
-install %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfs-lock.preconfig
+install %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfslock.preconfig
+
+# Disable old SysV service for systemd installs
+ln -s /dev/null $RPM_BUILD_ROOT%{systemdunitdir}/nfs.service
+ln -s /dev/null $RPM_BUILD_ROOT%{systemdunitdir}/nfsfs.service
 
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
@@ -340,15 +344,15 @@ fi
 
 %post systemd
 %systemd_post nfsd.service
-%systemd_post nfs-exportfs.service
-%systemd_post nfs-mountd.service
-%systemd_post nfs-svcgssd.service
+%systemd_post nfsd-exportfs.service
+%systemd_post nfsd-mountd.service
+%systemd_post svcgssd.service
 
 %preun systemd
 %systemd_preun nfsd.service
-%systemd_preun nfs-exportfs.service
-%systemd_preun nfs-mountd.service
-%systemd_preun nfs-svcgssd.service
+%systemd_preun nfsd-exportfs.service
+%systemd_preun nfsd-mountd.service
+%systemd_preun svcgssd.service
 
 %postun systemd
 %systemd_reload
@@ -372,12 +376,12 @@ if [ "$1" = "0" ]; then
 fi
 
 %post clients-systemd
-%systemd_post nfs-blkmapd.service
-%systemd_post nfs-gssd.service
+%systemd_post blkmapd.service
+%systemd_post gssd.service
 
 %preun clients-systemd
-%systemd_preun nfs-blkmapd.service
-%systemd_preun nfs-gssd.service
+%systemd_preun blkmapd.service
+%systemd_preun gssd.service
 
 %postun clients-systemd
 %systemd_reload
@@ -407,12 +411,12 @@ if [ "$1" = "0" ]; then
 fi
 
 %post common-systemd
-%systemd_post nfs-idmapd.service
-%systemd_post nfs-lock.service
+%systemd_post idmapd.service
+%systemd_post nfslock.service
 
 %preun common-systemd
-%systemd_preun nfs-idmapd.service
-%systemd_preun nfs-lock.service
+%systemd_preun idmapd.service
+%systemd_preun nfslock.service
 
 %postun common-systemd
 %systemd_reload
@@ -488,10 +492,11 @@ fi
 
 %files systemd
 %defattr(644,root,root,755)
+%{systemdunitdir}/nfs.service
 %{systemdunitdir}/nfsd.service
-%{systemdunitdir}/nfs-exportfs.service
-%{systemdunitdir}/nfs-mountd.service
-%{systemdunitdir}/nfs-svcgssd.service
+%{systemdunitdir}/nfsd-exportfs.service
+%{systemdunitdir}/nfsd-mountd.service
+%{systemdunitdir}/svcgssd.service
 %{systemdunitdir}/proc-fs-nfsd.mount
 %attr(755,root,root) %{_datadir}/nfs-utils/nfsd.postconfig
 %attr(755,root,root) %{_datadir}/nfs-utils/nfsd.preconfig
@@ -524,8 +529,9 @@ fi
 
 %files clients-systemd
 %defattr(644,root,root,755)
-%{systemdunitdir}/nfs-blkmapd.service
-%{systemdunitdir}/nfs-gssd.service
+%{systemdunitdir}/nfsfs.service
+%{systemdunitdir}/blkmapd.service
+%{systemdunitdir}/gssd.service
 
 %files common
 %defattr(644,root,root,755)
@@ -557,8 +563,8 @@ fi
 
 %files common-systemd
 %defattr(644,root,root,755)
-%{systemdunitdir}/nfs-idmapd.service
-%{systemdunitdir}/nfs-lock.service
+%{systemdunitdir}/idmapd.service
+%{systemdunitdir}/nfslock.service
 %{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
 %dir %{_datadir}/nfs-utils
-%attr(755,root,root) %{_datadir}/nfs-utils/nfs-lock.preconfig
+%attr(755,root,root) %{_datadir}/nfs-utils/nfslock.preconfig

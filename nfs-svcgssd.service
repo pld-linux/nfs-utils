@@ -1,7 +1,7 @@
 [Unit]
 Description=NFS server GSSAPI daemon
 Requires=var-lib-nfs-rpc_pipefs.mount proc-fs-nfsd.mount
-After=syslog.target var-lib-nfs-rpc_pipefs.mount proc-fs-nfsd.mount rpcbind.service nfs-idmapd.service 
+After=syslog.target var-lib-nfs-rpc_pipefs.mount proc-fs-nfsd.mount rpcbind.service idmapd.service 
 
 [Service]
 Type=forking

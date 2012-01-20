@@ -1,14 +1,14 @@
 [Unit]
 Description=NFS Server
-Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfs-exportfs.service
-After=network.target named.service rpcbind.service rquotad.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfs-exportfs.service nfs-mountd.service
+Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfsd-exportfs.service
+After=network.target named.service rpcbind.service rquotad.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfsd-exportfs.service nfsd-mountd.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
 StandardError=syslog+console
 EnvironmentFile=-/etc/sysconfig/nfsd
-ExecStartPre=-/usr/share/nfs-utils/nfs-lock.preconfig
+ExecStartPre=-/usr/share/nfs-utils/nfslock.preconfig
 ExecStartPre=/usr/share/nfs-utils/nfsd.preconfig
 ExecStart=/usr/sbin/rpc.nfsd $RPCNFSDOPTIONS $RPCNFSDCOUNT
 ExecStartPost=-/usr/share/nfs-utils/nfsd.postconfig

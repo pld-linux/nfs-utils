@@ -1,7 +1,7 @@
 [Unit]
 Description=NFS server mount daemon
-Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfs-exportfs.service
-After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfs-exportfs.service
+Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service nfsd-exportfs.service
+After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount nfsd-exportfs.service
 
 [Service]
 Type=forking
