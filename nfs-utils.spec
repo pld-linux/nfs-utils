@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	4
+Release:	5
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -85,6 +85,7 @@ Requires:	libevent >= 2.0.14-2
 Requires:	rc-scripts >= 0.4.1.5
 Requires:	rpcbind >= 0.1.7
 Requires:	setup >= 2.4.6-7
+Requires:	systemd-units >= 0.38
 Provides:	nfsdaemon
 Obsoletes:	knfsd
 Obsoletes:	nfs-server
@@ -119,20 +120,6 @@ do Linux.
 супутні утиліти, які забезпечують набагато більшу продуктивність, ніж
 традиційні Linux NFS-сервери, які використовує більшість користувачів.
 
-%package systemd
-Summary:	systemd units for NFS server services
-Summary(pl.UTF-8):	Jednostki systemd dla serwisów serwera NFS
-Group:		Daemons
-Requires:	%{name} = %{version}-%{release}
-Requires:	systemd
-Requires:	systemd-units
-
-%description systemd
-Systemd units for NFS server services.
-
-%description systemd -l pl.UTF-8
-Jednostki systemd dla serwisów serwera NFS.
-
 %package clients
 Summary:	Clients for connecting to a remote NFS server
 Summary(pl.UTF-8):	Klienci do łączenia się ze zdalnym serwerem NFS
@@ -141,6 +128,7 @@ Requires(post,preun):	/sbin/chkconfig
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	psmisc
 Requires:	rc-scripts
+Requires:	systemd-units >= 0.38
 Provides:	nfs-server-clients
 Provides:	nfsclient
 Obsoletes:	knfsd-clients
@@ -162,20 +150,6 @@ hoście. Na przykład, showmount potrafi pokazać klientów, którzy są
 zamountowani na tym serwerze. Ten pakiet nie jest konieczny do
 zamountowania zasobów NFS.
 
-%package clients-systemd
-Summary:	systemd units for NFS clients
-Summary(pl.UTF-8):	Jednostki systemd dla klientów NFS
-Group:		Daemons
-Requires:	%{name}-clients = %{version}-%{release}
-Requires:	systemd
-Requires:	systemd-units
-
-%description clients-systemd
-Systemd units for NFS clients.
-
-%description clients-systemd -l pl.UTF-8
-Jednostki systemd dla klientów NFS.
-
 %package common
 Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
@@ -188,6 +162,7 @@ Provides:	nfs-utils-lock
 Requires:	libnfsidmap >= 0.25-3
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
+Requires:	systemd-units >= 0.38
 Obsoletes:	nfs-utils-lock
 Obsoletes:	knfsd-lock
 Obsoletes:	nfslockd
@@ -198,20 +173,6 @@ Common programs for NFS.
 
 %description common -l pl.UTF-8
 Wspólne programy do obsługi NFS.
-
-%package common-systemd
-Summary:	systemd units for common NFS services
-Summary(pl.UTF-8):	Jednostki systemd dla wspólnych serwisów NFS
-Group:		Daemons
-Requires:	%{name}-common = %{version}-%{release}
-Requires:	systemd
-Requires:	systemd-units
-
-%description common-systemd
-Systemd units for common NFS services.
-
-%description common-systemd -l pl.UTF-8
-Jednostki systemd dla wspólnych serwisów NFS.
 
 %prep
 %setup -q -a1
@@ -333,6 +294,7 @@ rm -rf $RPM_BUILD_ROOT
 %service nfs restart "NFS daemon"
 /sbin/chkconfig --add svcgssd
 %service svcgssd restart "RPC svcgssd"
+%systemd_post nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
 
 %preun
 if [ "$1" = "0" ]; then
@@ -341,20 +303,9 @@ if [ "$1" = "0" ]; then
 	%service svcgssd stop
 	/sbin/chkconfig --del svcgssd
 fi
+%systemd_preun nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
 
-%post systemd
-%systemd_post nfsd.service
-%systemd_post nfsd-exportfs.service
-%systemd_post nfsd-mountd.service
-%systemd_post svcgssd.service
-
-%preun systemd
-%systemd_preun nfsd.service
-%systemd_preun nfsd-exportfs.service
-%systemd_preun nfsd-mountd.service
-%systemd_preun svcgssd.service
-
-%postun systemd
+%postun
 %systemd_reload
 
 %post clients
@@ -364,6 +315,7 @@ fi
 %service gssd restart "RPC gssd"
 /sbin/chkconfig --add blkmapd
 %service blkmapd restart "pNFS blkmapd"
+%systemd_post blkmapd.service gssd.service
 
 %preun clients
 if [ "$1" = "0" ]; then
@@ -374,16 +326,9 @@ if [ "$1" = "0" ]; then
 	%service blkmapd stop
 	/sbin/chkconfig --del blkmapd
 fi
+%systemd_preun blkmapd.service gssd.service
 
-%post clients-systemd
-%systemd_post blkmapd.service
-%systemd_post gssd.service
-
-%preun clients-systemd
-%systemd_preun blkmapd.service
-%systemd_preun gssd.service
-
-%postun clients-systemd
+%postun clients
 %systemd_reload
 
 %pre common
@@ -395,6 +340,7 @@ fi
 %service idmapd restart "RPC idmapd"
 /sbin/chkconfig --add nfslock
 %service nfslock restart "RPC statd"
+%systemd_post idmapd.service nfslock.service
 
 %preun common
 if [ "$1" = "0" ]; then
@@ -403,25 +349,16 @@ if [ "$1" = "0" ]; then
 	%service nfslock stop
 	/sbin/chkconfig --del nfslock
 fi
+%systemd_preun idmapd.service nfslock.service
 
 %postun common
 if [ "$1" = "0" ]; then
 	%userremove rpcstatd
 	%groupremove rpcstatd
 fi
-
-%post common-systemd
-%systemd_post idmapd.service
-%systemd_post nfslock.service
-
-%preun common-systemd
-%systemd_preun idmapd.service
-%systemd_preun nfslock.service
-
-%postun common-systemd
 %systemd_reload
 
-%triggerpostun -- %{name} < 1.2.5-4
+%triggerpostun -- %{name} < 1.2.5-5
 if [ -f /etc/sysconfig/nfsd ]; then
 	. /etc/sysconfig/nfsd
 	__RPCMOUNTDOPTIONS=
@@ -437,6 +374,10 @@ if [ -f /etc/sysconfig/nfsd ]; then
 	echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
 	echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
 fi
+%systemd_trigger nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
+
+%triggerpostun clients -- %{name}-clients < 1.2.5-5
+%systemd_trigger blkmapd.service gssd.service
 
 %triggerpostun common -- %{name}-lock < 1.2.5-3
 if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
@@ -444,7 +385,7 @@ if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
 	mv -f /etc/sysconfig/nfslock.rpmsave /etc/sysconfig/nfslock
 fi
 
-%triggerpostun common -- %{name}-common < 1.2.5-4
+%triggerpostun common -- %{name}-common < 1.2.5-5
 if [ -f /etc/sysconfig/nfslock ]; then
 	. /etc/sysconfig/nfslock
 	[ -n "$STATD_PORT" ] && STATDOPTS="$STATDOPTS -p $STATD_PORT"
@@ -455,6 +396,7 @@ if [ -f /etc/sysconfig/nfslock ]; then
 	echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
 	echo "STATDOPTIONS=\"$STATDOPTS\"" >>/etc/sysconfig/nfslock
 fi
+%systemd_trigger idmapd.service nfslock.service
 
 %files
 %defattr(644,root,root,755)
@@ -490,8 +432,6 @@ fi
 %{_mandir}/man8/rpcdebug.8*
 %{_mandir}/man8/svcgssd.8*
 
-%files systemd
-%defattr(644,root,root,755)
 %{systemdunitdir}/nfs.service
 %{systemdunitdir}/nfsd.service
 %{systemdunitdir}/nfsd-exportfs.service
@@ -527,8 +467,6 @@ fi
 %{_mandir}/man8/showmount.8*
 %{_mandir}/man8/umount.nfs.8*
 
-%files clients-systemd
-%defattr(644,root,root,755)
 %{systemdunitdir}/nfsfs.service
 %{systemdunitdir}/blkmapd.service
 %{systemdunitdir}/gssd.service
@@ -561,8 +499,6 @@ fi
 %{_mandir}/man8/sm-notify.8*
 %{_mandir}/man8/statd.8*
 
-%files common-systemd
-%defattr(644,root,root,755)
 %{systemdunitdir}/idmapd.service
 %{systemdunitdir}/nfslock.service
 %{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
