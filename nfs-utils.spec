@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	5
+Release:	6
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -89,6 +89,7 @@ Requires:	systemd-units >= 0.38
 Provides:	nfsdaemon
 Obsoletes:	knfsd
 Obsoletes:	nfs-server
+Obsoletes:	nfs-utils-systemd
 Obsoletes:	nfsdaemon
 Conflicts:	kernel < 2.2.5
 Conflicts:	krb5-common < 1.7
@@ -133,6 +134,7 @@ Provides:	nfs-server-clients
 Provides:	nfsclient
 Obsoletes:	knfsd-clients
 Obsoletes:	nfs-server-clients
+Obsoletes:	nfs-utils-clients-systemd
 Obsoletes:	nfsclient
 Conflicts:	krb5-common < 1.7
 
@@ -163,6 +165,7 @@ Requires:	libnfsidmap >= 0.25-3
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
 Requires:	systemd-units >= 0.38
+Obsoletes:	nfs-utils-common-systemd
 Obsoletes:	nfs-utils-lock
 Obsoletes:	knfsd-lock
 Obsoletes:	nfslockd
