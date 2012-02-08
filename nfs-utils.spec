@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	6
+Release:	7
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -361,7 +361,7 @@ if [ "$1" = "0" ]; then
 fi
 %systemd_reload
 
-%triggerpostun -- %{name} < 1.2.5-5
+%triggerpostun -- %{name} < 1.2.5-7
 if [ -f /etc/sysconfig/nfsd ]; then
 	. /etc/sysconfig/nfsd
 	__RPCMOUNTDOPTIONS=
@@ -371,15 +371,16 @@ if [ -f /etc/sysconfig/nfsd ]; then
 		[ -n "$__var" -a "$__var" != "yes" ] && \
 			__RPCMOUNTDOPTIONS="$__RPCMOUNTDOPTIONS --no-nfs-version $vers"
 	done
-	[ -z "$__RPCMOUNTDOPTIONS" ] && exit 0
-	cp -f /etc/sysconfig/nfsd{,.rpmsave}
-	echo >>/etc/sysconfig/nfsd
-	echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
-	echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
+	if [ -n "$__RPCMOUNTDOPTIONS" ]; then
+		cp -f /etc/sysconfig/nfsd{,.rpmsave}
+		echo >>/etc/sysconfig/nfsd
+		echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
+		echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
+	fi
 fi
 %systemd_trigger nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
 
-%triggerpostun clients -- %{name}-clients < 1.2.5-5
+%triggerpostun clients -- %{name}-clients < 1.2.5-7
 %systemd_trigger blkmapd.service gssd.service
 
 %triggerpostun common -- %{name}-lock < 1.2.5-3
@@ -388,16 +389,17 @@ if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
 	mv -f /etc/sysconfig/nfslock.rpmsave /etc/sysconfig/nfslock
 fi
 
-%triggerpostun common -- %{name}-common < 1.2.5-5
+%triggerpostun common -- %{name}-common < 1.2.5-7
 if [ -f /etc/sysconfig/nfslock ]; then
 	. /etc/sysconfig/nfslock
 	[ -n "$STATD_PORT" ] && STATDOPTS="$STATDOPTS -p $STATD_PORT"
 	[ -n "$STATD_OUTPORT" ] && STATDOPTS="$STATDOPTS -o $STATD_OUTPORT"
-	[ -z "$STATDOPTS" ] && exit 0
-	cp -f /etc/sysconfig/nfslock{,.rpmsave}
-	echo >>/etc/sysconfig/nfslock
-	echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
-	echo "STATDOPTIONS=\"$STATDOPTS\"" >>/etc/sysconfig/nfslock
+	if [ -n "$STATDOPTS" ]; then
+		cp -f /etc/sysconfig/nfslock{,.rpmsave}
+		echo >>/etc/sysconfig/nfslock
+		echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
+		echo "STATDOPTIONS=\"$STATDOPTS\"" >>/etc/sysconfig/nfslock
+	fi
 fi
 %systemd_trigger idmapd.service nfslock.service
 
