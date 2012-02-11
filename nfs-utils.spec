@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	7
+Release:	8
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -372,7 +372,7 @@ if [ -f /etc/sysconfig/nfsd ]; then
 			__RPCMOUNTDOPTIONS="$__RPCMOUNTDOPTIONS --no-nfs-version $vers"
 	done
 	if [ -n "$__RPCMOUNTDOPTIONS" ]; then
-		cp -f /etc/sysconfig/nfsd{,.rpmsave}
+		%{__cp} -f /etc/sysconfig/nfsd{,.rpmsave}
 		echo >>/etc/sysconfig/nfsd
 		echo "# Added by rpm trigger" >>/etc/sysconfig/nfsd
 		echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
@@ -395,7 +395,7 @@ if [ -f /etc/sysconfig/nfslock ]; then
 	[ -n "$STATD_PORT" ] && STATDOPTS="$STATDOPTS -p $STATD_PORT"
 	[ -n "$STATD_OUTPORT" ] && STATDOPTS="$STATDOPTS -o $STATD_OUTPORT"
 	if [ -n "$STATDOPTS" ]; then
-		cp -f /etc/sysconfig/nfslock{,.rpmsave}
+		%{__cp} -f /etc/sysconfig/nfslock{,.rpmsave}
 		echo >>/etc/sysconfig/nfslock
 		echo "# Added by rpm trigger" >>/etc/sysconfig/nfslock
 		echo "STATDOPTIONS=\"$STATDOPTS\"" >>/etc/sysconfig/nfslock
