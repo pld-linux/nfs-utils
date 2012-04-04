@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	8
+Release:	8.1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -29,6 +29,7 @@ Source8:	nfs.sysconfig
 Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Source11:	blkmapd.init
+Source12:	sunrpc.conf
 Source100:	proc-fs-nfsd.mount
 Source101:	var-lib-nfs-rpc_pipefs.mount
 Source102:	nfsd.service
@@ -218,7 +219,7 @@ Wspólne programy do obsługi NFS.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d} \
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
 	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery} \
 	$RPM_BUILD_ROOT{%{systemdunitdir},%{_datadir}/nfs-utils}
 
@@ -252,6 +253,8 @@ install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
+
+install %{SOURCE12} $RPM_BUILD_ROOT/etc/modprobe.d/sunrpc.conf
 
 install %{SOURCE100} $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
 install %{SOURCE101} $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
@@ -481,6 +484,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfslock
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
+%config(noreplace) %verify(not md5 mtime size) /etc/modprobe.d/sunrpc.conf
 %attr(755,root,root) %{_sbindir}/gss_clnt_send_err
 %attr(755,root,root) %{_sbindir}/gss_destroy_creds
 %attr(755,root,root) %{_sbindir}/sm-notify
