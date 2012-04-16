@@ -1,6 +1,6 @@
 [Unit]
 Description=NFSv4 ID <-> Name Mapper
-Requires=proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount rpcbind.service
+Requires=var-lib-nfs-rpc_pipefs.mount rpcbind.service
 After=network.target named.service rpcbind.service proc-fs-nfsd.mount var-lib-nfs-rpc_pipefs.mount
 
 [Service]
