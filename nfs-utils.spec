@@ -10,7 +10,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	1.2.5
-Release:	10
+Release:	11
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
@@ -81,6 +81,7 @@ BuildConflicts:	gss_mech_spkm3-devel
 Requires(post):	fileutils
 Requires(post):	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
+Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	libevent >= 2.0.14-2
 Requires:	rc-scripts >= 0.4.1.5
@@ -127,6 +128,7 @@ Summary:	Clients for connecting to a remote NFS server
 Summary(pl.UTF-8):	Klienci do łączenia się ze zdalnym serwerem NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
+Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	psmisc
 Requires:	rc-scripts
@@ -158,6 +160,7 @@ Summary:	Common programs for NFS
 Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
+Requires(post,preun,postun):	systemd-units >= 38
 Provides:	user(rpcstatd)
 Provides:	group(rpcstatd)
 Provides:	nfslockd
