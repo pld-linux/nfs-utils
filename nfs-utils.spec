@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.5
-Release:	11
+Version:	1.2.7
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	8395ac770720b83c5c469f88306d7765
+# Source0-md5:	3b5ca797197765dc0c3a4122720c7716
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -48,7 +48,6 @@ Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
-Patch5:		%{name}-heimdal-kcm.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -188,7 +187,6 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
 
 %build
 %{__libtoolize}
@@ -419,6 +417,7 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %attr(755,root,root) %{_sbindir}/nfsstat
+%attr(755,root,root) %{_sbindir}/nfsdcltrack
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 %attr(754,root,root) /etc/rc.d/init.d/svcgssd
@@ -436,6 +435,7 @@ fi
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
 %{_mandir}/man8/nfsd.8*
+%{_mandir}/man8/nfsdcltrack.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
@@ -464,6 +464,7 @@ fi
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
 %attr(755,root,root) /sbin/blkmapd
+%attr(755,root,root) /sbin/osd_login
 %attr(755,root,root) /sbin/rpc.gssd
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
