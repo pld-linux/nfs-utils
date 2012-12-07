@@ -52,12 +52,12 @@ URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
+BuildRequires:	device-mapper-devel
 BuildRequires:	keyutils-devel
 BuildRequires:	libblkid-devel >= 1.40
-BuildRequires:	libmount-devel
 BuildRequires:	libcap-devel
-BuildRequires:	device-mapper-devel
 BuildRequires:	libevent-devel >= 1.2
+BuildRequires:	libmount-devel
 BuildRequires:	libnfsidmap-devel >= 0.24
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
