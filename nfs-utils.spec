@@ -1,6 +1,6 @@
 #
 # Conditional build:
-%bcond_with	krb5		# build with MIT Kerberos (+libgssglue) instead of Heimdal
+%bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
 %bcond_without	tirpc		# use librpcsecgss instead of libtirpc
 #
 Summary:	Kernel NFS server
@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.7
+Version:	1.2.8
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	3b5ca797197765dc0c3a4122720c7716
+# Source0-md5:	6e7d97de51e428a0b8698c16ca23db77
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -70,7 +70,6 @@ BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
 %if %{with krb5}
 BuildRequires:	krb5-devel >= 1.6
-BuildRequires:	libgssglue-devel >= 0.3
 %else
 BuildRequires:	heimdal-devel >= 1.0
 %endif
@@ -214,6 +213,7 @@ Wspólne programy do obsługi NFS.
 	--with-statduser=rpcstatd \
 	--with-start-statd=/sbin/start-statd \
 	--with-tcp-wrappers \
+	--without-gssglue \
 	--with-krb5
 
 %{__make} all
@@ -409,7 +409,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc ChangeLog README html
+%doc README html
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
