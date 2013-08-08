@@ -229,6 +229,7 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d,modpro
 
 install -p utils/mount/nfsmount.conf $RPM_BUILD_ROOT/etc
 
+%{__rm} $RPM_BUILD_ROOT%{_sbindir}/start-statd
 cat >$RPM_BUILD_ROOT/sbin/start-statd <<EOF
 #!/bin/sh
 # mount.nfs calls this script when mounting a filesystem with locking
