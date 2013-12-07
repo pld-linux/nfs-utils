@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.8
+Version:	1.2.9
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
-#Source0:	http://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
+#Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	6e7d97de51e428a0b8698c16ca23db77
+# Source0-md5:	18869d16db3f49c053f8c68eba3fe2e0
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -63,6 +63,7 @@ BuildRequires:	libtool
 BuildRequires:	libwrap-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
+BuildRequires:	sqlite3-devel >= 3.3
 %if %{with tirpc}
 BuildRequires:	libtirpc-devel >= 1:0.1.10-4
 %else
@@ -238,7 +239,6 @@ cat >$RPM_BUILD_ROOT/sbin/start-statd <<EOF
 exec /sbin/rpc.statd --no-notify
 EOF
 
-%{__sed} -i -e "s|#!/bin/bash|#!/bin/sh|" $RPM_BUILD_ROOT%{_sbindir}/gss_destroy_creds
 %{__sed} -i -e 's|%{_sbindir}nfsidmap|/sbin/nfsidmap|g' $RPM_BUILD_ROOT%{_mandir}/man8/nfsidmap.8
 
 for f in rpcdebug blkmapd nfsidmap rpc.gssd rpc.idmapd rpc.statd ; do
@@ -490,8 +490,6 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not md5 mtime size) /etc/modprobe.d/sunrpc.conf
-%attr(755,root,root) %{_sbindir}/gss_clnt_send_err
-%attr(755,root,root) %{_sbindir}/gss_destroy_creds
 %attr(755,root,root) %{_sbindir}/sm-notify
 %attr(755,root,root) /sbin/nfsidmap
 %attr(755,root,root) /sbin/rpc.idmapd
