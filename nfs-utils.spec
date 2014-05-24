@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.2.9
-Release:	2
+Version:	1.3.0
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	18869d16db3f49c053f8c68eba3fe2e0
+# Source0-md5:	3ac3726eda563946d1f44ac3e5b61d56
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -48,7 +48,6 @@ Patch1:		%{name}-statdpath.patch
 Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
-Patch5:		fix-minorversion.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -188,7 +187,6 @@ Wspólne programy do obsługi NFS.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
 
 %build
 %{__libtoolize}
