@@ -30,8 +30,7 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Source11:	blkmapd.init
 Source12:	sunrpc.conf
-Source100:	proc-fs-nfsd.mount
-Source101:	var-lib-nfs-rpc_pipefs.mount
+Source13:	nfs-utils_env.sh
 Source102:	nfsd.service
 Source103:	nfs-blkmapd.service
 Source104:	nfs-exportfs.service
@@ -258,8 +257,8 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
 install %{SOURCE12} $RPM_BUILD_ROOT/etc/modprobe.d/sunrpc.conf
 
-install %{SOURCE100} $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
-install %{SOURCE101} $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+install systemd/proc-fs-nfsd.mount $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
+install systemd/var-lib-nfs-rpc_pipefs.mount $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
 install %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
 install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
 install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
