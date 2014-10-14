@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.3.0
+Version:	1.3.1
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	3ac3726eda563946d1f44ac3e5b61d56
+# Source0-md5:	97f157f954edb6d4d4385a0c5986f36f
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -410,6 +410,7 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README html
+%attr(755,root,root) /sbin/nfsdcltrack
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
@@ -417,7 +418,6 @@ fi
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %attr(755,root,root) %{_sbindir}/nfsstat
-%attr(755,root,root) %{_sbindir}/nfsdcltrack
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 %attr(754,root,root) /etc/rc.d/init.d/svcgssd
