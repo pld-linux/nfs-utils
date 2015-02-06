@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.3.1
+Version:	1.3.2
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	97f157f954edb6d4d4385a0c5986f36f
+# Source0-md5:	1e2f3c1ed468dee02d00c534c002ea10
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -201,6 +201,7 @@ Wspólne programy do obsługi NFS.
 	--enable-mount \
 	--enable-mountconfig \
 	--enable-libmount-mount \
+	--enable-svcgss \
 %if %{with tirpc}
 	--enable-tirpc \
 	--enable-ipv6 \
