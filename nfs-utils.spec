@@ -9,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.3.2
-Release:	3
+Version:	1.3.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	1e2f3c1ed468dee02d00c534c002ea10
+# Source0-md5:	9b87d890669eaaec8e97a2b0a35b2665
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -48,7 +48,6 @@ Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
-Patch6:		%{name}-fix-statd-nodaemon.patch
 URL:		http://nfs.sourceforge.net/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -189,7 +188,6 @@ Wspólne programy do obsługi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
 
 %build
 %{__libtoolize}
@@ -198,7 +196,6 @@ Wspólne programy do obsługi NFS.
 %{__autoheader}
 %{__automake}
 %configure \
-	--enable-nfsv3 \
 	--enable-nfsv4 \
 	--enable-nfsv41 \
 	--enable-gss \
