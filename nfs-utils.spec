@@ -1,8 +1,13 @@
-#
+# TODO
+# - two python scripts in -clients:
+#   /usr/sbin/mountstats:  Python script, ASCII text executable
+#   /usr/sbin/nfsiostat:   Python script, ASCII text executable
+#   appeared in commit e8168b4 with 1.2.3 update
+
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
 %bcond_without	tirpc		# use librpcsecgss instead of libtirpc
-#
+
 Summary:	Kernel NFS server
 Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
 Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
