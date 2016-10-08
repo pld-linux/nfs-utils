@@ -1,9 +1,4 @@
-# TODO
-# - two python scripts in -clients:
-#   /usr/sbin/mountstats:  Python script, ASCII text executable
-#   /usr/sbin/nfsiostat:   Python script, ASCII text executable
-#   appeared in commit e8168b4 with 1.2.3 update
-
+#
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
 %bcond_without	tirpc		# use librpcsecgss instead of libtirpc
@@ -14,13 +9,13 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.3.3
-Release:	2
+Version:	1.3.4
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 #Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
 Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	9b87d890669eaaec8e97a2b0a35b2665
+# Source0-md5:	2fabdadb8ff415a1eafcfb12ab1bf781
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -35,7 +30,7 @@ Source9:	nfslock.sysconfig
 Source10:	nfsfs.sysconfig
 Source11:	blkmapd.init
 Source12:	sunrpc.conf
-Source13:	nfs-utils_env.sh
+Source13:	%{name}_env.sh
 Source102:	nfsd.service
 Source103:	nfs-blkmapd.service
 Source104:	nfs-exportfs.service
@@ -165,17 +160,17 @@ Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
-Provides:	user(rpcstatd)
-Provides:	group(rpcstatd)
-Provides:	nfslockd
-Provides:	nfs-utils-lock
 Requires:	libnfsidmap >= 0.25-3
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
 Requires:	systemd-units >= 0.38
+Provides:	group(rpcstatd)
+Provides:	nfs-utils-lock
+Provides:	nfslockd
+Provides:	user(rpcstatd)
+Obsoletes:	knfsd-lock
 Obsoletes:	nfs-utils-common-systemd
 Obsoletes:	nfs-utils-lock
-Obsoletes:	knfsd-lock
 Obsoletes:	nfslockd
 Conflicts:	mount < 2.13-0.pre7.1
 
@@ -299,6 +294,9 @@ touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 
 cp -a nfs html
+
+# make python dep optional
+chmod a-x $RPM_BUILD_ROOT%{_sbindir}/{mountstats,nfsiostat}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
