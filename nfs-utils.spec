@@ -9,13 +9,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	1.3.4
-Release:	2
+Version:	2.1.1
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
-#Source0:	https://www.kernel.org/pub/linux/utils/nfs/%{name}-%{version}.tar.bz2
-Source0:	http://downloads.sourceforge.net/nfs/%{name}-%{version}.tar.bz2
-# Source0-md5:	2fabdadb8ff415a1eafcfb12ab1bf781
+Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
+# Source0-md5:	59dfcb2e6254b129f901f40c86086b13
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -48,7 +47,8 @@ Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
-URL:		http://nfs.sourceforge.net/
+Patch6:		nfs-utils-2.1.1-rpc-include.patch
+URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cpp
@@ -188,6 +188,7 @@ Wspólne programy do obsługi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 %{__libtoolize}
@@ -216,7 +217,8 @@ Wspólne programy do obsługi NFS.
 	--with-start-statd=/sbin/start-statd \
 	--with-tcp-wrappers \
 	--without-gssglue \
-	--with-krb5
+	--with-krb5 \
+	--with-systemd
 
 %{__make} all
 
@@ -436,7 +438,9 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/rmtab
 
 %{_mandir}/man5/exports.5*
+%{_mandir}/man5/nfs.conf.5*
 %{_mandir}/man7/nfsd.7*
+%{_mandir}/man7/nfs.systemd.7*
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
 %{_mandir}/man8/nfsd.8*
