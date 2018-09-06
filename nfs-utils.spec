@@ -1,3 +1,4 @@
+# TODO: systemd support needs cleanup (see TODOs below)
 #
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
@@ -9,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.1.1
+Version:	2.3.2
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	59dfcb2e6254b129f901f40c86086b13
+# Source0-md5:	01f5e6cd187aecf72b489c9c86cce865
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -47,7 +48,6 @@ Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
-Patch6:		nfs-utils-2.1.1-rpc-include.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -58,9 +58,9 @@ BuildRequires:	libblkid-devel >= 1.40
 BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libmount-devel
-BuildRequires:	libnfsidmap-devel >= 0.24
 BuildRequires:	libtool
 BuildRequires:	libwrap-devel
+BuildRequires:	openldap-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
 BuildRequires:	sqlite3-devel >= 3.3
@@ -160,7 +160,7 @@ Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
-Requires:	libnfsidmap >= 0.25-3
+Requires:	libnfsidmap = %{version}-%{release}
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
 Requires:	systemd-units >= 0.38
@@ -180,6 +180,45 @@ Common programs for NFS.
 %description common -l pl.UTF-8
 Wspólne programy do obsługi NFS.
 
+%package -n libnfsidmap
+Summary:	Library to help mapping id's, mainly for NFSv4
+Summary(pl.UTF-8):	Biblioteka pomagająca w mapowaniu identyfikatorów, głównie dla NFSv4
+License:	BSD
+Group:		Libraries
+Obsoletes:	nfsidmap
+
+%description -n libnfsidmap
+Library to help mapping id's, mainly for NFSv4.
+
+%description -n libnfsidmap -l pl.UTF-8
+Biblioteka pomagająca w mapowaniu identyfikatorów, głównie dla NFSv4.
+
+%package -n libnfsidmap-devel
+Summary:	Header files for libnfsidmap library
+Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki libnfsidmap
+Group:		Development/Libraries
+Requires:	libnfsidmap = %{version}-%{release}
+Obsoletes:	nfsidmap-devel
+
+%description -n libnfsidmap-devel
+Header files for libnfsidmap library.
+
+%description -n libnfsidmap-devel -l pl.UTF-8
+Pliki nagłówkowe biblioteki libnfsidmap.
+
+%package -n libnfsidmap-static
+Summary:	Static libnfsidmap library
+Summary(pl.UTF-8):	Statyczna biblioteka libnfsidmap
+Group:		Development/Libraries
+Requires:	libnfsidmap-devel = %{version}-%{release}
+Obsoletes:	nfsidmap-static
+
+%description -n libnfsidmap-static
+Static libnfsidmap library.
+
+%description -n libnfsidmap-static -l pl.UTF-8
+Statyczna biblioteka libnfsidmap.
+
 %prep
 %setup -q -a1
 %patch0 -p1
@@ -188,7 +227,6 @@ Wspólne programy do obsługi NFS.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
 
 %build
 %{__libtoolize}
@@ -200,36 +238,42 @@ Wspólne programy do obsługi NFS.
 	--enable-nfsv4 \
 	--enable-nfsv41 \
 	--enable-gss \
+	--enable-libmount-mount \
 	--enable-mount \
 	--enable-mountconfig \
-	--enable-libmount-mount \
 	--enable-svcgss \
 %if %{with tirpc}
-	--enable-tirpc \
 	--enable-ipv6 \
+	--enable-tirpc \
 %else
-	--disable-tirpc \
 	--disable-ipv6 \
+	--disable-tirpc \
 %endif
 	--with-statdpath=/var/lib/nfs/statd \
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
 	--with-start-statd=/sbin/start-statd \
-	--with-tcp-wrappers \
 	--without-gssglue \
 	--with-krb5 \
-	--with-systemd
+	--with-systemd=%{systemdunitdir} \
+	--with-tcp-wrappers
 
-%{__make} all
+%{__make}
+# all
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
+install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
 	$RPM_BUILD_ROOT%{_var}/lib/nfs/{rpc_pipefs,v4recovery} \
-	$RPM_BUILD_ROOT{%{systemdunitdir},%{_datadir}/nfs-utils}
+	$RPM_BUILD_ROOT%{_datadir}/nfs-utils
 
 %{__make} install \
-	DESTDIR=$RPM_BUILD_ROOT
+	DESTDIR=$RPM_BUILD_ROOT \
+	generator_dir=/lib/systemd/system-generators
+
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.la
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap/*.la
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap/*.a
 
 install -p utils/mount/nfsmount.conf $RPM_BUILD_ROOT/etc
 
@@ -245,7 +289,7 @@ EOF
 %{__sed} -i -e 's|%{_sbindir}nfsidmap|/sbin/nfsidmap|g' $RPM_BUILD_ROOT%{_mandir}/man8/nfsidmap.8
 
 for f in rpcdebug blkmapd nfsidmap rpc.gssd rpc.idmapd rpc.statd ; do
-	mv $RPM_BUILD_ROOT%{_sbindir}/$f $RPM_BUILD_ROOT/sbin
+	%{__mv} $RPM_BUILD_ROOT%{_sbindir}/$f $RPM_BUILD_ROOT/sbin
 done
 
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
@@ -261,15 +305,22 @@ install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
 install %{SOURCE12} $RPM_BUILD_ROOT/etc/modprobe.d/sunrpc.conf
 
-install systemd/proc-fs-nfsd.mount $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
-install systemd/var-lib-nfs-rpc_pipefs.mount $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+#install systemd/proc-fs-nfsd.mount $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
+#install systemd/var-lib-nfs-rpc_pipefs.mount $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+# TODO: upstream installs nfs-server.service
 install %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
+# TODO: upstream installs nfs-blkmap.service
 install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
 install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
+# TODO: upstream installs rpc-gssd.service
 install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
+# TODO: upstream installs nfs-idmapd.service
 install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
+# TODO: upstream installs rpc-statd.service + nfs-statd-notify.service
 install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
+# TODO: upstream installs nfs-mountd.service
 install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
+# TODO: upstream installs nfs-svcgssd.service
 install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
 install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
 install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
@@ -498,11 +549,12 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/idmapd
 %attr(754,root,root) /etc/rc.d/init.d/nfslock
 %config(noreplace) %verify(not md5 mtime size) /etc/modprobe.d/sunrpc.conf
-%attr(755,root,root) %{_sbindir}/sm-notify
 %attr(755,root,root) /sbin/nfsidmap
 %attr(755,root,root) /sbin/rpc.idmapd
 %attr(755,root,root) /sbin/rpc.statd
 %attr(755,root,root) /sbin/start-statd
+%attr(755,root,root) %{_sbindir}/nfsconf
+%attr(755,root,root) %{_sbindir}/sm-notify
 %dir %{_var}/lib/nfs
 %dir %{_var}/lib/nfs/rpc_pipefs
 %dir %{_var}/lib/nfs/v4recovery
@@ -510,8 +562,17 @@ fi
 %attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm
 %attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm.bak
 %attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
+%attr(755,root,root) /lib/systemd/system-generators/nfs-server-generator
+%attr(755,root,root) /lib/systemd/system-generators/rpc-pipefs-generator
+%{systemdunitdir}/idmapd.service
+%{systemdunitdir}/nfslock.service
+%{systemdunitdir}/rpc_pipefs.target
+%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
+%dir %{_datadir}/nfs-utils
+%attr(755,root,root) %{_datadir}/nfs-utils/nfslock.preconfig
 %{_mandir}/man5/nfs.5*
 %{_mandir}/man8/idmapd.8*
+%{_mandir}/man8/nfsconf.8*
 %{_mandir}/man8/nfsidmap.8*
 %{_mandir}/man8/rpc.idmapd.8*
 %{_mandir}/man8/rpc.sm-notify.8*
@@ -519,8 +580,28 @@ fi
 %{_mandir}/man8/sm-notify.8*
 %{_mandir}/man8/statd.8*
 
-%{systemdunitdir}/idmapd.service
-%{systemdunitdir}/nfslock.service
-%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
-%dir %{_datadir}/nfs-utils
-%attr(755,root,root) %{_datadir}/nfs-utils/nfslock.preconfig
+%files -n libnfsidmap
+%defattr(644,root,root,755)
+#%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%attr(755,root,root) %{_libdir}/libnfsidmap.so.*.*.*
+%attr(755,root,root) %ghost %{_libdir}/libnfsidmap.so.1
+%dir %{_libdir}/libnfsidmap
+%attr(755,root,root) %{_libdir}/libnfsidmap/nsswitch.so
+%attr(755,root,root) %{_libdir}/libnfsidmap/static.so
+# -plugin-ldap subpackage?
+%attr(755,root,root) %{_libdir}/libnfsidmap/umich_ldap.so
+# -plugin-gums subpackage (BR: some datagrid software - VOMS?)
+#%attr(755,root,root) %{_libdir}/libnfsidmap/gums.so
+%{_mandir}/man5/idmapd.conf.5*
+
+%files -n libnfsidmap-devel
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/libnfsidmap.so
+%{_includedir}/nfsidmap.h
+%{_includedir}/nfsidmap_plugin.h
+%{_pkgconfigdir}/libnfsidmap.pc
+%{_mandir}/man3/nfs4_uid_to_name.3*
+
+%files -n libnfsidmap-static
+%defattr(644,root,root,755)
+%{_libdir}/libnfsidmap.a

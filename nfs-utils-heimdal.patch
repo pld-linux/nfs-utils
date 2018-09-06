@@ -13,9 +13,9 @@
           AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
           KRBDIR="$dir"
           gssapi_lib=gssapi
---- nfs-utils-1.2.3.dist/utils/gssd/krb5_util.c.orig	2010-09-28 14:24:16.000000000 +0200
-+++ nfs-utils-1.2.3.dist/utils/gssd/krb5_util.c	2010-10-03 14:33:07.992424854 +0200
-@@ -927,9 +927,37 @@ 
+--- nfs-utils-2.3.2/utils/gssd/krb5_util.c.orig	2018-05-22 20:33:01.000000000 +0200
++++ nfs-utils-2.3.2/utils/gssd/krb5_util.c	2018-08-28 17:25:00.834953411 +0200
+@@ -966,9 +966,37 @@
  {
  	krb5_error_code ret;
  	krb5_creds creds;
@@ -54,7 +54,7 @@
  	ret = krb5_cc_start_seq_get(context, ccache, &cur);
  	if (ret) 
  		return 0;
-@@ -949,6 +977,7 @@ 
+@@ -988,6 +1016,7 @@
  		krb5_free_cred_contents(context, &creds);
  	}
  	krb5_cc_end_seq_get(context, ccache, &cur);
@@ -62,7 +62,7 @@
  
  	return found;
  }
-@@ -995,6 +1024,9 @@ 
+@@ -1034,6 +1063,9 @@
  	}
  	krb5_free_principal(context, principal);
  err_princ:
@@ -72,3 +72,12 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
+@@ -1323,7 +1355,7 @@
+ #endif
+ 	if (msg != NULL)
+ 		return msg;
+-#if HAVE_KRB5
++#ifdef HAVE_KRB5
+ 	return strdup(error_message(code));
+ #else
+ 	if (context != NULL)
