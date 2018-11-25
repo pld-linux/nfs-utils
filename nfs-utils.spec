@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.3.2
+Version:	2.3.3
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	01f5e6cd187aecf72b489c9c86cce865
+# Source0-md5:	b6c9c032995af1c08fea9fbcc1ce33e9
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -320,7 +320,7 @@ install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
 install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
 # TODO: upstream installs nfs-mountd.service
 install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
-# TODO: upstream installs nfs-svcgssd.service
+# TODO: upstream installs auth-rpcgss-module.service / nfs-svcgssd.service
 install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
 install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
 install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
