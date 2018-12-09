@@ -18,3 +18,60 @@
                     -f $dir/lib64/libroken.so -o \
                     -f $dir/lib/libroken.so \) ; then
           K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(2),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
+--- nfs-utils-2.3.3/support/nfs/cacheio.c.orig	2018-09-06 20:09:08.000000000 +0200
++++ nfs-utils-2.3.3/support/nfs/cacheio.c	2018-12-09 20:39:32.658337475 +0100
+@@ -234,7 +234,7 @@
+ 	    stb.st_mtime > now)
+ 		stb.st_mtime = time(0);
+ 	
+-	sprintf(stime, "%ld\n", stb.st_mtime);
++	sprintf(stime, "%lld\n", (long long)stb.st_mtime);
+ 	for (c=0; cachelist[c]; c++) {
+ 		int fd;
+ 		sprintf(path, "/proc/net/rpc/%s/flush", cachelist[c]);
+--- nfs-utils-2.3.3/utils/idmapd/idmapd.c.orig	2018-09-06 20:09:08.000000000 +0200
++++ nfs-utils-2.3.3/utils/idmapd/idmapd.c	2018-12-09 20:40:55.019279956 +0100
+@@ -171,7 +171,7 @@
+ 	int fd;
+ 	char stime[32];
+ 
+-	sprintf(stime, "%ld\n", now);
++	sprintf(stime, "%lld\n", (long long)now);
+ 	fd = open(path, O_RDWR);
+ 	if (fd == -1)
+ 		return -1;
+@@ -612,8 +612,8 @@
+ 		/* Name */
+ 		addfield(&bp, &bsiz, im.im_name);
+ 		/* expiry */
+-		snprintf(buf1, sizeof(buf1), "%lu",
+-			 time(NULL) + cache_entry_expiration);
++		snprintf(buf1, sizeof(buf1), "%llu",
++			 (unsigned long long)(time(NULL) + cache_entry_expiration));
+ 		addfield(&bp, &bsiz, buf1);
+ 		/* Note that we don't want to write the id if the mapping
+ 		 * failed; instead, by leaving it off, we write a negative
+@@ -640,8 +640,8 @@
+ 		snprintf(buf1, sizeof(buf1), "%u", im.im_id);
+ 		addfield(&bp, &bsiz, buf1);
+ 		/* expiry */
+-		snprintf(buf1, sizeof(buf1), "%lu",
+-			 time(NULL) + cache_entry_expiration);
++		snprintf(buf1, sizeof(buf1), "%llu",
++			 (uint64_t)(time(NULL) + cache_entry_expiration));
+ 		addfield(&bp, &bsiz, buf1);
+ 		/* Note we're ignoring the status field in this case; we'll
+ 		 * just map to nobody instead. */
+--- nfs-utils-2.3.3/utils/nfsdcltrack/sqlite.c.orig	2018-09-06 20:09:08.000000000 +0200
++++ nfs-utils-2.3.3/utils/nfsdcltrack/sqlite.c	2018-12-09 20:41:52.172247084 +0100
+@@ -542,8 +542,8 @@
+ 	int ret;
+ 	char *err = NULL;
+ 
+-	ret = snprintf(buf, sizeof(buf), "DELETE FROM clients WHERE time < %ld",
+-			grace_start);
++	ret = snprintf(buf, sizeof(buf), "DELETE FROM clients WHERE time < %lld",
++			(long long)grace_start);
+ 	if (ret < 0) {
+ 		return ret;
+ 	} else if ((size_t)ret >= sizeof(buf)) {
