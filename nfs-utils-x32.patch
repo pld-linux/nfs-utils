@@ -58,7 +58,7 @@
 -		snprintf(buf1, sizeof(buf1), "%lu",
 -			 time(NULL) + cache_entry_expiration);
 +		snprintf(buf1, sizeof(buf1), "%llu",
-+			 (uint64_t)(time(NULL) + cache_entry_expiration));
++			 (unsigned long long)(time(NULL) + cache_entry_expiration));
  		addfield(&bp, &bsiz, buf1);
  		/* Note we're ignoring the status field in this case; we'll
  		 * just map to nobody instead. */
