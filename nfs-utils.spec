@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	2.3.3
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
@@ -48,6 +48,7 @@ Patch2:		%{name}-subsys.patch
 Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
+Patch6:		libnfsidmap-pluginpath.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -227,6 +228,7 @@ Statyczna biblioteka libnfsidmap.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 %{__libtoolize}
@@ -258,7 +260,7 @@ Statyczna biblioteka libnfsidmap.
 	--with-systemd=%{systemdunitdir} \
 	--with-tcp-wrappers
 
-%{__make}
+%{__make} pkgplugindir=/%{_lib}/libnfsidmap
 # all
 
 %install
@@ -269,12 +271,17 @@ install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT \
+	pkgplugindir=/%{_lib}/libnfsidmap \
 	generator_dir=/lib/systemd/system-generators
 
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.la
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap/*.la
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap/*.a
+%{__rm} $RPM_BUILD_ROOT/%{_lib}/libnfsidmap/*.{a,la}
 
+mv -f $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.so.* $RPM_BUILD_ROOT/%{_lib}
+ln -sf /%{_lib}/$(basename $RPM_BUILD_ROOT/%{_lib}/libnfsidmap.so.*.*.*) \
+	$RPM_BUILD_ROOT%{_libdir}/libnfsidmap.so
+
+install -p support/nfsidmap/idmapd.conf $RPM_BUILD_ROOT%{_sysconfdir}
 install -p utils/mount/nfsmount.conf $RPM_BUILD_ROOT/etc
 
 %{__rm} $RPM_BUILD_ROOT%{_sbindir}/start-statd
@@ -582,16 +589,16 @@ fi
 
 %files -n libnfsidmap
 %defattr(644,root,root,755)
-#%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
-%attr(755,root,root) %{_libdir}/libnfsidmap.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libnfsidmap.so.1
-%dir %{_libdir}/libnfsidmap
-%attr(755,root,root) %{_libdir}/libnfsidmap/nsswitch.so
-%attr(755,root,root) %{_libdir}/libnfsidmap/static.so
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
+%attr(755,root,root) /%{_lib}/libnfsidmap.so.*.*.*
+%attr(755,root,root) %ghost /%{_lib}/libnfsidmap.so.1
+%dir /%{_lib}/libnfsidmap
+%attr(755,root,root) /%{_lib}/libnfsidmap/nsswitch.so
+%attr(755,root,root) /%{_lib}/libnfsidmap/static.so
 # -plugin-ldap subpackage?
-%attr(755,root,root) %{_libdir}/libnfsidmap/umich_ldap.so
+%attr(755,root,root) /%{_lib}/libnfsidmap/umich_ldap.so
 # -plugin-gums subpackage (BR: some datagrid software - VOMS?)
-#%attr(755,root,root) %{_libdir}/libnfsidmap/gums.so
+#%attr(755,root,root) /%{_lib}/libnfsidmap/gums.so
 %{_mandir}/man5/idmapd.conf.5*
 
 %files -n libnfsidmap-devel
