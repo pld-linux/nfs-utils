@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.3.3
-Release:	2
+Version:	2.3.4
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	b6c9c032995af1c08fea9fbcc1ce33e9
+# Source0-md5:	70fdbb678c21c4d8b362b43247f4b39a
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -49,6 +49,7 @@ Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
+Patch7:		%{name}-types.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -229,6 +230,7 @@ Statyczna biblioteka libnfsidmap.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 %{__libtoolize}
@@ -475,6 +477,7 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README html
+%attr(755,root,root) /sbin/nfsdcld
 %attr(755,root,root) /sbin/nfsdcltrack
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
@@ -502,6 +505,7 @@ fi
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
 %{_mandir}/man8/nfsd.8*
+%{_mandir}/man8/nfsdcld.8*
 %{_mandir}/man8/nfsdcltrack.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
@@ -531,7 +535,6 @@ fi
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
 %attr(755,root,root) /sbin/blkmapd
-%attr(755,root,root) /sbin/osd_login
 %attr(755,root,root) /sbin/rpc.gssd
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
