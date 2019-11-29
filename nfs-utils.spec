@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.4.1
+Version:	2.4.2
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	161efe469ec1b06f1c750bd87f8ba6dd
+# Source0-md5:	d427c6b3014e9a04e8498f0598b1c1b9
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -49,6 +49,7 @@ Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
+Patch7:		%{name}-types.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -229,6 +230,7 @@ Statyczna biblioteka libnfsidmap.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 %{__libtoolize}
@@ -327,8 +329,9 @@ install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
 install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
 # TODO: upstream installs nfs-mountd.service
 install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
-# TODO: upstream installs auth-rpcgss-module.service / nfs-svcgssd.service
+# TODO: upstream installs auth-rpcgss-module.service / rpc-svcgssd.service
 install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
+# TODO: upstream installs also nfs-utils.service and nfs-client.target meta-services
 install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
 install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
 install %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfslock.preconfig
@@ -479,6 +482,7 @@ fi
 %attr(755,root,root) /sbin/nfsdcltrack
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
+%attr(755,root,root) %{_sbindir}/clddb-tool
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
@@ -500,6 +504,7 @@ fi
 %{_mandir}/man5/nfs.conf.5*
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man7/nfs.systemd.7*
+%{_mandir}/man8/clddb-tool.8*
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
 %{_mandir}/man8/nfsd.8*

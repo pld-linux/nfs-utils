@@ -1,0 +1,94 @@
+--- nfs-utils-2.4.2/utils/nfsdcld/nfsdcld.c.orig	2019-11-29 16:50:34.858389742 +0100
++++ nfs-utils-2.4.2/utils/nfsdcld/nfsdcld.c	2019-11-29 16:50:38.298371106 +0100
+@@ -378,7 +378,7 @@
+ 	bsize = cld_message_size(cmsg);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize)
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 
+ 	/* reopen pipe, just to be sure */
+@@ -409,7 +409,7 @@
+ 	xlog(D_GENERAL, "Doing downcall with status %d", cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+@@ -459,7 +459,7 @@
+ 	xlog(D_GENERAL, "Doing downcall with status %d", cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+@@ -498,7 +498,7 @@
+ 			cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+@@ -548,7 +548,7 @@
+ 			cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+@@ -607,7 +607,7 @@
+ 	xlog(D_GENERAL, "Doing downcall with status %d", cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+@@ -667,7 +667,7 @@
+ 	xlog(D_GENERAL, "Doing downcall with status %d", cmsg->cm_status);
+ 	wsize = atomicio((void *)write, clnt->cl_fd, cmsg, bsize);
+ 	if (wsize != bsize) {
+-		xlog(L_ERROR, "%s: problem writing to cld pipe (%ld): %m",
++		xlog(L_ERROR, "%s: problem writing to cld pipe (%zd): %m",
+ 			 __func__, wsize);
+ 		ret = cld_pipe_open(clnt);
+ 		if (ret) {
+--- nfs-utils-2.4.2/utils/nfsdcld/sqlite.c.orig	2019-11-13 18:09:41.000000000 +0100
++++ nfs-utils-2.4.2/utils/nfsdcld/sqlite.c	2019-11-29 16:52:19.827821073 +0100
+@@ -512,7 +512,7 @@
+ 	current_epoch = tcur;
+ 	recovery_epoch = trec;
+ 	ret = 0;
+-	xlog(D_GENERAL, "%s: current_epoch=%lu recovery_epoch=%lu",
++	xlog(D_GENERAL, "%s: current_epoch=%"PRIu64" recovery_epoch=%"PRIu64,
+ 		__func__, current_epoch, recovery_epoch);
+ out:
+ 	sqlite3_finalize(stmt);
+@@ -1223,7 +1223,7 @@
+ 
+ 	current_epoch = tcur;
+ 	recovery_epoch = trec;
+-	xlog(D_GENERAL, "%s: current_epoch=%lu recovery_epoch=%lu",
++	xlog(D_GENERAL, "%s: current_epoch=%"PRIu64" recovery_epoch=%"PRIu64,
+ 		__func__, current_epoch, recovery_epoch);
+ 
+ out:
+@@ -1282,7 +1282,7 @@
+ 	}
+ 
+ 	recovery_epoch = 0;
+-	xlog(D_GENERAL, "%s: current_epoch=%lu recovery_epoch=%lu",
++	xlog(D_GENERAL, "%s: current_epoch=%"PRIu64" recovery_epoch=%"PRIu64,
+ 		__func__, current_epoch, recovery_epoch);
+ 
+ out:
