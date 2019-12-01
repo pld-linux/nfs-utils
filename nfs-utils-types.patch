@@ -99,7 +99,7 @@
  		return -EINVAL;
  
 -	xlog(D_GENERAL, "%s: grace done. gracetime=%ld", __func__, gracetime);
-+	xlog(D_GENERAL, "%s: grace done. gracetime=%lld", __func__, (uint64_t)gracetime);
++	xlog(D_GENERAL, "%s: grace done. gracetime=%lld", __func__, (long long)gracetime);
  
  	ret = sqlite_remove_unreclaimed(gracetime);
  
