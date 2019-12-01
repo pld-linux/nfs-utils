@@ -92,3 +92,14 @@
  		__func__, current_epoch, recovery_epoch);
  
  out:
+--- nfs-utils-2.4.2/utils/nfsdcltrack/nfsdcltrack.c.orig	2019-12-01 08:16:29.090420366 +0100
++++ nfs-utils-2.4.2/utils/nfsdcltrack/nfsdcltrack.c	2019-12-01 08:16:36.084104443 +0100
+@@ -525,7 +525,7 @@
+ 	if (*tail)
+ 		return -EINVAL;
+ 
+-	xlog(D_GENERAL, "%s: grace done. gracetime=%ld", __func__, gracetime);
++	xlog(D_GENERAL, "%s: grace done. gracetime=%lld", __func__, (uint64_t)gracetime);
+ 
+ 	ret = sqlite_remove_unreclaimed(gracetime);
+ 
