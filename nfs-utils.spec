@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	2.4.2
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
