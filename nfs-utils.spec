@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.4.2
-Release:	4
+Version:	2.4.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	d427c6b3014e9a04e8498f0598b1c1b9
+# Source0-md5:	06020c76f531ed97f3145514901e0e7c
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -49,7 +49,7 @@ Patch3:		%{name}-union-mount.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
-Patch7:		%{name}-types.patch
+Patch7:		%{name}-sh.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -65,7 +65,10 @@ BuildRequires:	libwrap-devel
 BuildRequires:	openldap-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpm-pythonprov
+BuildRequires:	rpmbuild(macros) >= 1.623
 BuildRequires:	sqlite3-devel >= 3.3
+BuildRequires:	tar >= 1:1.22
+BuildRequires:	xz
 %if %{with tirpc}
 BuildRequires:	libtirpc-devel >= 1:0.1.10-4
 %else
@@ -76,7 +79,6 @@ BuildRequires:	krb5-devel >= 1.6
 %else
 BuildRequires:	heimdal-devel >= 1.0
 %endif
-BuildRequires:	rpmbuild(macros) >= 1.623
 # lucid context fields mismatch with current version of spkm3.h
 BuildConflicts:	gss_mech_spkm3-devel
 Requires(post):	fileutils
@@ -325,7 +327,7 @@ install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
 install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
 # TODO: upstream installs nfs-idmapd.service
 install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
-# TODO: upstream installs rpc-statd.service + nfs-statd-notify.service
+# TODO: upstream installs rpc-statd.service + rpc-statd-notify.service
 install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
 # TODO: upstream installs nfs-mountd.service
 install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
@@ -478,12 +480,12 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README html
-%attr(755,root,root) /sbin/nfsdcld
 %attr(755,root,root) /sbin/nfsdcltrack
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/clddb-tool
 %attr(755,root,root) %{_sbindir}/exportfs
+%attr(755,root,root) %{_sbindir}/nfsdcld
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
@@ -521,6 +523,7 @@ fi
 %{systemdunitdir}/nfsd.service
 %{systemdunitdir}/nfsd-exportfs.service
 %{systemdunitdir}/nfsd-mountd.service
+%{systemdunitdir}/nfsdcld.service
 %{systemdunitdir}/svcgssd.service
 %{systemdunitdir}/proc-fs-nfsd.mount
 %attr(755,root,root) %{_datadir}/nfs-utils/nfsd.postconfig
