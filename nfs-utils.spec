@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	2.4.3
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
@@ -50,6 +50,7 @@ Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
 Patch7:		%{name}-sh.patch
+Patch8:		%{name}-types.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -233,6 +234,7 @@ Statyczna biblioteka libnfsidmap.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 %{__libtoolize}
