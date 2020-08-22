@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.4.3
-Release:	2
+Version:	2.5.1
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	06020c76f531ed97f3145514901e0e7c
+# Source0-md5:	d14294d5efcd9aada28f4dab871a44a6
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -363,7 +363,7 @@ ln -sf /bin/true $RPM_BUILD_ROOT/sbin/fsck.nfs
 cp -a nfs html
 
 # make python dep optional
-chmod a-x $RPM_BUILD_ROOT%{_sbindir}/{mountstats,nfsiostat}
+chmod a-x $RPM_BUILD_ROOT%{_sbindir}/{mountstats,nfsdclddb,nfsdclnts,nfsiostat}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -485,9 +485,10 @@ fi
 %attr(755,root,root) /sbin/nfsdcltrack
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
-%attr(755,root,root) %{_sbindir}/clddb-tool
 %attr(755,root,root) %{_sbindir}/exportfs
 %attr(755,root,root) %{_sbindir}/nfsdcld
+%attr(755,root,root) %{_sbindir}/nfsdclddb
+%attr(755,root,root) %{_sbindir}/nfsdclnts
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
@@ -508,11 +509,12 @@ fi
 %{_mandir}/man5/nfs.conf.5*
 %{_mandir}/man7/nfsd.7*
 %{_mandir}/man7/nfs.systemd.7*
-%{_mandir}/man8/clddb-tool.8*
 %{_mandir}/man8/exportfs.8*
 %{_mandir}/man8/mountd.8*
 %{_mandir}/man8/nfsd.8*
 %{_mandir}/man8/nfsdcld.8*
+%{_mandir}/man8/nfsdclddb.8*
+%{_mandir}/man8/nfsdclnts.8*
 %{_mandir}/man8/nfsdcltrack.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
@@ -605,6 +607,7 @@ fi
 %attr(755,root,root) %ghost /%{_lib}/libnfsidmap.so.1
 %dir /%{_lib}/libnfsidmap
 %attr(755,root,root) /%{_lib}/libnfsidmap/nsswitch.so
+%attr(755,root,root) /%{_lib}/libnfsidmap/regex.so
 %attr(755,root,root) /%{_lib}/libnfsidmap/static.so
 # -plugin-ldap subpackage?
 %attr(755,root,root) /%{_lib}/libnfsidmap/umich_ldap.so
