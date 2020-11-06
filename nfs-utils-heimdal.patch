@@ -15,33 +15,6 @@
           gssapi_lib=gssapi
 --- nfs-utils-2.5.1/utils/gssd/krb5_util.c.orig	2020-06-18 19:10:06.000000000 +0200
 +++ nfs-utils-2.5.1/utils/gssd/krb5_util.c	2020-08-22 18:47:27.393014417 +0200
-@@ -484,7 +484,7 @@
- 	if (ccache)
- 		krb5_cc_close(context, ccache);
- 	krb5_free_cred_contents(context, &my_creds);
--	krb5_free_string(context, k5err);
-+	free(k5err);
- 	return (code);
- }
- 
-@@ -723,7 +723,7 @@
- 				 "we failed to unparse principal name: %s\n",
- 				 k5err);
- 			k5_free_kt_entry(context, kte);
--			krb5_free_string(context, k5err);
-+			free(k5err);
- 			k5err = NULL;
- 			continue;
- 		}
-@@ -770,7 +770,7 @@
- 	if (retval < 0)
- 		retval = 0;
-   out:
--	krb5_free_string(context, k5err);
-+	free(k5err);
- 	return retval;
- }
- 
 @@ -836,7 +836,11 @@
  	        myhostad[i+1] = 0;
  	}
@@ -54,33 +27,6 @@
  
  	if (!srchost) {
  		retval = get_full_hostname(myhostname, myhostname, sizeof(myhostname));
-@@ -927,7 +931,7 @@
- 				k5err = gssd_k5_err_msg(context, code);
- 				printerr(1, "%s while building principal for '%s'\n",
- 					 k5err, spn);
--				krb5_free_string(context, k5err);
-+				free(k5err);
- 				k5err = NULL;
- 				continue;
- 			}
-@@ -937,7 +941,7 @@
- 				k5err = gssd_k5_err_msg(context, code);
- 				printerr(3, "%s while getting keytab entry for '%s'\n",
- 					 k5err, spn);
--				krb5_free_string(context, k5err);
-+				free(k5err);
- 				k5err = NULL;
- 				/*
- 				 * We tried the active directory machine account
-@@ -986,7 +990,7 @@
- 		k5_free_default_realm(context, default_realm);
- 	if (realmnames)
- 		krb5_free_host_realm(context, realmnames);
--	krb5_free_string(context, k5err);
-+	free(k5err);
- 	return retval;
- }
- 
 @@ -1003,9 +1007,37 @@
  {
  	krb5_error_code ret;
@@ -138,40 +84,6 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
-@@ -1249,7 +1285,7 @@
- 			printerr(0, "WARNING: %s while resolving credential "
- 				    "cache '%s' for destruction\n", k5err,
- 				    ple->ccname);
--			krb5_free_string(context, k5err);
-+			free(k5err);
- 			k5err = NULL;
- 			continue;
- 		}
-@@ -1258,13 +1294,13 @@
- 			k5err = gssd_k5_err_msg(context, code);
- 			printerr(0, "WARNING: %s while destroying credential "
- 				    "cache '%s'\n", k5err, ple->ccname);
--			krb5_free_string(context, k5err);
-+			free(k5err);
- 			k5err = NULL;
- 		}
- 	}
- 	krb5_free_context(context);
-   out:
--	krb5_free_string(context, k5err);
-+	free(k5err);
- }
- 
- /*
-@@ -1347,7 +1383,7 @@
- out_free_context:
- 	krb5_free_context(context);
- out:
--	krb5_free_string(context, k5err);
-+	free(k5err);
- 	return retval;
- }
- 
 @@ -1369,7 +1405,7 @@
  #endif
  	if (msg != NULL)
