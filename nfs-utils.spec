@@ -95,7 +95,7 @@ Requires:	systemd-units >= 0.38
 Provides:	nfsdaemon
 Obsoletes:	knfsd
 Obsoletes:	nfs-server
-Obsoletes:	nfs-utils-systemd
+Obsoletes:	nfs-utils-systemd < 1.2.5-5
 Obsoletes:	nfsdaemon
 Conflicts:	kernel < 2.2.5
 Conflicts:	krb5-common < 1.7
@@ -141,7 +141,7 @@ Provides:	nfs-server-clients
 Provides:	nfsclient
 Obsoletes:	knfsd-clients
 Obsoletes:	nfs-server-clients
-Obsoletes:	nfs-utils-clients-systemd
+Obsoletes:	nfs-utils-clients-systemd < 1.2.5-5
 Obsoletes:	nfsclient
 Conflicts:	krb5-common < 1.7
 
@@ -174,8 +174,8 @@ Provides:	nfs-utils-lock
 Provides:	nfslockd
 Provides:	user(rpcstatd)
 Obsoletes:	knfsd-lock
-Obsoletes:	nfs-utils-common-systemd
-Obsoletes:	nfs-utils-lock
+Obsoletes:	nfs-utils-common-systemd < 1.2.5-5
+Obsoletes:	nfs-utils-lock < 1.2.5-3
 Obsoletes:	nfslockd
 Conflicts:	mount < 2.13-0.pre7.1
 
@@ -190,7 +190,7 @@ Summary:	Library to help mapping id's, mainly for NFSv4
 Summary(pl.UTF-8):	Biblioteka pomagająca w mapowaniu identyfikatorów, głównie dla NFSv4
 License:	BSD
 Group:		Libraries
-Obsoletes:	nfsidmap
+Obsoletes:	nfsidmap < 0.12
 
 %description -n libnfsidmap
 Library to help mapping id's, mainly for NFSv4.
@@ -203,7 +203,7 @@ Summary:	Header files for libnfsidmap library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki libnfsidmap
 Group:		Development/Libraries
 Requires:	libnfsidmap = %{version}-%{release}
-Obsoletes:	nfsidmap-devel
+Obsoletes:	nfsidmap-devel < 0.12
 
 %description -n libnfsidmap-devel
 Header files for libnfsidmap library.
@@ -216,7 +216,7 @@ Summary:	Static libnfsidmap library
 Summary(pl.UTF-8):	Statyczna biblioteka libnfsidmap
 Group:		Development/Libraries
 Requires:	libnfsidmap-devel = %{version}-%{release}
-Obsoletes:	nfsidmap-static
+Obsoletes:	nfsidmap-static < 0.12
 
 %description -n libnfsidmap-static
 Static libnfsidmap library.
