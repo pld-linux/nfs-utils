@@ -1,6 +1,6 @@
---- nfs-utils-1.2.2/utils/statd/statd.man~	2010-02-18 13:35:00.000000000 +0100
-+++ nfs-utils-1.2.2/utils/statd/statd.man	2010-02-24 17:30:05.097124679 +0100
-@@ -232,7 +232,7 @@
+--- nfs-utils-2.5.3/utils/statd/statd.man.orig	2021-02-20 18:16:52.000000000 +0100
++++ nfs-utils-2.5.3/utils/statd/statd.man	2021-02-24 21:04:26.749244949 +0100
+@@ -251,7 +251,7 @@
  If this option is not specified,
  .B rpc.statd
  uses
@@ -9,8 +9,8 @@
  by default.
  .IP
  After starting,
-@@ -365,13 +365,13 @@
- will operate.
+@@ -431,13 +431,13 @@
+ .IR \-\-no\-notify .
  .SH FILES
  .TP 2.5i
 -.I /var/lib/nfs/sm

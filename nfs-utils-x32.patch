@@ -1,5 +1,5 @@
---- nfs-utils-2.4.2/aclocal/kerberos5.m4.orig	2019-11-29 16:24:46.626777231 +0100
-+++ nfs-utils-2.4.2/aclocal/kerberos5.m4	2019-11-29 16:27:53.019100791 +0100
+--- nfs-utils-2.5.3/aclocal/kerberos5.m4.orig	2021-02-24 21:11:25.667510884 +0100
++++ nfs-utils-2.5.3/aclocal/kerberos5.m4	2021-02-24 22:08:08.296189188 +0100
 @@ -39,8 +39,8 @@
        if test -f $dir/include/gssapi/gssapi_krb5.h -a \
                  \( -f $dir/lib/libgssapi_krb5.a -o \
@@ -9,9 +9,9 @@
 +                   -f $dir/libx32/libgssapi_krb5.a -o \
 +                   -f $dir/libx32/libgssapi_krb5.so -o \
                     -f $dir/lib64/libgssapi_krb5.a -o \
-                    -f $dir/lib64/libgssapi_krb5.so \) ; then
-          AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
-@@ -53,6 +53,8 @@
+                    -f $dir/lib64/libgssapi_krb5.so -o \
+                    -f $dir/lib/$(uname -m)-linux-gnu/libgssapi_krb5.a -o \
+@@ -55,6 +55,8 @@
        		 -f $dir/include/heimdal/heim_err.h \) -a \
                  \( -f $dir/lib/libroken.a -o \
                     -f $dir/lib64/libroken.a -o \

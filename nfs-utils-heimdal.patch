@@ -13,10 +13,10 @@
           AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
           KRBDIR="$dir"
           gssapi_lib=gssapi
---- nfs-utils-2.5.1/utils/gssd/krb5_util.c.orig	2020-06-18 19:10:06.000000000 +0200
-+++ nfs-utils-2.5.1/utils/gssd/krb5_util.c	2020-08-22 18:47:27.393014417 +0200
-@@ -836,7 +836,11 @@
- 	        myhostad[i+1] = 0;
+--- nfs-utils-2.5.3/utils/gssd/krb5_util.c.orig	2021-02-20 18:16:52.000000000 +0100
++++ nfs-utils-2.5.3/utils/gssd/krb5_util.c	2021-02-24 21:11:01.392926374 +0100
+@@ -891,7 +891,11 @@
+ 		myhostad[i+1] = 0;
  	}
  	if (adhostoverride)
 +#ifdef HAVE_HEIMDAL
@@ -25,9 +25,9 @@
  		krb5_free_string(context, adhostoverride);
 +#endif
  
- 	if (!srchost) {
- 		retval = get_full_hostname(myhostname, myhostname, sizeof(myhostname));
-@@ -1003,9 +1007,37 @@
+ 	code = krb5_get_default_realm(context, &default_realm);
+ 	if (code) {
+@@ -1050,9 +1054,37 @@
  {
  	krb5_error_code ret;
  	krb5_creds creds;
@@ -66,7 +66,7 @@
  	ret = krb5_cc_start_seq_get(context, ccache, &cur);
  	if (ret) 
  		return 0;
-@@ -1025,6 +1057,7 @@
+@@ -1072,6 +1104,7 @@
  		krb5_free_cred_contents(context, &creds);
  	}
  	krb5_cc_end_seq_get(context, ccache, &cur);
@@ -74,7 +74,7 @@
  
  	return found;
  }
-@@ -1071,6 +1104,9 @@
+@@ -1118,6 +1151,9 @@
  	}
  	krb5_free_principal(context, principal);
  err_princ:
@@ -84,7 +84,7 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
-@@ -1369,7 +1405,7 @@
+@@ -1455,7 +1491,7 @@
  #endif
  	if (msg != NULL)
  		return msg;
