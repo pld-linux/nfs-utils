@@ -1,5 +1,5 @@
---- nfs-utils-2.5.3/utils/statd/statd.man.orig	2021-02-20 18:16:52.000000000 +0100
-+++ nfs-utils-2.5.3/utils/statd/statd.man	2021-02-24 21:04:26.749244949 +0100
+--- nfs-utils-2.5.4/utils/statd/statd.man.orig	2021-06-10 20:07:47.000000000 +0200
++++ nfs-utils-2.5.4/utils/statd/statd.man	2021-07-04 20:44:39.952652905 +0200
 @@ -251,7 +251,7 @@
  If this option is not specified,
  .B rpc.statd
@@ -25,7 +25,7 @@
 +.I /var/lib/nfs/statd/state
  NSM state number for this host
  .TP 2.5i
- .I /var/run/run.statd.pid
+ .I /run/run.statd.pid
 --- nfs-utils-1.2.2/utils/statd/sm-notify.man~	2010-02-18 13:35:00.000000000 +0100
 +++ nfs-utils-1.2.2/utils/statd/sm-notify.man	2010-02-24 17:30:27.917124808 +0100
 @@ -186,7 +186,7 @@
