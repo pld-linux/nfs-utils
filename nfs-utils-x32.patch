@@ -20,16 +20,3 @@
                     -f $dir/lib64/libroken.so -o \
                     -f $dir/lib/libroken.so \) ; then
           K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(2),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
---- nfs-utils-2.3.3/utils/nfsdcltrack/sqlite.c.orig	2018-09-06 20:09:08.000000000 +0200
-+++ nfs-utils-2.3.3/utils/nfsdcltrack/sqlite.c	2018-12-09 20:41:52.172247084 +0100
-@@ -542,8 +542,8 @@
- 	int ret;
- 	char *err = NULL;
- 
--	ret = snprintf(buf, sizeof(buf), "DELETE FROM clients WHERE time < %ld",
--			grace_start);
-+	ret = snprintf(buf, sizeof(buf), "DELETE FROM clients WHERE time < %lld",
-+			(long long)grace_start);
- 	if (ret < 0) {
- 		return ret;
- 	} else if ((size_t)ret >= sizeof(buf)) {
