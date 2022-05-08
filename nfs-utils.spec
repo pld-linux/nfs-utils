@@ -61,9 +61,11 @@ BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libmount-devel
 BuildRequires:	libtool
+BuildRequires:	libuuid-devel
 BuildRequires:	libwrap-devel
 BuildRequires:	openldap-devel
 BuildRequires:	pkgconfig
+BuildRequires:	rpcsvc-proto
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.623
 BuildRequires:	sqlite3-devel >= 3.3
