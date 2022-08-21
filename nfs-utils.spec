@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.6.1
+Version:	2.6.2
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	43445a3563185963b736a7081979fd08
+# Source0-md5:	0961dc4777363b88f10305fc4957449f
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -236,6 +236,9 @@ Statyczna biblioteka libnfsidmap.
 %patch6 -p1
 %patch7 -p1
 
+# force regeneration
+%{__rm} tools/nfsrahead/99-nfs.rules
+
 %build
 %{__libtoolize}
 %{__aclocal} -I aclocal
@@ -278,7 +281,8 @@ install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT \
 	pkgplugindir=/%{_lib}/libnfsidmap \
-	generator_dir=/lib/systemd/system-generators
+	generator_dir=/lib/systemd/system-generators \
+	udev_rulesdir=/lib/udev/rules.d
 
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.la
 %{__rm} $RPM_BUILD_ROOT/%{_lib}/libnfsidmap/*.{a,la}
@@ -549,7 +553,10 @@ fi
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
 %attr(755,root,root) %{_sbindir}/showmount
+%attr(755,root,root) %{_libexecdir}/nfsrahead
+/lib/udev/rules.d/99-nfs.rules
 %{_mandir}/man5/nfsmount.conf.5*
+%{_mandir}/man5/nfsrahead.5*
 %{_mandir}/man8/blkmapd.8*
 %{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
@@ -574,6 +581,7 @@ fi
 %attr(755,root,root) /sbin/rpc.statd
 %attr(755,root,root) /sbin/start-statd
 %attr(755,root,root) %{_sbindir}/nfsconf
+%attr(755,root,root) %{_sbindir}/rpcctl
 %attr(755,root,root) %{_sbindir}/sm-notify
 %dir %{_var}/lib/nfs
 %dir %{_var}/lib/nfs/rpc_pipefs
@@ -584,6 +592,7 @@ fi
 %attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
 %attr(755,root,root) /lib/systemd/system-generators/nfs-server-generator
 %attr(755,root,root) /lib/systemd/system-generators/rpc-pipefs-generator
+%{_prefix}/lib/modprobe.d/50-nfs.conf
 %{systemdunitdir}/idmapd.service
 %{systemdunitdir}/nfslock.service
 %{systemdunitdir}/rpc_pipefs.target
@@ -597,6 +606,7 @@ fi
 %{_mandir}/man8/rpc.idmapd.8*
 %{_mandir}/man8/rpc.sm-notify.8*
 %{_mandir}/man8/rpc.statd.8*
+%{_mandir}/man8/rpcctl.8*
 %{_mandir}/man8/sm-notify.8*
 %{_mandir}/man8/statd.8*
 
