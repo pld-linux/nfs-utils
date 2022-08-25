@@ -11,7 +11,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	2.6.2
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
@@ -267,6 +267,7 @@ Statyczna biblioteka libnfsidmap.
 	--without-gssglue \
 	--with-krb5 \
 	--with-systemd=%{systemdunitdir} \
+	--with-modprobedir=/lib/modprobe.d \
 	--with-tcp-wrappers
 
 %{__make} pkgplugindir=/%{_lib}/libnfsidmap
@@ -592,7 +593,7 @@ fi
 %attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
 %attr(755,root,root) /lib/systemd/system-generators/nfs-server-generator
 %attr(755,root,root) /lib/systemd/system-generators/rpc-pipefs-generator
-%{_prefix}/lib/modprobe.d/50-nfs.conf
+/lib/modprobe.d/50-nfs.conf
 %{systemdunitdir}/idmapd.service
 %{systemdunitdir}/nfslock.service
 %{systemdunitdir}/rpc_pipefs.target
