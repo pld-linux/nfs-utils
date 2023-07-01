@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.6.2
-Release:	2
+Version:	2.6.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	0961dc4777363b88f10305fc4957449f
+# Source0-md5:	d47ff4ca79b71d64d37c0f0e81aae134
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -267,7 +267,6 @@ Statyczna biblioteka libnfsidmap.
 	--without-gssglue \
 	--with-krb5 \
 	--with-systemd=%{systemdunitdir} \
-	--with-modprobedir=/lib/modprobe.d \
 	--with-tcp-wrappers
 
 %{__make} pkgplugindir=/%{_lib}/libnfsidmap
@@ -491,6 +490,7 @@ fi
 %attr(755,root,root) /sbin/rpcdebug
 %attr(755,root,root) /sbin/fsck.nfs
 %attr(755,root,root) %{_sbindir}/exportfs
+%attr(755,root,root) %{_sbindir}/fsidd
 %attr(755,root,root) %{_sbindir}/nfsdcld
 %attr(755,root,root) %{_sbindir}/nfsdclddb
 %attr(755,root,root) %{_sbindir}/nfsdclnts
@@ -528,6 +528,7 @@ fi
 %{_mandir}/man8/rpcdebug.8*
 %{_mandir}/man8/svcgssd.8*
 
+%{systemdunitdir}/fsidd.service
 %{systemdunitdir}/nfs.service
 %{systemdunitdir}/nfsd.service
 %{systemdunitdir}/nfsd-exportfs.service
@@ -555,6 +556,7 @@ fi
 %attr(755,root,root) %{_sbindir}/nfsiostat
 %attr(755,root,root) %{_sbindir}/showmount
 %attr(755,root,root) %{_libexecdir}/nfsrahead
+/lib/udev/rules.d/60-nfs.rules
 /lib/udev/rules.d/99-nfs.rules
 %{_mandir}/man5/nfsmount.conf.5*
 %{_mandir}/man5/nfsrahead.5*
@@ -593,7 +595,6 @@ fi
 %attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
 %attr(755,root,root) /lib/systemd/system-generators/nfs-server-generator
 %attr(755,root,root) /lib/systemd/system-generators/rpc-pipefs-generator
-/lib/modprobe.d/50-nfs.conf
 %{systemdunitdir}/idmapd.service
 %{systemdunitdir}/nfslock.service
 %{systemdunitdir}/rpc_pipefs.target
