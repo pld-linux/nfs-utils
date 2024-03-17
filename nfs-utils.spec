@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.6.3
+Version:	2.6.4
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	d47ff4ca79b71d64d37c0f0e81aae134
+# Source0-md5:	907f95977ccf7a522ee32af1534f0e4c
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -72,7 +72,7 @@ BuildRequires:	sqlite3-devel >= 3.3
 BuildRequires:	tar >= 1:1.22
 BuildRequires:	xz
 %if %{with tirpc}
-BuildRequires:	libtirpc-devel >= 1:0.1.10-4
+BuildRequires:	libtirpc-devel >= 1:1.3.4
 %else
 BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
@@ -135,6 +135,11 @@ Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-common = %{version}-%{release}
+%if %{with tirpc}
+Requires:	libtirpc >= 1:1.3.4
+%else
+BuildRequires:	librpcsecgss >= 0.16
+%endif
 Requires:	psmisc
 Requires:	rc-scripts
 Requires:	systemd-units >= 0.38
