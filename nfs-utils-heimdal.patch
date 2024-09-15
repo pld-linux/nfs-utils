@@ -93,3 +93,32 @@
  	return strdup(error_message(code));
  #else
  	if (context != NULL)
+@@ -1642,6 +1642,11 @@ get_allowed_enctypes(void)
+ 	struct conf_list_node *node;
+ 	char *buf = NULL, *old = NULL;
+ 	int len, ret = 0;
++	krb5_context ctx = NULL;
++
++	ret = krb5_init_context(&ctx);
++	if (ret != 0)
++		return ret;
+ 
+ 	allowed_etypes = conf_get_list("gssd", "allowed-enctypes");
+ 	if (allowed_etypes) {
+@@ -1653,7 +1658,7 @@ get_allowed_enctypes(void)
+ 				ret = ENOMEM;
+ 				goto out_err;
+ 			}
+-			ret = krb5_string_to_enctype(node->field,
++			ret = krb5_string_to_enctype(ctx, node->field,
+ 						     &allowed_enctypes[num_allowed_enctypes]);
+ 			if (ret) {
+ 				printerr(0, "%s: invalid enctype %s",
+@@ -1694,6 +1699,7 @@ out:
+ 		free(old);
+ 	if (allowed_etypes)
+ 		conf_free_list(allowed_etypes);
++	krb5_free_context(ctx);
+ 	return ret;
+ }
+ 

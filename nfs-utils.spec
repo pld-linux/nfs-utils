@@ -10,12 +10,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.6.4
+Version:	2.7.1
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	907f95977ccf7a522ee32af1534f0e4c
+# Source0-md5:	5ca9f2a5c49f0a19563f3f14e813af18
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -499,6 +499,7 @@ fi
 %attr(755,root,root) %{_sbindir}/nfsdcld
 %attr(755,root,root) %{_sbindir}/nfsdclddb
 %attr(755,root,root) %{_sbindir}/nfsdclnts
+%attr(755,root,root) %{_sbindir}/nfsref
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
 %attr(755,root,root) %{_sbindir}/rpc.svcgssd
@@ -526,6 +527,7 @@ fi
 %{_mandir}/man8/nfsdclddb.8*
 %{_mandir}/man8/nfsdclnts.8*
 %{_mandir}/man8/nfsdcltrack.8*
+%{_mandir}/man8/nfsref.8*
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
