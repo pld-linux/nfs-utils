@@ -2,6 +2,7 @@
 #
 # Conditional build:
 %bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
+%bcond_without	static_libs	# static libraries
 %bcond_without	tirpc		# use librpcsecgss instead of libtirpc
 
 Summary:	Kernel NFS server
@@ -255,6 +256,7 @@ Statyczna biblioteka libnfsidmap.
 %{__autoheader}
 %{__automake}
 %configure \
+	%{__enable_disable static_libs static} \
 	--enable-nfsv4 \
 	--enable-nfsv41 \
 	--enable-gss \
@@ -294,7 +296,8 @@ install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig,exports.d,modprobe.d} \
 	udev_rulesdir=/lib/udev/rules.d
 
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.la
-%{__rm} $RPM_BUILD_ROOT/%{_lib}/libnfsidmap/*.{a,la}
+%{__rm} $RPM_BUILD_ROOT/%{_lib}/libnfsidmap/*.la
+%{?with_static_libs:%{__rm} $RPM_BUILD_ROOT/%{_lib}/libnfsidmap/*.a}
 
 %{__mv} $RPM_BUILD_ROOT%{_libdir}/libnfsidmap.so.* $RPM_BUILD_ROOT/%{_lib}
 ln -sf /%{_lib}/$(basename $RPM_BUILD_ROOT/%{_lib}/libnfsidmap.so.*.*.*) \
@@ -648,6 +651,8 @@ fi
 %{_pkgconfigdir}/libnfsidmap.pc
 %{_mandir}/man3/nfs4_uid_to_name.3*
 
+%if %{with static_libs}
 %files -n libnfsidmap-static
 %defattr(644,root,root,755)
 %{_libdir}/libnfsidmap.a
+%endif
