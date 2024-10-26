@@ -60,11 +60,14 @@ BuildRequires:	libblkid-devel >= 1.40
 BuildRequires:	libcap-devel
 BuildRequires:	libevent-devel >= 1.2
 BuildRequires:	libmount-devel
+BuildRequires:	libnl-devel >= 3.1
 BuildRequires:	libtool
 BuildRequires:	libuuid-devel
 BuildRequires:	libwrap-devel
+BuildRequires:	linux-libc-headers >= 7:6.11
 BuildRequires:	openldap-devel
 BuildRequires:	pkgconfig
+BuildRequires:	readline-devel
 BuildRequires:	rpcsvc-proto
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.623
@@ -89,6 +92,7 @@ Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-common = %{version}-%{release}
 Requires:	libevent >= 2.0.14-2
+Requires:	libnl >= 3.1
 Requires:	rc-scripts >= 0.4.1.5
 Requires:	rpcbind >= 0.1.7
 Requires:	setup >= 2.4.6-7
