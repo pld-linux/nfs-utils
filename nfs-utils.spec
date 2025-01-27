@@ -11,12 +11,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.8.1
+Version:	2.8.2
 Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	d579f1439485675392e1b84036ce7891
+# Source0-md5:	40e598d6ec2174258020c8be09bf9ddb
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -237,14 +237,14 @@ Statyczna biblioteka libnfsidmap.
 
 %prep
 %setup -q -a1
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
+%patch -P0 -p1
+%patch -P1 -p1
+%patch -P2 -p1
+%patch -P3 -p1
+%patch -P4 -p1
+%patch -P5 -p1
+%patch -P6 -p1
+%patch -P7 -p1
 
 # force regeneration
 %{__rm} tools/nfsrahead/99-nfs.rules
@@ -263,6 +263,7 @@ Statyczna biblioteka libnfsidmap.
 	--enable-libmount-mount \
 	--enable-mount \
 	--enable-mountconfig \
+	--enable-nfsdcltrack \
 	--enable-svcgss \
 %if %{with tirpc}
 	--enable-ipv6 \
