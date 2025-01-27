@@ -65,9 +65,10 @@ BuildRequires:	libnl-devel >= 3.1
 BuildRequires:	libtool
 BuildRequires:	libuuid-devel
 BuildRequires:	libwrap-devel
+BuildRequires:	libxml2-devel >= 2.4
 BuildRequires:	linux-libc-headers >= 7:6.11
 BuildRequires:	openldap-devel
-BuildRequires:	pkgconfig
+BuildRequires:	pkgconfig >= 1:0.9.0
 BuildRequires:	readline-devel
 BuildRequires:	rpcsvc-proto
 BuildRequires:	rpm-pythonprov
