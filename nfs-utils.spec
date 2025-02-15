@@ -12,7 +12,7 @@ Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки 
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
 Version:	2.8.2
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
@@ -32,6 +32,7 @@ Source10:	nfsfs.sysconfig
 Source11:	blkmapd.init
 Source12:	sunrpc.conf
 Source13:	%{name}_env.sh
+Source14:	nfsdcld.init
 Source102:	nfsd.service
 Source103:	nfs-blkmapd.service
 Source104:	nfs-exportfs.service
@@ -330,6 +331,7 @@ install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
 install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
+install %{SOURCE14} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsdcld
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
 install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
 install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
@@ -387,6 +389,8 @@ chmod a-x $RPM_BUILD_ROOT%{_sbindir}/{mountstats,nfsdclddb,nfsdclnts,nfsiostat}
 rm -rf $RPM_BUILD_ROOT
 
 %post
+/sbin/chkconfig --add nfsdcld
+%service nfsdcld restart "NFSDCLD Client Tracking Daemon"
 /sbin/chkconfig --add nfs
 %service nfs restart "NFS daemon"
 /sbin/chkconfig --add svcgssd
@@ -399,8 +403,10 @@ if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del nfs
 	%service svcgssd stop
 	/sbin/chkconfig --del svcgssd
+	%service nfsdcld stop
+	/sbin/chkconfig --del nfsdcld
 fi
-%systemd_preun nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
+%systemd_preun nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service nfsdcld.service
 
 %postun
 %systemd_reload
