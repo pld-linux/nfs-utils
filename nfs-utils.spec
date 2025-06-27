@@ -1,9 +1,9 @@
 # TODO: systemd support needs cleanup (see TODOs below)
 #
 # Conditional build:
-%bcond_with	krb5		# build with MIT Kerberos instead of Heimdal
+%bcond_with	krb5		# MIT Kerberos instead of Heimdal
 %bcond_without	static_libs	# static libraries
-%bcond_without	tirpc		# use librpcsecgss instead of libtirpc
+%bcond_without	tirpc		# libtirpc instead of librpcsecgss
 
 Summary:	Kernel NFS server
 Summary(pl.UTF-8):	Działający na poziomie jądra serwer NFS
@@ -11,12 +11,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.8.2
-Release:	2
+Version:	2.8.3
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	40e598d6ec2174258020c8be09bf9ddb
+# Source0-md5:	5a827a1254f878370135e3b3ae49be73
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -52,6 +52,7 @@ Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
 Patch7:		%{name}-sh.patch
+Patch8:		%{name}-krb5-cache.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -83,7 +84,7 @@ BuildRequires:	libtirpc-devel >= 1:1.3.4
 BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
 %if %{with krb5}
-BuildRequires:	krb5-devel >= 1.6
+BuildRequires:	krb5-devel >= 1.8
 %else
 BuildRequires:	heimdal-devel >= 1.0
 %endif
@@ -247,6 +248,9 @@ Statyczna biblioteka libnfsidmap.
 %patch -P5 -p1
 %patch -P6 -p1
 %patch -P7 -p1
+%if %{without krb5}
+%patch -P8 -p1 -R
+%endif
 
 # force regeneration
 %{__rm} tools/nfsrahead/99-nfs.rules
@@ -332,33 +336,33 @@ install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
 install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
 install %{SOURCE14} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsdcld
-install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
-install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
+cp -p %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
+cp -p %{SOURCE9} $RPM_BUILD_ROOT/etc/sysconfig/nfslock
+cp -p %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/nfsfs
 
-install %{SOURCE12} $RPM_BUILD_ROOT/etc/modprobe.d/sunrpc.conf
+cp -p %{SOURCE12} $RPM_BUILD_ROOT/etc/modprobe.d/sunrpc.conf
 
 #install systemd/proc-fs-nfsd.mount $RPM_BUILD_ROOT%{systemdunitdir}/proc-fs-nfsd.mount
 #install systemd/var-lib-nfs-rpc_pipefs.mount $RPM_BUILD_ROOT%{systemdunitdir}/var-lib-nfs-rpc_pipefs.mount
 # TODO: upstream installs nfs-server.service
-install %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
+cp -p %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
 # TODO: upstream installs nfs-blkmap.service
-install %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
-install %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
+cp -p %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
+cp -p %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
 # TODO: upstream installs rpc-gssd.service
-install %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
+cp -p %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
 # TODO: upstream installs nfs-idmapd.service
-install %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
+cp -p %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
 # TODO: upstream installs rpc-statd.service + rpc-statd-notify.service
-install %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
+cp -p %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
 # TODO: upstream installs nfs-mountd.service
-install %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
+cp -p %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
 # TODO: upstream installs auth-rpcgss-module.service / rpc-svcgssd.service
-install %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
+cp -p %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
 # TODO: upstream installs also nfs-utils.service and nfs-client.target meta-services
-install %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
-install %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
-install %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfslock.preconfig
+cp -p %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
+cp -p %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
+cp -p %{SOURCE112} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfslock.preconfig
 
 # Disable old SysV service for systemd installs
 ln -s /dev/null $RPM_BUILD_ROOT%{systemdunitdir}/nfs.service
@@ -522,6 +526,7 @@ fi
 %attr(755,root,root) %{_sbindir}/nfsstat
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
+%attr(754,root,root) /etc/rc.d/init.d/nfsdcld
 %attr(754,root,root) /etc/rc.d/init.d/svcgssd
 
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
