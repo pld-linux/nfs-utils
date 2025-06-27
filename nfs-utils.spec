@@ -1,6 +1,7 @@
 # TODO: systemd support needs cleanup (see TODOs below)
 #
 # Conditional build:
+%bcond_without	kerberos5	# Kerberos V (GSS) support
 %bcond_with	krb5		# MIT Kerberos instead of Heimdal
 %bcond_without	static_libs	# static libraries
 %bcond_without	tirpc		# libtirpc instead of librpcsecgss
@@ -83,10 +84,12 @@ BuildRequires:	libtirpc-devel >= 1:1.3.4
 %else
 BuildRequires:	librpcsecgss-devel >= 0.16
 %endif
+%if %{with kerberos5}
 %if %{with krb5}
 BuildRequires:	krb5-devel >= 1.8
 %else
 BuildRequires:	heimdal-devel >= 1.0
+%endif
 %endif
 # lucid context fields mismatch with current version of spkm3.h
 BuildConflicts:	gss_mech_spkm3-devel
@@ -265,12 +268,12 @@ Statyczna biblioteka libnfsidmap.
 	%{__enable_disable static_libs static} \
 	--enable-nfsv4 \
 	--enable-nfsv41 \
-	--enable-gss \
+	%{!?with_kerberos5:--disable-gss} \
 	--enable-libmount-mount \
 	--enable-mount \
 	--enable-mountconfig \
 	--enable-nfsdcltrack \
-	--enable-svcgss \
+	%{?with_kerberos5:--enable-svcgss} \
 %if %{with tirpc}
 	--enable-ipv6 \
 	--enable-tirpc \
@@ -283,7 +286,6 @@ Statyczna biblioteka libnfsidmap.
 	--with-statduser=rpcstatd \
 	--with-start-statd=/sbin/start-statd \
 	--without-gssglue \
-	--with-krb5 \
 	--with-systemd=%{systemdunitdir} \
 	--with-tcp-wrappers
 
@@ -324,7 +326,7 @@ EOF
 
 %{__sed} -i -e 's|%{_sbindir}nfsidmap|/sbin/nfsidmap|g' $RPM_BUILD_ROOT%{_mandir}/man8/nfsidmap.8
 
-for f in rpcdebug blkmapd nfsidmap rpc.gssd rpc.idmapd rpc.statd ; do
+for f in rpcdebug blkmapd nfsidmap %{?with_kerberos5:rpc.gssd} rpc.idmapd rpc.statd ; do
 	%{__mv} $RPM_BUILD_ROOT%{_sbindir}/$f $RPM_BUILD_ROOT/sbin
 done
 
@@ -332,8 +334,10 @@ install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfs
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfslock
 install %{SOURCE4} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsfs
 install %{SOURCE5} $RPM_BUILD_ROOT/etc/rc.d/init.d/idmapd
+%if %{with kerberos5}
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/rc.d/init.d/gssd
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/svcgssd
+%endif
 install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/blkmapd
 install %{SOURCE14} $RPM_BUILD_ROOT/etc/rc.d/init.d/nfsdcld
 cp -p %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/nfsd
@@ -349,16 +353,18 @@ cp -p %{SOURCE102} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd.service
 # TODO: upstream installs nfs-blkmap.service
 cp -p %{SOURCE103} $RPM_BUILD_ROOT%{systemdunitdir}/blkmapd.service
 cp -p %{SOURCE104} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-exportfs.service
-# TODO: upstream installs rpc-gssd.service
-cp -p %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
 # TODO: upstream installs nfs-idmapd.service
 cp -p %{SOURCE106} $RPM_BUILD_ROOT%{systemdunitdir}/idmapd.service
 # TODO: upstream installs rpc-statd.service + rpc-statd-notify.service
 cp -p %{SOURCE107} $RPM_BUILD_ROOT%{systemdunitdir}/nfslock.service
 # TODO: upstream installs nfs-mountd.service
 cp -p %{SOURCE108} $RPM_BUILD_ROOT%{systemdunitdir}/nfsd-mountd.service
+%if %{with kerberos5}
+# TODO: upstream installs rpc-gssd.service
+cp -p %{SOURCE105} $RPM_BUILD_ROOT%{systemdunitdir}/gssd.service
 # TODO: upstream installs auth-rpcgss-module.service / rpc-svcgssd.service
 cp -p %{SOURCE109} $RPM_BUILD_ROOT%{systemdunitdir}/svcgssd.service
+%endif
 # TODO: upstream installs also nfs-utils.service and nfs-client.target meta-services
 cp -p %{SOURCE110} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.postconfig
 cp -p %{SOURCE111} $RPM_BUILD_ROOT%{_datadir}/nfs-utils/nfsd.preconfig
@@ -371,14 +377,17 @@ ln -s /dev/null $RPM_BUILD_ROOT%{systemdunitdir}/nfsfs.service
 > $RPM_BUILD_ROOT%{_var}/lib/nfs/rmtab
 > $RPM_BUILD_ROOT%{_sysconfdir}/exports
 
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,sm-notify,svcgssd,gssd,idmapd}.8
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{mountd,nfsd,statd,sm-notify,idmapd}.8
 echo ".so mountd.8"  > 	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.mountd.8
 echo ".so nfsd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.nfsd.8
 echo ".so statd.8"   >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.statd.8
 echo ".so sm-notify.8" > $RPM_BUILD_ROOT%{_mandir}/man8/rpc.sm-notify.8
-echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so idmapd.8"  >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.idmapd.8
+%if %{with kerberos5}
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man8/rpc.{svcgssd,gssd}.8
+echo ".so gssd.8"    >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.gssd.8
 echo ".so svcgssd.8" >	$RPM_BUILD_ROOT%{_mandir}/man8/rpc.svcgssd.8
+%endif
 
 touch $RPM_BUILD_ROOT/var/lib/nfs/xtab
 
@@ -397,20 +406,24 @@ rm -rf $RPM_BUILD_ROOT
 %service nfsdcld restart "NFSDCLD Client Tracking Daemon"
 /sbin/chkconfig --add nfs
 %service nfs restart "NFS daemon"
+%if %{with kerberos5}
 /sbin/chkconfig --add svcgssd
 %service svcgssd restart "RPC svcgssd"
-%systemd_post nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
+%endif
+%systemd_post nfsd.service nfsd-exportfs.service nfsd-mountd.service %{?with_kerberos5:svcgssd.service}
 
 %preun
 if [ "$1" = "0" ]; then
 	%service nfs stop
 	/sbin/chkconfig --del nfs
+%if %{with kerberos5}
 	%service svcgssd stop
 	/sbin/chkconfig --del svcgssd
+%endif
 	%service nfsdcld stop
 	/sbin/chkconfig --del nfsdcld
 fi
-%systemd_preun nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service nfsdcld.service
+%systemd_preun nfsd.service nfsd-exportfs.service nfsd-mountd.service %{?with_kerberos5:svcgssd.service} nfsdcld.service
 
 %postun
 %systemd_reload
@@ -418,22 +431,26 @@ fi
 %post clients
 /sbin/chkconfig --add nfsfs
 %service nfsfs restart
+%if %{with kerberos5}
 /sbin/chkconfig --add gssd
 %service gssd restart "RPC gssd"
+%endif
 /sbin/chkconfig --add blkmapd
 %service blkmapd restart "pNFS blkmapd"
-%systemd_post blkmapd.service gssd.service
+%systemd_post blkmapd.service %{?with_kerberos5:gssd.service}
 
 %preun clients
 if [ "$1" = "0" ]; then
 	%service nfsfs stop
 	/sbin/chkconfig --del nfsfs
+%if %{with kerberos5}
 	%service gssd stop
 	/sbin/chkconfig --del gssd
+%endif
 	%service blkmapd stop
 	/sbin/chkconfig --del blkmapd
 fi
-%systemd_preun blkmapd.service gssd.service
+%systemd_preun blkmapd.service %{?with_kerberos5:gssd.service}
 
 %postun clients
 %systemd_reload
@@ -482,12 +499,12 @@ if [ -f /etc/sysconfig/nfsd ]; then
 		echo "RPCMOUNTDOPTIONS=\"$RPCMOUNTOPTIONS $__RPCMOUNTDOPTIONS\"" >>/etc/sysconfig/nfsd
 	fi
 fi
-%systemd_trigger nfsd.service nfsd-exportfs.service nfsd-mountd.service svcgssd.service
+%systemd_trigger nfsd.service nfsd-exportfs.service nfsd-mountd.service %{?with_kerberos5:svcgssd.service}
 
-%triggerpostun clients -- %{name}-clients < 1.2.5-7
-%systemd_trigger blkmapd.service gssd.service
+%triggerpostun clients -- nfs-utils-clients < 1.2.5-7
+%systemd_trigger blkmapd.service %{?with_kerberos5:gssd.service}
 
-%triggerpostun common -- %{name}-lock < 1.2.5-3
+%triggerpostun common -- nfs-utils-lock < 1.2.5-3
 if [ -f /etc/sysconfig/nfslock.rpmsave ]; then
 	mv -f /etc/sysconfig/nfslock{,.rpmnew}
 	mv -f /etc/sysconfig/nfslock.rpmsave /etc/sysconfig/nfslock
@@ -522,12 +539,10 @@ fi
 %attr(755,root,root) %{_sbindir}/nfsref
 %attr(755,root,root) %{_sbindir}/rpc.mountd
 %attr(755,root,root) %{_sbindir}/rpc.nfsd
-%attr(755,root,root) %{_sbindir}/rpc.svcgssd
 %attr(755,root,root) %{_sbindir}/nfsstat
 
 %attr(754,root,root) /etc/rc.d/init.d/nfs
 %attr(754,root,root) /etc/rc.d/init.d/nfsdcld
-%attr(754,root,root) /etc/rc.d/init.d/svcgssd
 
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/exports
 %dir %{_sysconfdir}/exports.d
@@ -553,9 +568,7 @@ fi
 %{_mandir}/man8/nfsstat.8*
 %{_mandir}/man8/rpc.mountd.8*
 %{_mandir}/man8/rpc.nfsd.8*
-%{_mandir}/man8/rpc.svcgssd.8*
 %{_mandir}/man8/rpcdebug.8*
-%{_mandir}/man8/svcgssd.8*
 
 %{systemdunitdir}/fsidd.service
 %{systemdunitdir}/nfs.service
@@ -563,15 +576,21 @@ fi
 %{systemdunitdir}/nfsd-exportfs.service
 %{systemdunitdir}/nfsd-mountd.service
 %{systemdunitdir}/nfsdcld.service
-%{systemdunitdir}/svcgssd.service
 %{systemdunitdir}/proc-fs-nfsd.mount
 %attr(755,root,root) %{_datadir}/nfs-utils/nfsd.postconfig
 %attr(755,root,root) %{_datadir}/nfs-utils/nfsd.preconfig
 
+%if %{with kerberos5}
+%attr(755,root,root) %{_sbindir}/rpc.svcgssd
+%attr(754,root,root) /etc/rc.d/init.d/svcgssd
+%{_mandir}/man8/rpc.svcgssd.8*
+%{_mandir}/man8/svcgssd.8*
+%{systemdunitdir}/svcgssd.service
+%endif
+
 %files clients
 %defattr(644,root,root,755)
 %attr(754,root,root) /etc/rc.d/init.d/blkmapd
-%attr(754,root,root) /etc/rc.d/init.d/gssd
 %attr(754,root,root) /etc/rc.d/init.d/nfsfs
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/nfsfs
 %attr(664,root,fileshare) %config(noreplace) %verify(not md5 mtime size) /etc/nfsmount.conf
@@ -580,7 +599,6 @@ fi
 %attr(4755,root,root) /sbin/mount.nfs4
 %attr(4755,root,root) /sbin/umount.nfs4
 %attr(755,root,root) /sbin/blkmapd
-%attr(755,root,root) /sbin/rpc.gssd
 %attr(755,root,root) %{_sbindir}/mountstats
 %attr(755,root,root) %{_sbindir}/nfsiostat
 %attr(755,root,root) %{_sbindir}/showmount
@@ -590,17 +608,22 @@ fi
 %{_mandir}/man5/nfsmount.conf.5*
 %{_mandir}/man5/nfsrahead.5*
 %{_mandir}/man8/blkmapd.8*
-%{_mandir}/man8/gssd.8*
 %{_mandir}/man8/mount.nfs.8*
 %{_mandir}/man8/mountstats.8*
 %{_mandir}/man8/nfsiostat.8*
-%{_mandir}/man8/rpc.gssd.8*
 %{_mandir}/man8/showmount.8*
 %{_mandir}/man8/umount.nfs.8*
 
 %{systemdunitdir}/nfsfs.service
 %{systemdunitdir}/blkmapd.service
+
+%if %{with kerberos5}
+%attr(755,root,root) /sbin/rpc.gssd
+%attr(754,root,root) /etc/rc.d/init.d/gssd
 %{systemdunitdir}/gssd.service
+%{_mandir}/man8/gssd.8*
+%{_mandir}/man8/rpc.gssd.8*
+%endif
 
 %files common
 %defattr(644,root,root,755)
