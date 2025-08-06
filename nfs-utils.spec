@@ -54,6 +54,7 @@ Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
 Patch7:		%{name}-sh.patch
 Patch8:		%{name}-krb5-cache.patch
+Patch9:		glibc2.42.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -254,6 +255,7 @@ Statyczna biblioteka libnfsidmap.
 %if %{without krb5}
 %patch -P8 -p1 -R
 %endif
+%patch -P9 -p1
 
 # force regeneration
 %{__rm} tools/nfsrahead/99-nfs.rules
