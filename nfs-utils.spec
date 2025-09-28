@@ -12,12 +12,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.8.3
-Release:	2
+Version:	2.8.4
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	5a827a1254f878370135e3b3ae49be73
+# Source0-md5:	e5aa4f14759abd4f93b4a68e2bc086ff
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -54,7 +54,6 @@ Patch5:		%{name}-x32.patch
 Patch6:		libnfsidmap-pluginpath.patch
 Patch7:		%{name}-sh.patch
 Patch8:		%{name}-krb5-cache.patch
-Patch9:		glibc2.42.patch
 URL:		http://linux-nfs.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
@@ -255,7 +254,6 @@ Statyczna biblioteka libnfsidmap.
 %if %{without krb5}
 %patch -P8 -p1 -R
 %endif
-%patch -P9 -p1
 
 # force regeneration
 %{__rm} tools/nfsrahead/99-nfs.rules
@@ -670,7 +668,7 @@ fi
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
 %attr(755,root,root) /%{_lib}/libnfsidmap.so.*.*.*
-%attr(755,root,root) %ghost /%{_lib}/libnfsidmap.so.1
+%ghost /%{_lib}/libnfsidmap.so.1
 %dir /%{_lib}/libnfsidmap
 %attr(755,root,root) /%{_lib}/libnfsidmap/nsswitch.so
 %attr(755,root,root) /%{_lib}/libnfsidmap/regex.so
@@ -683,7 +681,7 @@ fi
 
 %files -n libnfsidmap-devel
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/libnfsidmap.so
+%{_libdir}/libnfsidmap.so
 %{_includedir}/nfsidmap.h
 %{_includedir}/nfsidmap_plugin.h
 %{_pkgconfigdir}/libnfsidmap.pc
