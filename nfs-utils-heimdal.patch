@@ -13,9 +13,9 @@
           AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
           KRBDIR="$dir"
           gssapi_lib=gssapi
---- nfs-utils-2.5.3/utils/gssd/krb5_util.c.orig	2021-02-20 18:16:52.000000000 +0100
-+++ nfs-utils-2.5.3/utils/gssd/krb5_util.c	2021-02-24 21:11:01.392926374 +0100
-@@ -891,7 +891,11 @@
+--- nfs-utils-2.8.7/utils/gssd/krb5_util.c.orig	2026-03-12 22:01:26.000000000 +0100
++++ nfs-utils-2.8.7/utils/gssd/krb5_util.c	2026-03-24 06:31:40.201476726 +0100
+@@ -876,7 +876,11 @@ find_keytab_entry(krb5_context context,
  		myhostad[i+1] = 0;
  	}
  	if (adhostoverride)
@@ -27,7 +27,7 @@
  
  	code = krb5_get_default_realm(context, &default_realm);
  	if (code) {
-@@ -1050,9 +1054,37 @@
+@@ -1035,9 +1039,37 @@ check_for_tgt(krb5_context context, krb5
  {
  	krb5_error_code ret;
  	krb5_creds creds;
@@ -66,7 +66,7 @@
  	ret = krb5_cc_start_seq_get(context, ccache, &cur);
  	if (ret) 
  		return 0;
-@@ -1072,6 +1104,7 @@
+@@ -1057,6 +1089,7 @@ check_for_tgt(krb5_context context, krb5
  		krb5_free_cred_contents(context, &creds);
  	}
  	krb5_cc_end_seq_get(context, ccache, &cur);
@@ -74,7 +74,7 @@
  
  	return found;
  }
-@@ -1118,6 +1151,9 @@
+@@ -1109,6 +1142,9 @@ query_krb5_ccache(const char* cred_cache
  	}
  	krb5_free_principal(context, principal);
  err_princ:
@@ -84,7 +84,7 @@
  	krb5_cc_set_flags(context, ccache,  KRB5_TC_OPENCLOSE);
  	krb5_cc_close(context, ccache);
  err_cache:
-@@ -1455,7 +1491,7 @@
+@@ -1484,11 +1520,11 @@ gssd_k5_err_msg(krb5_context context, kr
  #endif
  	if (msg != NULL)
  		return msg;
@@ -93,10 +93,41 @@
  	return strdup(error_message(code));
  #else
  	if (context != NULL)
-@@ -1642,6 +1642,11 @@ get_allowed_enctypes(void)
+-		return strdup(krb5_get_err_text(context, code));
++		return strdup(krb5_get_error_message(context, code));
+ 	else
+ 		return strdup(error_message(code));
+ #endif
+@@ -1596,14 +1632,14 @@ out_cred:
+ }
+ 
+ int
+-enctypes_list_to_string(krb5_enctype *enctypes, int num_enctypes,
++enctypes_list_to_string(krb5_context ctx, krb5_enctype *enctypes, int num_enctypes,
+ 		        char **enctype_string)
+ {
+-	char tmp[100], *buf = NULL, *old = NULL;
++	char *tmp = NULL, *buf = NULL, *old = NULL;
+ 	int i, len, ret;
+ 
+ 	for (i = 0; i < num_enctypes; i++) {
+-		ret = krb5_enctype_to_name(enctypes[i], true, tmp, sizeof(tmp));
++		ret = krb5_enctype_to_string(ctx, enctypes[i], &tmp);
+ 		if (ret == 0) {
+ 			if (buf == NULL) {
+ 				len = asprintf(&buf, "%s (%d)", tmp,
+@@ -1635,6 +1671,7 @@ out_err:
+ 	free(buf);
+ 
+ out:
++	free(tmp);
+ 	if (old != buf)
+ 		free(old);
+ 	if (ret == 0)
+@@ -1649,6 +1686,11 @@ get_allowed_enctypes(void)
+ 	struct conf_list *allowed_etypes = NULL;
  	struct conf_list_node *node;
- 	char *buf = NULL, *old = NULL;
- 	int len, ret = 0;
+ 	int ret = 0;
 +	krb5_context ctx = NULL;
 +
 +	ret = krb5_init_context(&ctx);
@@ -105,7 +136,7 @@
  
  	allowed_etypes = conf_get_list("gssd", "allowed-enctypes");
  	if (allowed_etypes) {
-@@ -1653,7 +1658,7 @@ get_allowed_enctypes(void)
+@@ -1660,7 +1702,7 @@ get_allowed_enctypes(void)
  				ret = ENOMEM;
  				goto out_err;
  			}
@@ -114,11 +145,98 @@
  						     &allowed_enctypes[num_allowed_enctypes]);
  			if (ret) {
  				printerr(0, "%s: invalid enctype %s",
-@@ -1694,6 +1699,7 @@ out:
- 		free(old);
+@@ -1671,7 +1713,7 @@ get_allowed_enctypes(void)
+ 		}
+ 	}
+ 	if (num_allowed_enctypes > 0) {
+-		if (enctypes_list_to_string(allowed_enctypes, num_allowed_enctypes,
++		if (enctypes_list_to_string(ctx, allowed_enctypes, num_allowed_enctypes,
+ 					    &allowed_enctypes_string) != 0) {
+ 			printerr(2, "%s: warning: enctypes_list_to_string() failed\n",
+ 				 __func__);
+@@ -1687,6 +1729,7 @@ out_err:
+ out:
  	if (allowed_etypes)
  		conf_free_list(allowed_etypes);
 +	krb5_free_context(ctx);
  	return ret;
  }
  
+@@ -1721,7 +1764,7 @@ get_krb5_library_permitted_enctypes(void
+ 			num_lib_enctypes++;
+ 
+ 	if (num_lib_enctypes > 0) {
+-		if (enctypes_list_to_string(lib_enctypes, num_lib_enctypes,
++		if (enctypes_list_to_string(context, lib_enctypes, num_lib_enctypes,
+ 					    &lib_enctypes_string) != 0) {
+ 			printerr(2, "%s: warning: enctypes_list_to_string() failed\n",
+ 				 __func__);
+@@ -1771,7 +1814,7 @@ out:
+  * according to the krb5 library's list, hence this helper function.
+  */
+ static int
+-determine_enctypes(krb5_enctype **set_enctypes, int *num_set_enctypes,
++determine_enctypes(krb5_context ctx, krb5_enctype **set_enctypes, int *num_set_enctypes,
+ 		   char **set_enctypes_string)
+ {
+ 	extern int num_allowed_enctypes, num_krb5_enctypes, num_lib_enctypes;
+@@ -1840,7 +1883,7 @@ determine_enctypes(krb5_enctype **set_en
+ 	}
+ 
+ 	if (num_enctypes > 0) {
+-		if (enctypes_list_to_string(enctypes, num_enctypes,
++		if (enctypes_list_to_string(ctx, enctypes, num_enctypes,
+ 					    &enctypes_string) != 0) {
+ 			printerr(2, "%s: warning: enctypes_list_to_string() failed\n",
+ 				 __func__);
+@@ -1889,8 +1932,16 @@ limit_krb5_enctypes(struct rpc_gss_sec *
+ 	}
+ 
+ 	if (set_enctypes == NULL) {
+-		err = determine_enctypes(&set_enctypes, &num_set_enctypes,
++		krb5_context ctx;
++		err = krb5_init_context(&ctx);
++		if (err) {
++			printerr(2, "%s: failed to initialize context\n",
++				 __func__);
++			return -1;
++		}
++		err = determine_enctypes(ctx, &set_enctypes, &num_set_enctypes,
+ 					 &set_enctypes_string);
++		krb5_free_context(ctx);
+ 		if (err) {
+ 			printerr(2, "%s: failed to determine set_enctypes\n",
+ 				 __func__);
+--- nfs-utils-2.8.7/utils/gssd/krb5_util.h.orig	2026-03-12 22:01:26.000000000 +0100
++++ nfs-utils-2.8.7/utils/gssd/krb5_util.h	2026-03-24 19:31:29.067999687 +0100
+@@ -24,7 +24,7 @@ void gssd_k5_get_default_realm(char **de
+ int gssd_acquire_user_cred(gss_cred_id_t *gss_cred);
+ int gssd_k5_remove_bad_service_cred(char *srvname);
+ 
+-int enctypes_list_to_string(krb5_enctype *enctypes, int num_enctypes,
++int enctypes_list_to_string(krb5_context ctx, krb5_enctype *enctypes, int num_enctypes,
+ 			    char **enctype_string);
+ 
+ #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
+--- nfs-utils-2.8.7/utils/gssd/gssd_proc.c.orig	2026-03-12 22:01:26.000000000 +0100
++++ nfs-utils-2.8.7/utils/gssd/gssd_proc.c	2026-03-24 19:47:28.539468451 +0100
+@@ -160,8 +160,17 @@ parse_enctypes(char *enctypes)
+ 		strcpy(cached_types, enctypes);
+ 
+ 	if (num_krb5_enctypes > 0) {
+-		if (enctypes_list_to_string(krb5_enctypes, num_krb5_enctypes,
+-					    &krb5_enctypes_string) != 0) {
++		krb5_context ctx;
++		int err = krb5_init_context(&ctx);
++		if (err) {
++			printerr(2, "%s: failed to initialize context\n",
++				 __func__);
++			goto out;
++		}
++		err = enctypes_list_to_string(ctx, krb5_enctypes, num_krb5_enctypes,
++					      &krb5_enctypes_string);
++		krb5_free_context(ctx);
++		if (err != 0) {
+ 			printerr(2, "%s: warning: enctypes_list_to_string() failed\n",
+ 				 __func__);
+ 			goto out;

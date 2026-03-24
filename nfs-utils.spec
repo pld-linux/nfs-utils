@@ -1,4 +1,5 @@
 # TODO: systemd support needs cleanup (see TODOs below)
+# switch to MIT krb5, getting it build with heimdal is getting harder with each release
 #
 # Conditional build:
 %bcond_without	kerberos5	# Kerberos V (GSS) support
@@ -12,12 +13,12 @@ Summary(pt_BR.UTF-8):	Os utilitários para o cliente e servidor NFS do Linux
 Summary(ru.UTF-8):	Утилиты для NFS и демоны поддержки для NFS-сервера ядра
 Summary(uk.UTF-8):	Утиліти для NFS та демони підтримки для NFS-сервера ядра
 Name:		nfs-utils
-Version:	2.8.4
-Release:	3
+Version:	2.8.7
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	https://www.kernel.org/pub/linux/utils/nfs-utils/%{version}/%{name}-%{version}.tar.xz
-# Source0-md5:	e5aa4f14759abd4f93b4a68e2bc086ff
+# Source0-md5:	69a6ab83132f4a82134e925ac4c7f8c8
 #Source1:	ftp://ftp.linuxnfs.sourceforge.org/pub/nfs/nfs.doc.tar.gz
 Source1:	nfs.doc.tar.gz
 # Source1-md5:	ae7db9c61c5ad04f83bb99e5caed73da
@@ -266,13 +267,13 @@ Statyczna biblioteka libnfsidmap.
 %{__automake}
 %configure \
 	%{__enable_disable static_libs static} \
-	--enable-nfsv4 \
-	--enable-nfsv41 \
+	--enable-blkmapd \
 	%{!?with_kerberos5:--disable-gss} \
 	--enable-libmount-mount \
 	--enable-mount \
 	--enable-mountconfig \
 	--enable-nfsdcltrack \
+	--enable-nfsv4 \
 	%{?with_kerberos5:--enable-svcgss} \
 %if %{with tirpc}
 	--enable-ipv6 \
@@ -281,16 +282,16 @@ Statyczna biblioteka libnfsidmap.
 	--disable-ipv6 \
 	--disable-tirpc \
 %endif
+	--without-gssglue \
+	--with-start-statd=/sbin/start-statd \
 	--with-statdpath=/var/lib/nfs/statd \
 	--with-statedir=/var/lib/nfs \
 	--with-statduser=rpcstatd \
-	--with-start-statd=/sbin/start-statd \
-	--without-gssglue \
 	--with-systemd=%{systemdunitdir} \
 	--with-tcp-wrappers
 
-%{__make} pkgplugindir=/%{_lib}/libnfsidmap
-# all
+%{__make} \
+	pkgplugindir=/%{_lib}/libnfsidmap
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -667,16 +668,16 @@ fi
 %files -n libnfsidmap
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/idmapd.conf
-%attr(755,root,root) /%{_lib}/libnfsidmap.so.*.*.*
+/%{_lib}/libnfsidmap.so.*.*.*
 %ghost /%{_lib}/libnfsidmap.so.1
 %dir /%{_lib}/libnfsidmap
-%attr(755,root,root) /%{_lib}/libnfsidmap/nsswitch.so
-%attr(755,root,root) /%{_lib}/libnfsidmap/regex.so
-%attr(755,root,root) /%{_lib}/libnfsidmap/static.so
+/%{_lib}/libnfsidmap/nsswitch.so
+/%{_lib}/libnfsidmap/regex.so
+/%{_lib}/libnfsidmap/static.so
 # -plugin-ldap subpackage?
-%attr(755,root,root) /%{_lib}/libnfsidmap/umich_ldap.so
+/%{_lib}/libnfsidmap/umich_ldap.so
 # -plugin-gums subpackage (BR: some datagrid software - VOMS?)
-#%attr(755,root,root) /%{_lib}/libnfsidmap/gums.so
+#/%{_lib}/libnfsidmap/gums.so
 %{_mandir}/man5/idmapd.conf.5*
 
 %files -n libnfsidmap-devel
