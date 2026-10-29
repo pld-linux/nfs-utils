@@ -647,6 +647,7 @@ fi
 %attr(700,rpcstatd,rpcstatd) %dir %{_var}/lib/nfs/statd/sm.bak
 %attr(600,rpcstatd,rpcstatd) %config(noreplace) %verify(not md5 mtime size) %{_var}/lib/nfs/statd/state
 %attr(755,root,root) /lib/systemd/system-generators/nfs-server-generator
+%attr(755,root,root) /lib/systemd/system-generators/nfsroot-generator
 %attr(755,root,root) /lib/systemd/system-generators/rpc-pipefs-generator
 %{systemdunitdir}/idmapd.service
 %{systemdunitdir}/nfslock.service
