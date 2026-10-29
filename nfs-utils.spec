@@ -183,7 +183,7 @@ Summary(pl.UTF-8):	Wspólne programy do obsługi NFS
 Group:		Networking
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
-Requires:	libnfsidmap = %{version}-%{release}
+Requires:	libnfsidmap%{?_isa} = %{version}-%{release}
 Requires:	rc-scripts
 Requires:	rpcbind >= 0.1.7
 Requires:	systemd-units >= 0.38
@@ -220,7 +220,7 @@ Biblioteka pomagająca w mapowaniu identyfikatorów, głównie dla NFSv4.
 Summary:	Header files for libnfsidmap library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki libnfsidmap
 Group:		Development/Libraries
-Requires:	libnfsidmap = %{version}-%{release}
+Requires:	libnfsidmap%{?_isa} = %{version}-%{release}
 Obsoletes:	nfsidmap-devel < 0.12
 
 %description -n libnfsidmap-devel
@@ -233,7 +233,7 @@ Pliki nagłówkowe biblioteki libnfsidmap.
 Summary:	Static libnfsidmap library
 Summary(pl.UTF-8):	Statyczna biblioteka libnfsidmap
 Group:		Development/Libraries
-Requires:	libnfsidmap-devel = %{version}-%{release}
+Requires:	libnfsidmap-devel%{?_isa} = %{version}-%{release}
 Obsoletes:	nfsidmap-static < 0.12
 
 %description -n libnfsidmap-static
